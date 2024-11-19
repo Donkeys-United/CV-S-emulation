@@ -20,27 +20,27 @@ class RequestMessage(Message):
     """
 
     def __init__(self, unixTimeLimit: float, taskID: int):
-        self.__unixTimeLimit__ = unixTimeLimit
-        self.__taskID__ = taskID
+        self.__unixTimeLimit = unixTimeLimit
+        self.__taskID = taskID
 
-    def get_unix_time_limit(self) -> float:
-        """Method for returning the __unixTimeLimit__ attribute value.
+    def getUnixTimeLimit(self) -> float:
+        """Method for returning the __unixTimeLimit attribute value.
 
         Returns:
             float: the unix time limit, meaning the unix time stamp + the 
                    time limit for the processing.
         """
 
-        return self.__unixTimeLimit__
+        return self.__unixTimeLimit
 
-    def get_task_id(self) -> int:
-        """Method for returning the __taskID__ attribute value.
+    def getTaskID(self) -> int:
+        """Method for returning the __taskID attribute value.
 
         Returns:
             int: the taskID which is a number for the unique task plus the MAC address of the original satellite.
         """
 
-        return self.__taskID__
+        return self.__taskID
 
 
 class RespondMessage(Message):
@@ -49,26 +49,26 @@ class RespondMessage(Message):
     """
 
     def __init__(self, taskID: int, source: int):
-        self.__taskID__ = taskID
-        self.__source__ = source
+        self.__taskID = taskID
+        self.__source = source
 
     def getTaskID(self) -> int:
-        """Method for returning the __taskID__ attribute value.
+        """Method for returning the __taskID attribute value.
 
         Returns:
             int: the taskID which is a number for the unique task plus the
                  MAC address of the original satellite.
         """
-        return self.__taskID__
+        return self.__taskID
 
     def getSource(self) -> int:
-        """Method for returning the __source__ attribute value.
+        """Method for returning the __source attribute value.
 
         Returns:
             int: the MAC address of the responding satellite.
         """
 
-        return self.__source__
+        return self.__source
 
 
 
@@ -79,17 +79,17 @@ class ImageDataMessage(Message):
     """
 
     def __init__(self, payload: Task):
-        self.__payload__ = payload
+        self.__payload = payload
 
 
     def getPayload(self):
-        """Method for returning the __payload__ attribute value.
+        """Method for returning the __payload attribute value.
 
         Returns:
             Task: the Task object instance.
         """
 
-        return self.__payload__
+        return self.__payload
 
 
 
@@ -105,51 +105,51 @@ class ProcessedDataMessage(Message):
                  fileName: str, 
                  boundingBox: Tuple[Tuple[int, int], Tuple[int, int]]
                  ):
-        self.__image__ = imread(image)
-        self.__location__ = location
-        self.__unixTimeStamp__ = unixTimeStamp
-        self.__fileName__ = fileName
-        self.__boundingBox__ = boundingBox
+        self.__image = imread(image)
+        self.__location = location
+        self.__unixTimeStamp = unixTimeStamp
+        self.__fileName = fileName
+        self.__boundingBox = boundingBox
 
     def getImage(self):
-        """Method for returning the __image__ attribute value.
+        """Method for returning the __image attribute value.
 
         Returns:
             numpy.ndarray: the processed image, processed by the 
                            ObjectDetectionThread.
         """
 
-        return self.__image__
+        return self.__image
 
     def getLocation(self) -> complex:
-        """Method for returning the __location__ attribute value.
+        """Method for returning the __location attribute value.
 
         Returns:
             complex: satellites location written as a complex number.
         """
 
-        return self.__location__
+        return self.__location
 
     def getUnixTimeStamp(self) -> float:
-        """Method for returning the __unixTimeStamp__ attribute value.
+        """Method for returning the __unixTimeStamp attribute value.
 
         Returns:
             float: unix time stamp for when the image was "captured".
         """
 
-        return self.__unixTimeStamp__
+        return self.__unixTimeStamp
 
     def getFileName(self) -> str:
-        """Method for returning the __fileName__ attribute value.
+        """Method for returning the __fileName attribute value.
 
         Returns:
             str: file name of the original image file. Used by the ground
                  station for determining IoU.
         """
-        return self.__fileName__
+        return self.__fileName
 
     def getBoundingBox(self) -> Tuple[Tuple[int, int], Tuple[int, int]]:
-        """Method for returning the __boundingBox__ attribute value.
+        """Method for returning the __boundingBox attribute value.
 
         Returns:
             Tuple[Tuple[int, int], Tuple[int, int]]: tuple containing 2 
@@ -157,7 +157,7 @@ class ProcessedDataMessage(Message):
             location of the bounding box.
         """
 
-        return self.__boundingBox__
+        return self.__boundingBox
 
 
 class ResponseNackMessage(Message):
@@ -166,13 +166,13 @@ class ResponseNackMessage(Message):
     """
 
     def __init__(self, taskID: int):
-        self.__taskID__ = taskID
+        self.__taskID = taskID
 
     def getTaskID(self) -> int:
-        """Method for returning the __taskID__ attribute value.
+        """Method for returning the __taskID attribute value.
 
         Returns:
             int: the taskID which is a number for the unique task plus the MAC address of the original satellite.
         """
 
-        return self.__taskID__
+        return self.__taskID
