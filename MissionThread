@@ -1,0 +1,32 @@
+import json
+
+class MissionThread:
+    imagePath = ""
+    imageList = ""
+
+    def __init__(self, configPath):
+        # Attributes
+        self.imagePath 
+        self.imageList
+        self.configPath = configPath
+
+        # Open and parse the JSON file
+        with open(self.configPath, 'r') as file: 
+            configData = json.load(file) 
+
+
+        self.missions = configData.get("missions")
+
+    def run(self):
+        for mission in self.missions:
+            print(mission)
+
+
+
+# Pass the parsed dictionary to the constructor
+configPath = r"C:\Users\Phuon\OneDrive\Dokumenter\GitHub\CV-S-emulation\config_test.JSON"
+
+m1 = MissionThread(configPath)
+
+# Example: Access the missions data
+m1.run()
