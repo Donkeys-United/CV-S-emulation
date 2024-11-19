@@ -54,10 +54,10 @@ class ObjectDetectionThread:
 
         finished_message_list = []
         for result in len(results):
-            finished_message_list.append(ProcessedDataMessage(image_name_list[result], imageObject.get))
+            finished_message_list.append(ProcessedDataMessage(image_name_list[result], imageObject.getLocation(), imageObject.getUnixTimeStamp(), imageObject.getFileName(), ((bounding_box_xyxy[result][0], bounding_box_xyxy[result][1]),(bounding_box_xyxy[result][2], bounding_box_xyxy[result][4]))))
         return finished_message_list
 
-    def sendProcessedDataMessage(message: ProcessedDataMessage, communication_thread: CommunicationThread):
+    def sendProcessedDataMessage(message_list: list[ProcessedDataMessage], communication_thread: CommunicationThread):
         """Simple method for moving the PrcessedDataMessage object instance to the transmission queue in the CommunicationThread object instance.
 
         Args:
@@ -67,5 +67,6 @@ class ObjectDetectionThread:
         Returns:
             None: none
         """
-        communication_thread.transmissionQueue.append(message)
+        for message in message_list:
+            communication_thread.transmissionQueue.append(message)
         return None
