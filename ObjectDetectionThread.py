@@ -1,5 +1,6 @@
 from ultralytics import YOLO
-import ImageDataMessage, ProcessedDataMessage, CommunicationThread
+from MessageClasses import ImageDataMessage, ProcessedDataMessage
+import CommunicationThread
 
 
 class ObjectDetectionThread:

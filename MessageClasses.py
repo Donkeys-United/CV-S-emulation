@@ -1,74 +1,178 @@
 import time
 from abc import ABC, abstractmethod
 from typing import Tuple
+import Task
+from cv2 import imread
 
 #Abstract class
 class Message():
+    """An abstract class for all the Message classes. Contains no actual 
+       functionality.
+    """
 
     @abstractmethod
     def __init__(self):
         pass
 
 class RequestMessage(Message):
-    def __init__(self, unix_time_limit: int, task_id: str):
-        self.unix_time_limit = unix_time_limit
-        self.task_id = task_id
+    """Class for sending a request to other satellites, requesting that they '
+       process the data.
+    """
 
-    def get_unix_time_limit(self) -> int:
-        return self.unix_time_limit
+    def __init__(self, unixTimeLimit: float, taskID: int):
+        self.__unixTimeLimit__ = unixTimeLimit
+        self.__taskID__ = taskID
 
-    def get_task_id(self) -> str:
-        return self.task_id
+    def get_unix_time_limit(self) -> float:
+        """Method for returning the __unixTimeLimit__ attribute value.
+
+        Returns:
+            float: the unix time limit, meaning the unix time stamp + the 
+                   time limit for the processing.
+        """
+
+        return self.__unixTimeLimit__
+
+    def get_task_id(self) -> int:
+        """Method for returning the __taskID__ attribute value.
+
+        Returns:
+            int: the taskID which is a number for the unique task plus the MAC address of the original satellite.
+        """
+
+        return self.__taskID__
 
 
 class RespondMessage(Message):
-    def __init__(self, task_id: str, source: str):
-        self.task_id = task_id
-        self.source = source
+    """Class for sending an ack response to a satellite, when receiving a 
+       RequestMessage, and accepting the task.
+    """
 
-    def get_task_id(self) -> str:
-        return self.task_id
+    def __init__(self, taskID: int, source: int):
+        self.__taskID__ = taskID
+        self.__source__ = source
 
-    def get_source(self) -> str:
-        return self.source
+    def getTaskID(self) -> int:
+        """Method for returning the __taskID__ attribute value.
+
+        Returns:
+            int: the taskID which is a number for the unique task plus the
+                 MAC address of the original satellite.
+        """
+        return self.__taskID__
+
+    def getSource(self) -> int:
+        """Method for returning the __source__ attribute value.
+
+        Returns:
+            int: the MAC address of the responding satellite.
+        """
+
+        return self.__source__
+
+
 
 class ImageDataMessage(Message):
-    def __init__(self, taskID: int, fileName: str, location: complex, unixTimestamp: float, unixTimestampLimit: float, image: 'jpg'):
-        self.taskID = taskID
-        self.fileName = fileName
-        self.location = location
-        self.image = image
-        self.unixTimestamp = unixTimestamp
-        self.unixTimestampLimit = unixTimestampLimit
+    """Class for sending the Image Task to another satellite. The task
+       contains all the needed data. The entire Task object instance
+       is sent to the receiving satellite.
+    """
 
+    def __init__(self, payload: Task):
+        self.__payload__ = payload
 
 
     def get_payload(self):
-        return self.taskID, self.fileName, self.location, self.image, self.unixTimestamp, self.unixTimestampLimit
+        """Method for returning the __payload__ attribute value.
+
+        Returns:
+            Task: the Task object instance.
+        """
+
+        return self.__payload__
+
+
 
 class ProcessedDataMessage(Message):
-    def __init__(self, image: 'jpg', location: complex, unix_timestamp: int, file_name: str, bounding_box: Tuple[Tuple[int, int], Tuple[int, int]]):
-        self.image = image
-        self.location = location
-        self.unix_timestamp = unix_timestamp
-        self.file_name = file_name
-        self.bounding_box = bounding_box
+    """Class for creating messages with the results from the
+       ObjectDetectionThread. They are meant to be sent to the ground station.
+    """
 
-    def get_image(self):
-        return self.image
+    def __init__(self, 
+                 image: str, 
+                 location: complex, 
+                 unixTimeStamp: float, 
+                 fileName: str, 
+                 boundingBox: Tuple[Tuple[int, int], Tuple[int, int]]
+                 ):
+        self.__image__ = imread(image)
+        self.__location__ = location
+        self.__unixTimeStamp__ = unixTimeStamp
+        self.__fileName__ = fileName
+        self.__boundingBox__ = boundingBox
 
-    def get_location(self) -> complex:
-        return self.location
+    def getImage(self):
+        """Method for returning the __image__ attribute value.
 
-    def get_unix_timestamp(self) -> int:
-        return self.unix_timestamp
+        Returns:
+            numpy.ndarray: the processed image, processed by the 
+                           ObjectDetectionThread.
+        """
 
-    def get_file_name(self) -> str:
-        return self.file_name
+        return self.__image__
+
+    def getLocation(self) -> complex:
+        """Method for returning the __location__ attribute value.
+
+        Returns:
+            complex: satellites location written as a complex number.
+        """
+
+        return self.__location__
+
+    def getUnixTimeStamp(self) -> float:
+        """Method for returning the __unixTimeStamp__ attribute value.
+
+        Returns:
+            float: unix time stamp for when the image was "captured".
+        """
+
+        return self.__unixTimeStamp__
+
+    def getFileName(self) -> str:
+        """Method for returning the __fileName__ attribute value.
+
+        Returns:
+            str: file name of the original image file. Used by the ground
+                 station for determining IoU.
+        """
+        return self.__fileName__
+
+    def getBoundingBox(self) -> Tuple[Tuple[int, int], Tuple[int, int]]:
+        """Method for returning the __boundingBox__ attribute value.
+
+        Returns:
+            Tuple[Tuple[int, int], Tuple[int, int]]: tuple containing 2 
+            tuples. Each nested tuple has a set of xy coordinates, for the 
+            location of the bounding box.
+        """
+
+        return self.__boundingBox__
+
 
 class ResponseNackMessage(Message):
-    def __init__(self, task_id: str):
-        self.task_id = task_id
+    """Class for sending a Nack to a responding satellite, it not sending the
+       task to that satellite.
+    """
 
-    def get_task_id(self) -> str:
-        return self.task_id
+    def __init__(self, taskID: int):
+        self.__taskID__ = taskID
+
+    def getTaskID(self) -> int:
+        """Method for returning the __taskID__ attribute value.
+
+        Returns:
+            int: the taskID which is a number for the unique task plus the MAC address of the original satellite.
+        """
+
+        return self.__taskID__
