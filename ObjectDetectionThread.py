@@ -1,6 +1,9 @@
 from ultralytics import YOLO
 from MessageClasses import ImageDataMessage, ProcessedDataMessage
 import CommunicationThread
+import os
+from pathlib import Path
+import Task
 
 
 class ObjectDetectionThread:
@@ -21,7 +24,7 @@ class ObjectDetectionThread:
         model = YOLO(self.PATH_TO_MODEL)
         return model
     
-    def runInference(self, imageObject: ImageDataMessage):
+    def runInference(self, imageObject: Task):
         """Method used for running inference on a specific imageDataMessage object instance - which the satellite would have received or captured itself.
 
         Args:
@@ -39,11 +42,22 @@ class ObjectDetectionThread:
         bounding_boxes = [result.boxes for result in results]
         bounding_box_xyxy = [box.xyxy for box in bounding_boxes]
 
-        # Mangler måde at pakke det om til ProcessedDataMessage - Class ikke lavet endnu.
-        finished_message = ProcessedDataMessage
-        return finished_message
+        save_dir = results[0].save_dir
 
-    def sendProcessedDataMessage(message: ProcessedDataMessage, communication_thread: CommunicationThread):
+        image_name_list = []
+
+        # Rename saved files (example logic)
+        for image_path in Path(save_dir).glob("*.jpg"):  # Adjust extension if not .jpg
+            new_name = f"processed_{image_path.stem}.jpg"
+            image_name_list.append(f"{save_dir}/{new_name}")
+            os.rename(image_path, save_dir / new_name)
+
+        finished_message_list = []
+        for result in len(results):
+            finished_message_list.append(ProcessedDataMessage(image_name_list[result], imageObject.getLocation(), imageObject.getUnixTimeStamp(), imageObject.getFileName(), ((bounding_box_xyxy[result][0], bounding_box_xyxy[result][1]),(bounding_box_xyxy[result][2], bounding_box_xyxy[result][4]))))
+        return finished_message_list
+
+    def sendProcessedDataMessage(message_list: list[ProcessedDataMessage], communication_thread: CommunicationThread):
         """Simple method for moving the PrcessedDataMessage object instance to the transmission queue in the CommunicationThread object instance.
 
         Args:
@@ -53,5 +67,6 @@ class ObjectDetectionThread:
         Returns:
             None: none
         """
-        communication_thread.transmissionQueue.append(message)
+        for message in message_list:
+            communication_thread.transmissionQueue.append(message)
         return None

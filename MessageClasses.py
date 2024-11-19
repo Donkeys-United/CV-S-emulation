@@ -82,7 +82,7 @@ class ImageDataMessage(Message):
         self.__payload__ = payload
 
 
-    def get_payload(self):
+    def getPayload(self):
         """Method for returning the __payload__ attribute value.
 
         Returns:
