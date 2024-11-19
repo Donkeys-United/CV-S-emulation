@@ -32,7 +32,7 @@ class AcceptedRequestQueue(Thread):
     def getIDInQueue(self) -> List[int]:
         IDList: List[int] = []
         for message in self.__acceptedRequests:
-            IDList.append(message[0].get_task_id())
+            IDList.append(message[0].getTaskID())
         return IDList
 
     

@@ -1,8 +1,8 @@
 import time
 from abc import ABC, abstractmethod
 from typing import Tuple
-import Task
-from cv2 import imread
+from Task import Task
+#from cv2 import imread
 
 #Abstract class
 class Message():
@@ -23,7 +23,7 @@ class RequestMessage(Message):
         self.__unixTimeLimit__ = unixTimeLimit
         self.__taskID__ = taskID
 
-    def get_unix_time_limit(self) -> float:
+    def getUnixTimestampLimit(self) -> float:
         """Method for returning the __unixTimeLimit__ attribute value.
 
         Returns:
@@ -33,7 +33,7 @@ class RequestMessage(Message):
 
         return self.__unixTimeLimit__
 
-    def get_task_id(self) -> int:
+    def getTaskID(self) -> int:
         """Method for returning the __taskID__ attribute value.
 
         Returns:
@@ -78,18 +78,18 @@ class ImageDataMessage(Message):
        is sent to the receiving satellite.
     """
 
-    def __init__(self, payload: Task):
-        self.__payload__ = payload
+    def __init__(self, payload: Task) -> None:
+        self.__payload = payload
 
 
-    def getPayload(self):
+    def getPayload(self) -> Task:
         """Method for returning the __payload__ attribute value.
 
         Returns:
             Task: the Task object instance.
         """
 
-        return self.__payload__
+        return self.__payload
 
 
 
@@ -104,12 +104,12 @@ class ProcessedDataMessage(Message):
                  unixTimeStamp: float, 
                  fileName: str, 
                  boundingBox: Tuple[Tuple[int, int], Tuple[int, int]]
-                 ):
-        self.__image__ = imread(image)
-        self.__location__ = location
-        self.__unixTimeStamp__ = unixTimeStamp
-        self.__fileName__ = fileName
-        self.__boundingBox__ = boundingBox
+                 ) -> None:
+        self.__image = image
+        self.__location = location
+        self.__unixTimeStamp = unixTimeStamp
+        self.__fileName = fileName
+        self.__boundingBox = boundingBox
 
     def getImage(self):
         """Method for returning the __image__ attribute value.
@@ -119,7 +119,7 @@ class ProcessedDataMessage(Message):
                            ObjectDetectionThread.
         """
 
-        return self.__image__
+        return self.__image
 
     def getLocation(self) -> complex:
         """Method for returning the __location__ attribute value.
@@ -128,7 +128,7 @@ class ProcessedDataMessage(Message):
             complex: satellites location written as a complex number.
         """
 
-        return self.__location__
+        return self.__location
 
     def getUnixTimeStamp(self) -> float:
         """Method for returning the __unixTimeStamp__ attribute value.
@@ -137,7 +137,7 @@ class ProcessedDataMessage(Message):
             float: unix time stamp for when the image was "captured".
         """
 
-        return self.__unixTimeStamp__
+        return self.__unixTimeStamp
 
     def getFileName(self) -> str:
         """Method for returning the __fileName__ attribute value.
@@ -146,7 +146,7 @@ class ProcessedDataMessage(Message):
             str: file name of the original image file. Used by the ground
                  station for determining IoU.
         """
-        return self.__fileName__
+        return self.__fileName
 
     def getBoundingBox(self) -> Tuple[Tuple[int, int], Tuple[int, int]]:
         """Method for returning the __boundingBox__ attribute value.
@@ -157,7 +157,7 @@ class ProcessedDataMessage(Message):
             location of the bounding box.
         """
 
-        return self.__boundingBox__
+        return self.__boundingBox
 
 
 class ResponseNackMessage(Message):
@@ -166,7 +166,7 @@ class ResponseNackMessage(Message):
     """
 
     def __init__(self, taskID: int):
-        self.__taskID__ = taskID
+        self.__taskID = taskID
 
     def getTaskID(self) -> int:
         """Method for returning the __taskID__ attribute value.
@@ -175,4 +175,4 @@ class ResponseNackMessage(Message):
             int: the taskID which is a number for the unique task plus the MAC address of the original satellite.
         """
 
-        return self.__taskID__
+        return self.__taskID
