@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from Task import Task
 from threading import Thread
 from MessageClasses import RequestMessage, RespondMessage, ImageDataMessage, ResponseNackMessage, ProcessedDataMessage
 from AcceptedRequestQueue import AcceptedRequestQueue
@@ -34,7 +35,13 @@ class CommunicationThread(Thread):
         elif type(message) == RespondMessage:
             pass
         elif type(message) == ImageDataMessage:
-            pass
+            if message.getPayload() in self.AcceptedRequests:
+                messagePayload = message.getPayload()
+                requestedTask = Task(messagePayload.getUnixTimestampLimit())
+                requestedTask.appendImage(messagePayload.getFileName(), messagePayload.getImage(), messagePayload.getLocation())
+                #Insert TaskHandlerThread add to allocatedTasks
+            else:
+                pass
         elif type(message) == ResponseNackMessage:
             if message.getTaskID() in self.AcceptedRequests.getIDInQueue():
                 self.AcceptedRequests.removeMessage(message.getTaskID())
