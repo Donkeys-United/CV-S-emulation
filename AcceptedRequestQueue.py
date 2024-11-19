@@ -29,6 +29,13 @@ class AcceptedRequestQueue(Thread):
         else:
             return False
     
+    def getIDInQueue(self) -> List[int]:
+        IDList: List[int] = []
+        for message in self.__acceptedRequests:
+            IDList.append(message[0].get_task_id())
+        return IDList
+
+    
     def addMessage(self, message:RequestMessage, time) -> None:
         self.__acceptedRequests.append([message, self.__TIME_TO_LIVE])
     
