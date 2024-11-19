@@ -1,5 +1,6 @@
 from abc import ABC
 import time
+import Task
 
 
 class Message():
@@ -10,24 +11,43 @@ class Message():
 
 class RequestMessage(Message):
     
-    def __init__(self, taskID):
-        self.unixTimeStamp = time.time()
-        self.taskID = taskID
+    def __init__(self, unixTimeLimit: float, taskID: int):
+        self.__unixTimeLimit__ = unixTimeLimit
+        self.__taskID__ = taskID
     
     def getUnixTimeStamp(self):
-        return self.unixTimeStamp
+        return self.__unixTimeLimit__
     
     def getTaskID(self):
-        return self.taskID
+        return self.__taskID__
 
 class RespondMessage(Message):
-    pass
+
+    def __init__(self, taskID: int, MAC: int):
+        self.__source__ = MAC
+        self.__taskID__ = taskID
+    
+    def getTaskID(self):
+        return self.__taskID__
+    
+    def getSource(self):
+        return self.__source__
 
 class ImageDataMessage(Message):
-    pass
+    
+    def __init__(self, payload: Task):
+        self.__payload__ = payload
+
+    def getPayload(self):
+        return self.__payload__
 
 class ProcessedDataMessage(Message):
     pass
 
 class ResponseNackMessage(Message):
-    pass
+    
+    def __init__(self, taskID: int):
+        self.__taskID__ = taskID
+    
+    def getTaskID(self):
+        return self.__taskID__
