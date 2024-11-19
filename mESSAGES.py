@@ -47,14 +47,7 @@ class ImageDataMessage(Message):
         return self.taskID, self.fileName, self.location, self.image, self.unixTimestamp, self.unixTimestampLimit
 
 class ProcessedDataMessage(Message):
-    def __init__(
-        self,
-        image: 'jpg',
-        location: complex,
-        unix_timestamp: int,
-        file_name: str,
-        bounding_box: Tuple[Tuple[int, int], Tuple[int, int]]
-    ):
+    def __init__(self, image: 'jpg', location: complex, unix_timestamp: int, file_name: str, bounding_box: Tuple[Tuple[int, int], Tuple[int, int]]):
         self.image = image
         self.location = location
         self.unix_timestamp = unix_timestamp
