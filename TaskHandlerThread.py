@@ -7,26 +7,37 @@ from OribtalPositionThread import canExecuteMission
 class TaskHandlerThread(threading.Thread):
 
     #Attributes:
-    __allocatedTasks = []
-    __unallocatedTasks = []
 
     def __init__(self, name, delay):
         super().__init__()
         self.name = name
         self.delay = delay
         self.running = True
+        self.__allocatedTasks = []
+        self.__allocatedTasks = []
 
     def run(self,):
         while self.running:
             pass
 
 
-    def doAllocateTaskToSelf(self, task: Task):
-        pass
-
+    def doAllocateTaskToSelf(self, task: Task,__unallocatedTasks, __allocatedTasks):
+        """
+        Method used to either allocate a task to a satellite itself, or send a request message to another satellite
+        """
+        if __unallocatedTasks != None:
+            x = OribtalPositionThread.canExecuteMission() #er lidt i tvivl om syntaxen er rigtig, men ellers fiks senere
+            if x == True:
+                __allocatedTasks.append[task]
+            else:
+                TaskHandlerThread.sendRequest(Task)
+        else:
+            pass
+        
 
     def sendRequest(self,):
         pass
+            
 
     def sendRespond(self,):
         pass
