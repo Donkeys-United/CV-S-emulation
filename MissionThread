@@ -1,32 +1,52 @@
 import json
+import uuid
+from orbitalPositionThread_test import orbitalPositionThread_test # Import the other class
+import random
+import numpy as np
+import os
+from Task import Task
 
 class MissionThread:
-    imagePath = ""
-    imageList = ""
-
-    def __init__(self, configPath):
-        # Attributes
-        self.imagePath 
-        self.imageList
-        self.configPath = configPath
-
-        # Open and parse the JSON file
-        with open(self.configPath, 'r') as file: 
-            configData = json.load(file) 
+    # Attributes 
+    # IMAGEPATH = r"C:\Users\Phuon\OneDrive\Dokumenter\GitHub\CV-S-emulation\test"
+    # files = os.listdir(IMAGEPATH)
 
 
-        self.missions = configData.get("missions")
+    # def __init__(self, configPath):
+    #     # Attributes
+    #     self.configPath = configPath
 
-    def run(self):
-        for mission in self.missions:
-            print(mission)
+    #     # Open and parse the JSON file
+    #     with open(self.configPath, 'r') as file: 
+    #         configData = json.load(file) 
 
+
+    #     self.missions = configData.get("missions")
+
+    # def run(self):
+    #     # Create an instance of orbitalPositionThread_test
+    #     orbital_thread = orbitalPositionThread_test()
+
+    #     # Iterate through missions and call canExecuteMission
+    #     for mission in self.missions:
+    #         if (mission["satellite_id"] == uuid.getnode()) and orbital_thread.canExecuteMission(mission["satellite_id"], mission["orbit_number"]):
+    #             self.__createTask()
+
+    # def __createTask(self, location, timestamp, timeLimit):
+
+    #     task = Task(
+    #         taskID=uuid.getnode()+ random.getrandbits(1),
+    #         fileName=imagePath,
+    #         location=location,
+    #         unixTimestamp=timestamp,
+    #         unixTimeLimit=timeLimit,
+    #         image=image
+    #     )
 
 
 # Pass the parsed dictionary to the constructor
-configPath = r"C:\Users\Phuon\OneDrive\Dokumenter\GitHub\CV-S-emulation\config_test.JSON"
 
-m1 = MissionThread(configPath)
 
 # Example: Access the missions data
-m1.run()
+IMAGEPATH = r"C:\Users\Phuon\OneDrive\Dokumenter\GitHub\CV-S-emulation\test"
+files = os.listdir(IMAGEPATH)

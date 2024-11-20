@@ -27,16 +27,19 @@
   ],
   "missions": [
     {
-      "satellite_id": 1,
+      "satellite_id": 62156055568968,
       "location_radian": 1.0471975512,
       "orbit_number": 1,
-      "pictures_number": 20 
+      "pictures_number": 20, 
+      "time_limit": 10
     },
     {
       "satellite_id": 3,
       "location_radian": 3.92699081699,
       "orbit_number": 2,
-      "pictures_number": 20 
+      "pictures_number": 20,
+      "time_limit": 20 
+
     }
   ],
   "ground_station_ip": "192.168.1.105"
