@@ -2,7 +2,7 @@ import threading
 from CommunicationThread import CommunicationThread
 from MessageClasses import Message, RequestMessage, RespondMessage, ResponseNackMessage, ProcessedDataMessage, ImageDataMessage
 import socket
-from pickle import loads, dumps
+from pickle import dumps
 
 class TransmissionThread(threading.Thread):
 
@@ -40,13 +40,15 @@ class TransmissionThread(threading.Thread):
             while not self._stop_event.is_set():
                 if self.communicationThread.transmissionQueue:
                     message = self.communicationThread.transmissionQueue.pop(0)
+
                     if isinstance(message, Message):
                         if (isinstance(message, ProcessedDataMessage) == False) and (message.lastSenderID != None):
                             if message.lastSenderID == self.leftSatelliteID:
                                 connection.connect(self.rightSatelliteAddr)
                             else:
                                 connection.connect(self.leftSatelliteAddr)
-                        elif isinstance(message, ProcessedDataMessage):
+
+                        elif isinstance(message, ProcessedDataMessage) and (message.lastSenderID != None):
                             try:
                                 connection.connect(self.groundstationAddr)
                             except:
@@ -54,10 +56,40 @@ class TransmissionThread(threading.Thread):
                                     connection.connect(self.rightSatelliteAddr)
                                 else:
                                     connection.connect(self.leftSatelliteAddr)
-                        
+
+                        elif isinstance(message, ProcessedDataMessage):
+                            try:
+                                connection.connect(self.groundstationAddr)
+                            except:
+                                if message.firstHopID == self.leftSatelliteID:
+                                    connection.connect(self.rightSatelliteAddr)
+                                else:
+                                    connection.connect(self.leftSatelliteAddr)
+
+                        elif isinstance(message, RequestMessage):
+                            message.lastSenderID = self.satelliteID
+                            pickled_message = dumps(message)
+
+                            connection.connect(self.rightSatelliteAddr)
+                            connection.send(pickled_message)
+                            connection.shutdown()
+
+                            connection.connect(self.leftSatelliteAddr)
+                            connection.send(pickled_message)
+                            connection.shutdown()
+
+                            continue
+
+                        else:
+                            if message.firstHopID == self.leftSatelliteID:
+                                connection.connect(self.rightSatelliteAddr)
+                            else:
+                                connection.connect(self.leftSatelliteAddr)
+
                         message.lastSenderID = self.satelliteID
                         pickled_message = dumps(message)
-                        connection.send(pickled_message,)
+                        connection.send(pickled_message)
+                        connection.shutdown()
 
     def run(self):
         self.sendTransmission()

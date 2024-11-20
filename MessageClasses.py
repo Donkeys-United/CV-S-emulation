@@ -49,9 +49,13 @@ class RespondMessage(Message):
        RequestMessage, and accepting the task.
     """
 
-    def __init__(self, taskID: int, source: int, ):
+    def __init__(self, 
+                 taskID: int, 
+                 source: int, 
+                 firstHopID: int):
         self.__taskID = taskID
         self.__source = source
+        self.firstHopID = firstHopID
 
     def getTaskID(self) -> int:
         """Method for returning the __taskID__ attribute value.
@@ -79,8 +83,9 @@ class ImageDataMessage(Message):
        is sent to the receiving satellite.
     """
 
-    def __init__(self, payload: Task) -> None:
+    def __init__(self, payload: Task, firstHopID: int) -> None:
         self.__payload = payload
+        self.firstHopID = firstHopID
 
 
     def getPayload(self) -> Task:
@@ -104,13 +109,15 @@ class ProcessedDataMessage(Message):
                  location: complex, 
                  unixTimeStamp: float, 
                  fileName: str, 
-                 boundingBox: Tuple[Tuple[int, int], Tuple[int, int]]
+                 boundingBox: Tuple[Tuple[int, int], Tuple[int, int]],
+                 firstHopID: int
                  ) -> None:
         self.__image = image
         self.__location = location
         self.__unixTimeStamp = unixTimeStamp
         self.__fileName = fileName
         self.__boundingBox = boundingBox
+        self.firstHopID = firstHopID
 
     def getImage(self):
         """Method for returning the __image__ attribute value.
@@ -166,8 +173,9 @@ class ResponseNackMessage(Message):
        task to that satellite.
     """
 
-    def __init__(self, taskID: int):
+    def __init__(self, taskID: int, firstHopID: int):
         self.__taskID = taskID
+        self.firstHopID = firstHopID
 
     def getTaskID(self) -> int:
         """Method for returning the __taskID__ attribute value.
