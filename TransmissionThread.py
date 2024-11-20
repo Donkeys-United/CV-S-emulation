@@ -40,14 +40,16 @@ class TransmissionThread(threading.Thread):
             while not self._stop_event.is_set():
                 if self.communicationThread.transmissionQueue:
                     message = self.communicationThread.transmissionQueue.pop(0)
-
                     if isinstance(message, Message):
+
+                        # Case 1: The satellite must relay a message to the next satellite in the chain.
                         if (isinstance(message, ProcessedDataMessage) == False) and (message.lastSenderID != None):
                             if message.lastSenderID == self.leftSatelliteID:
                                 connection.connect(self.rightSatelliteAddr)
                             else:
                                 connection.connect(self.leftSatelliteAddr)
 
+                        # Case 2: The satellite must relay the result message to either the groundstation or the next satellite.
                         elif isinstance(message, ProcessedDataMessage) and (message.lastSenderID != None):
                             try:
                                 connection.connect(self.groundstationAddr)
@@ -57,6 +59,7 @@ class TransmissionThread(threading.Thread):
                                 else:
                                     connection.connect(self.leftSatelliteAddr)
 
+                        # Case 3: The satellite must send its own results to the groundstation, or another satellite.
                         elif isinstance(message, ProcessedDataMessage):
                             try:
                                 connection.connect(self.groundstationAddr)
@@ -66,6 +69,7 @@ class TransmissionThread(threading.Thread):
                                 else:
                                     connection.connect(self.leftSatelliteAddr)
 
+                        # Case 4: The satellite sends out its own RequestMessage - which must be sent to both neighbouring satellites.
                         elif isinstance(message, RequestMessage):
                             message.lastSenderID = self.satelliteID
                             pickled_message = dumps(message)
@@ -80,6 +84,7 @@ class TransmissionThread(threading.Thread):
 
                             continue
 
+                        # Case 5: The satellite sends any other message created by itself to one of its neighbouring satellites.
                         else:
                             if message.firstHopID == self.leftSatelliteID:
                                 connection.connect(self.rightSatelliteAddr)
