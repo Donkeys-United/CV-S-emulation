@@ -2,10 +2,10 @@
 import threading
 from Task import Task
 from MessageClasses import *
-from communicationthread import * #Fiks navn af fil senere
+from CommunicationThread import * #Fiks navn af fil senere
 
 
-class TaskHandlerThread(threading.Thread):
+class TaskHandlerThread(threading.Thread, CommunicationThread):
 
     #Attributes:
 
@@ -39,7 +39,7 @@ class TaskHandlerThread(threading.Thread):
             pass
         
 
-    def sendRequest(self, task: Task, communication_thread):
+    def sendRequest(self, task: Task):
         """
         Method to send a request to the CommunicationThread, which forwards it to other satellites.
         
@@ -51,27 +51,43 @@ class TaskHandlerThread(threading.Thread):
         - taskID: int
         - timeLimit: float
         """
+        #Creates an object of the RequestMessage
         sendRequestMessage = RequestMessage(
             taskID = task.taskID,
-            unixTimeLimit = task.unixTimeLimit
+            unixTimeLimit = task.unixTimestamp
         )
 
         # Use the RequestMessage methods to get the task details
         taskID = sendRequestMessage.getTaskID()
         timeLimit = sendRequestMessage.getUnixTimeLimit()
 
-        communication_thread.addMessage(sendRequestMessage)
+        CommunicationThread.addMessage(sendRequestMessage)
 
         #Print for debugging
         print(sendRequestMessage)
         return taskID, timeLimit #Nødvendigt at retunere?
             
 
-    def sendRespond(self,):
+    def sendRespond(self, task):
         """
         Method to send a respond to other satellites telling them they can perform the requested task
         """
-        pass
+        
+        #Creates an object of the RespondMessage
+        sendRespondMessage = RespondMessage(
+            taskID = task.taskID,
+            source = task.source
+        )
+
+        taskID = sendRespondMessage.getTaskID()
+        source = sendRespondMessage.getSource()
+
+        CommunicationThread.addMessage(sendRespondMessage)
+
+        #Print for debugging
+        print(sendRespondMessage)
+        return taskID, timeLimit #Nødvendigt at retunere?
+
 
     def sendDataPacket(self,):
         """
@@ -79,17 +95,20 @@ class TaskHandlerThread(threading.Thread):
         """
         pass
 
+
     def changeFrequency(self, frequency: int):
         """
         Method to adjust the GPU frequency - maybe declared in another class, not this one. TBD
         """
         pass
 
+
     def getAcceptedTaskTotal(self, ):
         """
         Method to get the ammount of accepted tasks a satellite has
         """
         pass
+
 
     def enqueueUnallocatedTask(self, task: Task):
         self.__unallocatedTasks.append(task)
