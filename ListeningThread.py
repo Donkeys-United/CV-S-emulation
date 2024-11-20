@@ -2,11 +2,12 @@ import threading
 from CommunicationThread import CommunicationThread
 from MessageClasses import Message
 import socket
+from pickle import loads
 
 class ListeningThread(threading.Thread):
 
     HOSTNAME = socket.gethostname()
-    IP_ADDR = socket.gethostbyname()
+    IP_ADDR = socket.gethostbyname(HOSTNAME)
 
     def __init__(self, port: int, communicationThread: CommunicationThread):
         super().__init__()
@@ -25,8 +26,15 @@ class ListeningThread(threading.Thread):
         while not self._stop_event.is_set():
             connection.listen()
             incoming_message = connection.accept()
-            self.addMessageList(incoming_message)
-        
+            unpickled_message = loads(incoming_message)
+            self.addMessageList(unpickled_message)
+
+    def run(self):
+        self.activeListening()
+
+    def stop(self):
+        self._stop_event.set()
+
 
 
 

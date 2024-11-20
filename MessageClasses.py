@@ -9,10 +9,11 @@ class Message():
     """An abstract class for all the Message classes. Contains no actual 
        functionality.
     """
+    lastSenderID = None
 
     @abstractmethod
     def __init__(self):
-        pass
+        self.lastSenderID
 
 class RequestMessage(Message):
     """Class for sending a request to other satellites, requesting that they '
@@ -20,8 +21,8 @@ class RequestMessage(Message):
     """
 
     def __init__(self, unixTimeLimit: float, taskID: int):
-        self.__unixTimeLimit__ = unixTimeLimit
-        self.__taskID__ = taskID
+        self.__unixTimeLimit = unixTimeLimit
+        self.__taskID = taskID
 
     def getUnixTimestampLimit(self) -> float:
         """Method for returning the __unixTimeLimit__ attribute value.
@@ -31,7 +32,7 @@ class RequestMessage(Message):
                    time limit for the processing.
         """
 
-        return self.__unixTimeLimit__
+        return self.__unixTimeLimit
 
     def getTaskID(self) -> int:
         """Method for returning the __taskID__ attribute value.
@@ -40,7 +41,7 @@ class RequestMessage(Message):
             int: the taskID which is a number for the unique task plus the MAC address of the original satellite.
         """
 
-        return self.__taskID__
+        return self.__taskID
 
 
 class RespondMessage(Message):
@@ -48,9 +49,9 @@ class RespondMessage(Message):
        RequestMessage, and accepting the task.
     """
 
-    def __init__(self, taskID: int, source: int):
-        self.__taskID__ = taskID
-        self.__source__ = source
+    def __init__(self, taskID: int, source: int, ):
+        self.__taskID = taskID
+        self.__source = source
 
     def getTaskID(self) -> int:
         """Method for returning the __taskID__ attribute value.
@@ -59,7 +60,7 @@ class RespondMessage(Message):
             int: the taskID which is a number for the unique task plus the
                  MAC address of the original satellite.
         """
-        return self.__taskID__
+        return self.__taskID
 
     def getSource(self) -> int:
         """Method for returning the __source__ attribute value.
@@ -68,7 +69,7 @@ class RespondMessage(Message):
             int: the MAC address of the responding satellite.
         """
 
-        return self.__source__
+        return self.__source
 
 
 
