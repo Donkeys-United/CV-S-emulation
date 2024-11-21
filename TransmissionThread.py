@@ -8,7 +8,7 @@ class TransmissionThread(threading.Thread):
 
     HOSTNAME = socket.gethostname()
     IP_ADDR = socket.gethostbyname(HOSTNAME)
-    __dataTransmittedBytes = 0
+    dataTransmittedBytes = 0
 
     def __init__(self, 
                  port: int, 
@@ -22,7 +22,7 @@ class TransmissionThread(threading.Thread):
         self._stop_event = threading.Event()
         self.HOSTNAME
         self.IP_ADDR
-        self.__dataTransmittedBytes
+        self.dataTransmittedBytes
         self.satelliteID = satelliteID
         self.leftSatelliteID = neighbourSatelliteIDs[0]
         self.rightSatelliteID = neighbourSatelliteIDs[1]
@@ -73,6 +73,7 @@ class TransmissionThread(threading.Thread):
                         elif isinstance(message, RequestMessage):
                             message.lastSenderID = self.satelliteID
                             pickled_message = dumps(message)
+                            self.dataTransmittedBytes += len(pickled_message)
 
                             connection.connect(self.rightSatelliteAddr)
                             connection.send(pickled_message)
@@ -93,6 +94,7 @@ class TransmissionThread(threading.Thread):
 
                         message.lastSenderID = self.satelliteID
                         pickled_message = dumps(message)
+                        self.dataTransmittedBytes += len(pickled_message)
                         connection.send(pickled_message)
                         connection.shutdown()
 
