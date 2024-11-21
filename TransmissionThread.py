@@ -3,6 +3,7 @@ from CommunicationThread import CommunicationThread
 from MessageClasses import Message, RequestMessage, RespondMessage, ResponseNackMessage, ProcessedDataMessage, ImageDataMessage
 import socket
 from pickle import dumps
+from uuid import getnode
 
 class TransmissionThread(threading.Thread):
 
@@ -10,6 +11,7 @@ class TransmissionThread(threading.Thread):
     IP_ADDR = socket.gethostbyname(HOSTNAME)
     __dataTransmittedBytes = 0
     port = 6969
+    __satelliteID = getnode()
 
     def __init__(self, 
                  communicationThread: CommunicationThread, satelliteID: int, 
@@ -23,7 +25,7 @@ class TransmissionThread(threading.Thread):
         self.HOSTNAME
         self.IP_ADDR
         self.__dataTransmittedBytes
-        self.satelliteID = satelliteID
+        self.__satelliteID
         self.leftSatelliteID = neighbourSatelliteIDs[0]
         self.rightSatelliteID = neighbourSatelliteIDs[1]
         self.leftSatelliteAddr = neighbourSatelliteAddrs[0]
@@ -71,9 +73,9 @@ class TransmissionThread(threading.Thread):
 
                         # Case 4: The satellite sends out its own RequestMessage - which must be sent to both neighbouring satellites.
                         elif isinstance(message, RequestMessage):
-                            message.lastSenderID = self.satelliteID
+                            message.lastSenderID = self.__satelliteID
                             pickled_message = dumps(message)
-                            self.dataTransmittedBytes += len(pickled_message)
+                            self.__dataTransmittedBytes += len(pickled_message)
 
                             connection.connect(self.rightSatelliteAddr)
                             connection.send(pickled_message)
@@ -92,7 +94,7 @@ class TransmissionThread(threading.Thread):
                             else:
                                 connection.connect(self.leftSatelliteAddr)
 
-                        message.lastSenderID = self.satelliteID
+                        message.lastSenderID = self.__satelliteID
                         pickled_message = dumps(message)
                         self.__dataTransmittedBytes += len(pickled_message)
                         connection.send(pickled_message)
