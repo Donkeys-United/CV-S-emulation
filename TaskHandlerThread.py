@@ -25,8 +25,6 @@ class TaskHandlerThread(threading.Thread):
         """
         Method used to either allocate a task to a satellite itself, or send a request message to another satellite
         """
-
-
         if __unallocatedTasks != None:
             task = __unallocatedTasks[0]
             x = "Insert Kristian Meth"
@@ -44,8 +42,8 @@ class TaskHandlerThread(threading.Thread):
         """
         # Create a RequestMessage object
         sendRequestMessage = RequestMessage(
-            unix_time_limit=task.getUnixTimestampLimit(),
-            task_id=task.getTaskId()
+            unixTimeLimit=task.getUnixTimestampLimit(),
+            taskID=task.getTaskID()
         )
 
         # Print the message object directly
@@ -59,12 +57,12 @@ class TaskHandlerThread(threading.Thread):
         return sendRequestMessage.getTaskID(), sendRequestMessage.getUnixTimeLimit()
 
 
-    def sendRespond(self, task):
+    def sendRespond(self, task: Task):
         """
         Method to send a respond to other satellites telling them they can perform the requested task
         """
         sendRequestMessage = RequestMessage(
-            taskID=task.getTaskId(),
+            taskID=task.getTaskID(),
             unixTimeLimit=task.getUnixTimestampLimit()
         )
 

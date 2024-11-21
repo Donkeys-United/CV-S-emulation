@@ -10,28 +10,28 @@ class Message():
         pass
 
 class RequestMessage(Message):
-    def __init__(self, unix_time_limit: float, task_id: int):
+    def __init__(self, unixTimeLimit: float, taskID: int):
         super().__init__()
-        self.unix_time_limit = unix_time_limit
-        self.task_id = task_id
+        self.unixTimeLimit = unixTimeLimit
+        self.taskID = taskID
 
     def getUnixTimeLimit(self) -> float:
-        return self.unix_time_limit
+        return self.unixTimeLimit
 
     def getTaskID(self) -> int:
-        return self.task_id
+        return self.taskID
     
     def __str__(self):
-        return f"RequestMessage(task_id={self.task_id}, unix_time_limit={self.unix_time_limit})"
+        return f"RequestMessage(taskID={self.taskID}, unixTimeLimit={self.unixTimeLimit})"
 
 
 class RespondMessage(Message):
-    def __init__(self, task_id: str, source: str):
-        self.task_id = task_id
+    def __init__(self, taskID: str, source: str):
+        self.taskID = taskID
         self.source = source
 
     def getTaskID(self) -> str:
-        return self.task_id
+        return self.taskID
 
     def getSource(self) -> str:
         return self.source
@@ -45,32 +45,32 @@ class ImageDataMessage(Message):
         self.unixTimestamp = unixTimestamp
         self.unixTimestampLimit = unixTimestampLimit
 
-    def get_payload(self):
+    def getPayload(self):
         return self.taskID, self.fileName, self.location, self.image, self.unixTimestamp, self.unixTimestampLimit
 
 class ProcessedDataMessage(Message):
-    def __init__(self, image: 'jpg', location: complex, unix_timestamp: int, file_name: str, bounding_box: Tuple[Tuple[int, int], Tuple[int, int]]):
+    def __init__(self, image: 'jpg', location: complex, unixTimestamp: int, fileName: str, boundingBox: Tuple[Tuple[int, int], Tuple[int, int]]):
         self.image = image
         self.location = location
-        self.unix_timestamp = unix_timestamp
-        self.file_name = file_name
-        self.bounding_box = bounding_box
+        self.unixTimestamp = unixTimestamp
+        self.fileName = fileName
+        self.boundingBox = boundingBox
 
-    def get_image(self):
+    def getImage(self):
         return self.image
 
-    def get_location(self) -> complex:
+    def getLocation(self) -> complex:
         return self.location
 
-    def get_unix_timestamp(self) -> int:
-        return self.unix_timestamp
+    def getUnixTimestamp(self) -> int:
+        return self.unixTimestamp
 
-    def get_file_name(self) -> str:
-        return self.file_name
+    def getFileName(self) -> str:
+        return self.fileName
 
 class ResponseNackMessage(Message):
-    def __init__(self, task_id: str):
-        self.task_id = task_id
+    def __init__(self, taskID: str):
+        self.taskID = taskID
 
-    def get_task_id(self) -> str:
-        return self.task_id
+    def getTaskID(self) -> str:
+        return self.taskID
