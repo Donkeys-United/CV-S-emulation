@@ -10,16 +10,19 @@ class Message():
         pass
 
 class RequestMessage(Message):
-    def __init__(self, unix_time_limit: int, task_id: str):
+    def __init__(self, unix_time_limit: float, task_id: int):
         super().__init__()
         self.unix_time_limit = unix_time_limit
         self.task_id = task_id
 
-    def getUnixTimeLimit(self) -> int:
+    def getUnixTimeLimit(self) -> float:
         return self.unix_time_limit
 
-    def getTaskID(self) -> str:
+    def getTaskID(self) -> int:
         return self.task_id
+    
+    def __str__(self):
+        return f"RequestMessage(task_id={self.task_id}, unix_time_limit={self.unix_time_limit})"
 
 
 class RespondMessage(Message):

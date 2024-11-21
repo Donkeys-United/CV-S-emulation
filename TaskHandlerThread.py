@@ -16,7 +16,6 @@ class TaskHandlerThread(threading.Thread):
         self.__unallocatedTasks = []
 
 
-
     def run(self,):
         while self.running:
             pass
@@ -46,18 +45,19 @@ class TaskHandlerThread(threading.Thread):
         # Create a RequestMessage object
         sendRequestMessage = RequestMessage(
             unix_time_limit=task.getUnixTimestampLimit(),
-            task_id=str(task.getTaskId())  # Ensure task ID is a string as expected by RequestMessage
+            task_id=task.getTaskId()
         )
 
+        # Print the message object directly
+        print(f"Sending message: {sendRequestMessage}")
+
         # Add the message to the CommunicationThread
-        CommunicationThread().addMessage(sendRequestMessage)
+        communication_thread = CommunicationThread()  # Create a communication thread
+        communication_thread.addMessage(sendRequestMessage)
 
-        # Debug output
-        print(f"Sending: {sendRequestMessage}")
-
-        # Return for verification
+        # Return the task ID and time limit
         return sendRequestMessage.getTaskID(), sendRequestMessage.getUnixTimeLimit()
-            
+
 
     def sendRespond(self, task):
         """
@@ -69,7 +69,7 @@ class TaskHandlerThread(threading.Thread):
         )
 
         # Add the message to the CommunicationThread
-        CommunicationThread().addMessage(sendRequestMessage)
+        CommunicationThread.addMessage(sendRequestMessage)
 
         # Print and return
         print(f"Sending: {sendRequestMessage}")
@@ -102,16 +102,16 @@ class TaskHandlerThread(threading.Thread):
         self.__unallocatedTasks.append(task)
         
 
-
-
-class CommunicationThread():
+class CommunicationThread(threading.Thread):
 
     def __init__(self):
+        super().__init__()
         self.tasklist = []
 
 
-    def addMessage(self, task: Task):
-        self.tasklist.append(task)
+    def addMessage(self, message: Message):
+        self.tasklist.append(message)
+        print(f"The tasklist is now: {[str(msg) for msg in self.tasklist]}")
 
 
 # Create instances
