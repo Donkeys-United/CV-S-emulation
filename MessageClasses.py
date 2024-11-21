@@ -14,10 +14,10 @@ class RequestMessage(Message):
         self.unix_time_limit = unix_time_limit
         self.task_id = task_id
 
-    def get_unix_time_limit(self) -> int:
+    def getUnixTimeLimit(self) -> int:
         return self.unix_time_limit
 
-    def get_task_id(self) -> str:
+    def getTaskID(self) -> str:
         return self.task_id
 
 
@@ -26,10 +26,10 @@ class RespondMessage(Message):
         self.task_id = task_id
         self.source = source
 
-    def get_task_id(self) -> str:
+    def getTaskID(self) -> str:
         return self.task_id
 
-    def get_source(self) -> str:
+    def getSource(self) -> str:
         return self.source
 
 class ImageDataMessage(Message):
@@ -40,8 +40,6 @@ class ImageDataMessage(Message):
         self.image = image
         self.unixTimestamp = unixTimestamp
         self.unixTimestampLimit = unixTimestampLimit
-
-
 
     def get_payload(self):
         return self.taskID, self.fileName, self.location, self.image, self.unixTimestamp, self.unixTimestampLimit
