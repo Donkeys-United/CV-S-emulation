@@ -3,15 +3,15 @@ from numpy import ndarray
 import time
 
 class Task:
-    taskID:int
+    taskID:bytes
     fileName:str
     location:complex
     unixTimestamp:float
     unixTimestampLimit:float
     image:ndarray
 
-    def __init__(self, timeLimit:int) -> None:
-        self.taskID = getnode()
+    def __init__(self, incrementingID:int, timeLimit:int) -> None:
+        self.taskID = getnode().to_bytes(6, 'big') + incrementingID.to_bytes(1, 'big')
         self.unixTimestamp = time.time()
         self.unixTimestampLimit = timeLimit
 
