@@ -49,3 +49,6 @@ class CommunicationThread(Thread):
                 pass
         elif type(message) == ProcessedDataMessage:
             pass
+    
+    def priorityCheck(sourceMac:int) -> int:
+        pass #I need constellation to do this
