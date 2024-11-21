@@ -17,7 +17,7 @@ class TransmissionThread(threading.Thread):
                  neighbourSatelliteAddrs: tuple,
                  groundstationAddr: tuple):
         super().__init__()
-        self.port = port
+        self.port
         self.communicationThread = communicationThread
         self._stop_event = threading.Event()
         self.HOSTNAME
