@@ -4,12 +4,14 @@ from threading import Thread
 from MessageClasses import RequestMessage, RespondMessage, ImageDataMessage, ResponseNackMessage, ProcessedDataMessage
 from AcceptedRequestQueue import AcceptedRequestQueue
 from typing import Any, Iterable, List, Mapping
+from TransmissionThread import TransmissionThread
 
 class CommunicationThread(Thread):
     unAcceptedRequests:List[RequestMessage] = []
     transmissionQueue:List[RequestMessage | RespondMessage | ImageDataMessage | ResponseNackMessage | ProcessedDataMessage] = []
     messageList:List[RequestMessage | RespondMessage | ImageDataMessage | ResponseNackMessage | ProcessedDataMessage] = []
-    AcceptedRequests:AcceptedRequestQueue
+    acceptedRequestsQueue:AcceptedRequestQueue
+    transmission:TransmissionThread
 
     def __init__(
             self,
@@ -19,8 +21,10 @@ class CommunicationThread(Thread):
             daemon: bool | None = None
             ) -> None:
         super().__init__(group, target, name, args, kwargs, daemon=daemon)
-        self.AcceptedRequests = AcceptedRequestQueue()
-        self.AcceptedRequests.start()
+        self.acceptedRequestsQueue = AcceptedRequestQueue()
+        self.acceptedRequestsQueue.start()
+        self.transmission = TransmissionThread()
+
 
     def run(self) -> None:
         return super().run()
@@ -35,7 +39,7 @@ class CommunicationThread(Thread):
         elif type(message) == RespondMessage:
             pass
         elif type(message) == ImageDataMessage:
-            if message.getPayload() in self.AcceptedRequests:
+            if message.getPayload() in self.acceptedRequestsQueue:
                 messagePayload = message.getPayload()
                 requestedTask = Task(messagePayload.getUnixTimestampLimit())
                 requestedTask.appendImage(messagePayload.getFileName(), messagePayload.getImage(), messagePayload.getLocation())
@@ -43,8 +47,8 @@ class CommunicationThread(Thread):
             else:
                 pass
         elif type(message) == ResponseNackMessage:
-            if message.getTaskID() in self.AcceptedRequests.getIDInQueue():
-                self.AcceptedRequests.removeMessage(message.getTaskID())
+            if message.getTaskID() in self.acceptedRequestsQueue.getIDInQueue():
+                self.acceptedRequestsQueue.removeMessage(message.getTaskID())
             else:
                 pass
         elif type(message) == ProcessedDataMessage:
