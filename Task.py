@@ -1,4 +1,3 @@
-from uuid import getnode
 from numpy import ndarray
 import time
 
@@ -10,8 +9,8 @@ class Task:
     unixTimestampLimit:float
     image:ndarray
 
-    def __init__(self, incrementingID:int, timeLimit:int) -> None:
-        self.taskID = getnode().to_bytes(6, 'big') + incrementingID.to_bytes(1, 'big')
+    def __init__(self, satelliteID:int, incrementingID:int, timeLimit:int) -> None:
+        self.taskID = satelliteID.to_bytes(6, 'big') + incrementingID.to_bytes(1, 'big')
         self.unixTimestamp = time.time()
         self.unixTimestampLimit = self.unixTimestamp + timeLimit
 
