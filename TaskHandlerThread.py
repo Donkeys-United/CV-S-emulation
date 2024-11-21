@@ -2,12 +2,10 @@
 import threading
 from Task import Task
 from MessageClasses import *
-from CommunicationThread import * #Fiks navn af fil senere
+#from CommunicationThread import * #Fiks navn af fil senere
 
 
-class TaskHandlerThread(threading.Thread, CommunicationThread):
-
-    #Attributes:
+class TaskHandlerThread(threading.Thread):
 
     def __init__(self, name, delay):
         super().__init__()
@@ -28,6 +26,8 @@ class TaskHandlerThread(threading.Thread, CommunicationThread):
         """
         Method used to either allocate a task to a satellite itself, or send a request message to another satellite
         """
+
+
         if __unallocatedTasks != None:
             task = __unallocatedTasks[0]
             x = "Insert Kristian Meth"
@@ -41,52 +41,40 @@ class TaskHandlerThread(threading.Thread, CommunicationThread):
 
     def sendRequest(self, task: Task):
         """
-        Method to send a request to the CommunicationThread, which forwards it to other satellites.
-        
-        Parameters:
-        - task: Task object containing task details.
-        - communication_thread: An instance of the CommunicationThread to send the message.
-        
-        Returns:
-        - taskID: int
-        - timeLimit: float
+        Sends a request message for a task to the CommunicationThread.
         """
-        #Creates an object of the RequestMessage
+        # Create a RequestMessage object
         sendRequestMessage = RequestMessage(
-            taskID = task.taskID,
-            unixTimeLimit = task.unixTimestamp
+            unix_time_limit=task.getUnixTimestampLimit(),
+            task_id=str(task.getTaskId())  # Ensure task ID is a string as expected by RequestMessage
         )
 
-        # Use the RequestMessage methods to get the task details
-        taskID = sendRequestMessage.getTaskID()
-        timeLimit = sendRequestMessage.getUnixTimeLimit()
+        # Add the message to the CommunicationThread
+        CommunicationThread().addMessage(sendRequestMessage)
 
-        CommunicationThread.addMessage(sendRequestMessage)
+        # Debug output
+        print(f"Sending: {sendRequestMessage}")
 
-        #Print for debugging
-        print(sendRequestMessage)
-        return taskID, timeLimit #Nødvendigt at retunere?
+        # Return for verification
+        return sendRequestMessage.getTaskID(), sendRequestMessage.getUnixTimeLimit()
             
 
     def sendRespond(self, task):
         """
         Method to send a respond to other satellites telling them they can perform the requested task
         """
-        
-        #Creates an object of the RespondMessage
-        sendRespondMessage = RespondMessage(
-            taskID = task.taskID,
-            source = task.source
+        sendRequestMessage = RequestMessage(
+            taskID=task.getTaskId(),
+            unixTimeLimit=task.getUnixTimestampLimit()
         )
 
-        taskID = sendRespondMessage.getTaskID()
-        source = sendRespondMessage.getSource()
+        # Add the message to the CommunicationThread
+        CommunicationThread().addMessage(sendRequestMessage)
 
-        CommunicationThread.addMessage(sendRespondMessage)
+        # Print and return
+        print(f"Sending: {sendRequestMessage}")
+        return sendRequestMessage.getTaskID(), sendRequestMessage.getUnixTimeLimit()
 
-        #Print for debugging
-        print(sendRespondMessage)
-        return taskID, timeLimit #Nødvendigt at retunere?
 
 
     def sendDataPacket(self,):
@@ -114,8 +102,27 @@ class TaskHandlerThread(threading.Thread, CommunicationThread):
         self.__unallocatedTasks.append(task)
         
 
-thread = TaskHandlerThread(name = "mainWorker", delay = 2)
+
+
+class CommunicationThread():
+
+    def __init__(self):
+        self.tasklist = []
+
+
+    def addMessage(self, task: Task):
+        self.tasklist.append(task)
+
+
+# Create instances
+task = Task(timeLimit=3600)  # Create a Task with a 1-hour limit
+thread = TaskHandlerThread(name="TaskHandler", delay=1)
+
+# Start the thread (if needed)
 thread.start()
 
+# Send a task request
+taskID, timeLimit = thread.sendRequest(task)  # Call on the instance
+print(f"TaskID: {taskID}, TimeLimit: {timeLimit}")
 
 

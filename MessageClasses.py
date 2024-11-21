@@ -11,6 +11,7 @@ class Message():
 
 class RequestMessage(Message):
     def __init__(self, unix_time_limit: int, task_id: str):
+        super().__init__()
         self.unix_time_limit = unix_time_limit
         self.task_id = task_id
 
