@@ -13,7 +13,7 @@ class Task:
     def __init__(self, incrementingID:int, timeLimit:int) -> None:
         self.taskID = getnode().to_bytes(6, 'big') + incrementingID.to_bytes(1, 'big')
         self.unixTimestamp = time.time()
-        self.unixTimestampLimit = timeLimit
+        self.unixTimestampLimit = self.unixTimestamp + timeLimit
 
     def appendImage(self, fileName:str, image, location:complex) -> None:
         self.fileName = fileName
