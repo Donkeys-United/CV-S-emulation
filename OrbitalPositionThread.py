@@ -46,7 +46,7 @@ class OrbitalPositionThread(Thread):
         print("Do stuff")
     
     def getCurrentPosition(self) -> complex:
-        print("Do stuff")
+        return np.exp(1j * self.currentAngle[self.satelliteID])
     
     def __updatePositions(self, forwardTime: float) -> None:
         for key in self.currentAngle.keys():
