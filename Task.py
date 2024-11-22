@@ -1,26 +1,31 @@
+
 from uuid import getnode
+
 from numpy import ndarray
 import time
 
 class Task:
-    taskID:int
+
+    taskID:bytes
     fileName:str
     location:complex
     unixTimestamp:float
     unixTimestampLimit:float
     image:ndarray
 
-    def __init__(self, timeLimit:int) -> None:
-        self.taskID = getnode()
+
+    def __init__(self, satelliteID:int, incrementingID:int, timeLimit:int) -> None:
+        self.taskID = satelliteID.to_bytes(6, 'big') + incrementingID.to_bytes(1, 'big')
         self.unixTimestamp = time.time()
-        self.unixTimestampLimit = timeLimit
+        self.unixTimestampLimit = self.unixTimestamp + timeLimit
 
     def appendImage(self, fileName:str, image, location:complex) -> None:
         self.fileName = fileName
         self.image = image
         self.location = location
     
-    def getTaskId(self) -> int:
+
+    def getTaskID(self) -> int:
         return self.taskID
     
     def getFileName(self) -> str:
