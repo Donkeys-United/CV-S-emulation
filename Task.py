@@ -1,13 +1,18 @@
+
+from uuid import getnode
+
 from numpy import ndarray
 import time
 
 class Task:
+
     taskID:bytes
     fileName:str
     location:complex
     unixTimestamp:float
     unixTimestampLimit:float
     image:ndarray
+
 
     def __init__(self, satelliteID:int, incrementingID:int, timeLimit:int) -> None:
         self.taskID = satelliteID.to_bytes(6, 'big') + incrementingID.to_bytes(1, 'big')
@@ -19,6 +24,7 @@ class Task:
         self.image = image
         self.location = location
     
+
     def getTaskID(self) -> int:
         return self.taskID
     

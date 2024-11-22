@@ -1,18 +1,19 @@
 import time
 from abc import ABC, abstractmethod
 from typing import Tuple
-import Task
-from cv2 import imread
+from Task import Task
+#from cv2 import imread
 
 #Abstract class
 class Message():
     """An abstract class for all the Message classes. Contains no actual 
        functionality.
     """
+    lastSenderID = None
 
     @abstractmethod
     def __init__(self):
-        pass
+        self.lastSenderID
 
 class RequestMessage(Message):
     """Class for sending a request to other satellites, requesting that they '
@@ -23,9 +24,10 @@ class RequestMessage(Message):
         self.__unixTimeLimit = unixTimeLimit
         self.__taskID = taskID
 
+
     def getUnixTimeLimit(self) -> float:
         """Method for returning the __unixTimeLimit attribute value.
-
+        
         Returns:
             float: the unix time limit, meaning the unix time stamp + the 
                    time limit for the processing.
@@ -35,6 +37,7 @@ class RequestMessage(Message):
 
     def getTaskID(self) -> int:
         """Method for returning the __taskID attribute value.
+
 
         Returns:
             int: the taskID which is a number for the unique task plus the MAC address of the original satellite.
@@ -47,10 +50,15 @@ class RespondMessage(Message):
     """Class for sending an ack response to a satellite, when receiving a 
        RequestMessage, and accepting the task.
     """
-
-    def __init__(self, taskID: int, source: int):
+    
+    def __init__(self, 
+                 taskID: int, 
+                 source: int, 
+                 firstHopID: int):
         self.__taskID = taskID
         self.__source = source
+        self.firstHopID = firstHopID
+
 
     def getTaskID(self) -> int:
         """Method for returning the __taskID attribute value.
@@ -78,11 +86,13 @@ class ImageDataMessage(Message):
        is sent to the receiving satellite.
     """
 
-    def __init__(self, payload: Task):
+
+    def __init__(self, payload: Task, firstHopID: int) -> None:
         self.__payload = payload
+        self.firstHopID = firstHopID
 
 
-    def getPayload(self):
+    def getPayload(self) -> Task:
         """Method for returning the __payload attribute value.
 
         Returns:
@@ -103,13 +113,17 @@ class ProcessedDataMessage(Message):
                  location: complex, 
                  unixTimeStamp: float, 
                  fileName: str, 
-                 boundingBox: Tuple[Tuple[int, int], Tuple[int, int]]
-                 ):
+
+                 boundingBox: Tuple[Tuple[int, int], Tuple[int, int]],
+                 firstHopID: int
+                 ) -> None:
         self.__image = imread(image)
         self.__location = location
         self.__unixTimeStamp = unixTimeStamp
         self.__fileName = fileName
         self.__boundingBox = boundingBox
+
+        self.firstHopID = firstHopID
 
     def getImage(self):
         """Method for returning the __image attribute value.
@@ -165,8 +179,10 @@ class ResponseNackMessage(Message):
        task to that satellite.
     """
 
-    def __init__(self, taskID: int):
+    def __init__(self, taskID: int, firstHopID: int):
         self.__taskID = taskID
+        self.firstHopID = firstHopID
+
 
     def getTaskID(self) -> int:
         """Method for returning the __taskID attribute value.
