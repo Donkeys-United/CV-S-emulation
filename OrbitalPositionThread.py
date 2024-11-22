@@ -4,7 +4,7 @@ import numpy as np
 from uuid import getnode
 
 class OrbitalPositionThread(Thread):
-    RADIUS_EARTH: float = 63710000.0
+    RADIUS_EARTH: float = 6378000.0
     MASS_EARTH: float = 5.97219 * 10**24
     GRAVITATIONAL_CONSTANT: float = 6.6743 * 10**-11
     GROUND_STATION_POSITION: complex = 1 + 0j
@@ -49,7 +49,8 @@ class OrbitalPositionThread(Thread):
         print("Do stuff")
     
     def __updatePositions(self, forwardTime: float) -> None:
-        print("Do stuff")
+        for key in self.currentAngle.keys():
+            self.currentAngle[key] = self.currentAngle[key] + 2 * np.pi / self.orbitalPeriod * forwardTime
     
     def getSatellitePriorityList(self) -> list[int]:
         print("Do stuff")
@@ -95,3 +96,4 @@ if __name__ == "__main__":
     print(testObject.orbitalPeriod)
     print(testObject.satelliteID)
     print(testObject.neighbourSatDist)
+    print(testObject.currentAngle)
