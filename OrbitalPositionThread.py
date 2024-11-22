@@ -43,7 +43,8 @@ class OrbitalPositionThread(Thread):
         return np.abs((self.RADIUS_EARTH + self.altitude) * (np.exp(angle1*1j) - np.exp(angle2*1j)))
     
     def canExecuteMission(self, radian: float, orbitNumber: int) -> bool:
-        print("Do stuff")
+        angle = radian * orbitNumber
+        return angle >= self.currentAngle[self.satelliteID]
     
     def getCurrentPosition(self) -> complex:
         return np.exp(1j * self.currentAngle[self.satelliteID])
