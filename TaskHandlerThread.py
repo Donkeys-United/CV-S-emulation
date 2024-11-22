@@ -50,8 +50,7 @@ class TaskHandlerThread(threading.Thread):
         print(f"Sending message: {sendRequestMessage}")
 
         # Add the message to the CommunicationThread
-        communication_thread = CommunicationThread()  # Create a communication thread
-        communication_thread.addMessage(sendRequestMessage)
+        thread2.addMessage(sendRequestMessage)
 
         # Return the task ID and time limit
         return sendRequestMessage.getTaskID(), sendRequestMessage.getUnixTimeLimit()
@@ -61,17 +60,18 @@ class TaskHandlerThread(threading.Thread):
         """
         Method to send a respond to other satellites telling them they can perform the requested task
         """
-        sendRequestMessage = RequestMessage(
+        sendRespondMessage = RespondMessage(
             taskID=task.getTaskID(),
-            unixTimeLimit=task.getUnixTimestampLimit()
+            source=task.getTaskID()
         )
 
         # Add the message to the CommunicationThread
-        CommunicationThread.addMessage(sendRequestMessage)
+        thread2.addMessage(sendRespondMessage)
+ 
 
         # Print and return
-        print(f"Sending: {sendRequestMessage}")
-        return sendRequestMessage.getTaskID(), sendRequestMessage.getUnixTimeLimit()
+        print(f"Sending: {sendRespondMessage}")
+        return sendRespondMessage.getTaskID(), sendRespondMessage.getTaskID()
 
 
 
@@ -101,26 +101,34 @@ class TaskHandlerThread(threading.Thread):
         
 
 class CommunicationThread(threading.Thread):
+    
+    tasklist = []
 
-    def __init__(self):
+    def __init__(self, name, delay):
         super().__init__()
-        self.tasklist = []
+        self.name = name
+        self.delay = delay
 
 
     def addMessage(self, message: Message):
         self.tasklist.append(message)
+        print(f"The tasklist is currently: {self.tasklist}")
         print(f"The tasklist is now: {[str(msg) for msg in self.tasklist]}")
 
 
 # Create instances
 task = Task(timeLimit=3600)  # Create a Task with a 1-hour limit
-thread = TaskHandlerThread(name="TaskHandler", delay=1)
+thread = TaskHandlerThread(name="TaskHandler", delay = 1)
+thread2 = CommunicationThread(name="CommThread", delay = 1)
 
 # Start the thread (if needed)
 thread.start()
+thread2.start()
 
 # Send a task request
 taskID, timeLimit = thread.sendRequest(task)  # Call on the instance
 print(f"TaskID: {taskID}, TimeLimit: {timeLimit}")
 
+#send a task respond
+taskID, source= thread.sendRespond(task)  # Call on the instance
 
