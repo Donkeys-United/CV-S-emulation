@@ -19,7 +19,7 @@ class Task:
         self.image = image
         self.location = location
     
-    def getTaskId(self) -> int:
+    def getTaskID(self) -> int:
         return self.taskID
     
     def getFileName(self) -> str:
