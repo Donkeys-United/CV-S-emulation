@@ -52,4 +52,7 @@ class AcceptedRequestQueue(Thread):
                 else:
                     message[1] -= 1
     
+    def getLength(self) -> int:
+        return len(self.__acceptedRequests)
+    
     

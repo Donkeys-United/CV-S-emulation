@@ -1,6 +1,4 @@
 
-from uuid import getnode
-
 from numpy import ndarray
 import time
 
@@ -42,3 +40,6 @@ class Task:
     
     def getImage(self) -> ndarray:
         return self.image
+    
+    def getSource(self) -> int:
+        return int(self.getTaskID()[0:6])
