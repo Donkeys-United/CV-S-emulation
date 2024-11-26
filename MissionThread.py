@@ -33,7 +33,6 @@ class MissionThread(threading.Thread):
         # Instance Attributes
         self.configPath = configPath
         self.IMAGEPATH = r"C:\Users\Phuon\OneDrive\Dokumenter\GitHub\CV-S-emulation\test"
-        self.missions = [] # Nina Ændrer
         self.myMissions = []
         self.files = [] 
         self.satelliteID = satelliteID
@@ -55,15 +54,12 @@ class MissionThread(threading.Thread):
         try:
             with open(self.configPath, 'r') as file: 
                 configData = json.load(file) # Parsed JSON data as a Python dictionary or list
-            self.missions = configData.get("missions")  # Extract only the missions data 
-            logging.info("Configuration loaded successfully from %s", self.configPath)
-            logging.debug("Parsed missions: %s", self.missions)
         except Exception as e:
              logging.error("Failed to load configuration: %s", e)
              raise
          
         # Filter relevant missions 
-        for mission in self.missions:
+        for mission in configData.get("missions"): # Extract only the missions data 
              logging.debug("Checking mission: %s", mission)
              if mission.get("satellite_id") == self.satelliteID and self.orbitalPosistionThread.canExecuteMission(mission.get("location_radian"), mission.get("orbit_number")):
                  self.myMissions.append(mission)
@@ -80,6 +76,8 @@ class MissionThread(threading.Thread):
         """
         logging.debug("Creating task with taskMAC: %s, file: %s, location: %s", self.satelliteID, file, location)
         task = Task(self.satelliteID, self.taskCounter, timeLimit)
+
+        # Include a taskCounter
         if self.taskCounter == 255:
             self.taskCounter=0
         else:
@@ -127,7 +125,6 @@ class MissionThread(threading.Thread):
 
                         self.taskHandlerThread.appendUnallocatedTask(task)
 
-                        # Der skal 
                     
                     logging.info("Mission completed: %s", mission)
                     time.sleep(2) #sleep for 2 sec
