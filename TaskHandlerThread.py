@@ -5,15 +5,15 @@ from Task import Task
 from MessageClasses import *
 #from MissionThread import *
 from CommunicationThread import CommunicationThread
-
+from PriorityQueue import PriorityQueue
 
 class TaskHandlerThread(threading.Thread):
 
     def __init__(self, communicationThread: CommunicationThread):
         super().__init__()
         self.running = True
-        self.__allocatedTasks = []
-        self.__unallocatedTasks = []
+        self.__allocatedTasks = PriorityQueue()
+        self.__unallocatedTasks = PriorityQueue()
         self.communicationThread = communicationThread
 
 
@@ -26,19 +26,11 @@ class TaskHandlerThread(threading.Thread):
 
     # Det her skal lige fikses, så det kører fra run().
     # mucho fix
-    def allocateTaskToSelf(self, task: Task, __unallocatedTasks: list, __allocatedTasks: list):
+    def allocateTaskToSelf(self, task: Task):
         """
         Method used to either allocate a task to a satellite itself, or send a request message to another satellite
         """
-        if __unallocatedTasks != None:
-            task = __unallocatedTasks[0]
-            x = "Insert Kristian Meth"
-            if x == True:
-                self.__allocatedTasks.append[task]
-            else:
-                TaskHandlerThread.sendRequest(Task)
-        else:
-            pass
+        pass
         
 
     def sendRequest(self, task: Task):
@@ -92,22 +84,18 @@ class TaskHandlerThread(threading.Thread):
         return sendDataMessage
 
 
-    def getAcceptedTaskTotal(self, __allocatedTasks: list):
+    def getAcceptedTaskTotal(self):
         """
         Method to get the ammount of accepted tasks a satellite has
         """
-        return len(__allocatedTasks) + self.communicationThread.getTotalAcceptedTasks()
+        return len(self.__allocatedTasks) + self.communicationThread.getTotalAcceptedTasks()
 
-
-    def enqueueUnallocatedTask(self, task: Task):
-        self.__unallocatedTasks.append(task)
-        
 
     def appendTask(self, task: Task):
-        self.__allocatedTasks.append(task)
+        self.__allocatedTasks.addTaskToQueue(task)
     
     def appendUnallocatedTask(self, task: Task):
-        self.__unallocatedTasks.append(task)
+        self.__unallocatedTasks.addTaskToQueue(task)
 
 
 #####################################################################################################
