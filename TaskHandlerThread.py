@@ -2,7 +2,7 @@
 import threading
 from Task import Task
 from MessageClasses import *
-#from CommunicationThread import * #Fiks navn af fil senere
+from CommunicationThread import * 
 
 
 class TaskHandlerThread(threading.Thread):
@@ -23,8 +23,6 @@ class TaskHandlerThread(threading.Thread):
         """
         while self.running:
             pass
-
-                
 
 
     def allocateTaskToSelf(self, task: Task, __unallocatedTasks: list, __allocatedTasks: list):
@@ -112,25 +110,6 @@ class TaskHandlerThread(threading.Thread):
     def enqueueUnallocatedTask(self, task: Task):
         self.__unallocatedTasks.append(task)
         
-
-
-class CommunicationThread(threading.Thread):
-    
-    tasklist = []
-
-    def __init__(self, name, delay):
-        super().__init__()
-        self.name = name
-        self.delay = delay
-
-
-    def addMessage(self, message: Message):
-        self.tasklist.append(message)
-        print(f"The tasklist is currently: {self.tasklist}")
-        print(f"The tasklist is now: {[str(msg) for msg in self.tasklist]}")
-
-
-
 
 #Test for the different messages
 thread = TaskHandlerThread(name="TaskHandler", delay = 1)
