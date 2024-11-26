@@ -46,7 +46,7 @@ class CommunicationThread(Thread):
             ) -> None:
         
         if type(message) == RequestMessage:
-            if self.taskHandlerThread.allocateTaskToSelf(): #add input
+            if self.taskHandlerThread.allocateTaskToSelf(): #add input - ONLY TIMELIMIT
                 self.acceptedRequestsQueue.addMessage(message=message)
             else:
                 pass #add send transmission
@@ -57,7 +57,7 @@ class CommunicationThread(Thread):
             if messagePayload.getTaskID() in self.acceptedRequestsQueue.getIDInQueue():
                 requestedTask = Task(messagePayload.getUnixTimestampLimit())
                 requestedTask.appendImage(messagePayload.getFileName(), messagePayload.getImage(), messagePayload.getLocation())
-                self.taskHandlerThread.appendTask(requestedTask)
+                self.taskHandlerThread.appendTask(requestedTask) # payload er allerede Task Object Instance - Nicolai Fiks.
             else:
                 pass
         elif type(message) == ResponseNackMessage:
@@ -71,11 +71,11 @@ class CommunicationThread(Thread):
     def priorityCheck(sourceMac:int) -> int:
         pass #I need constellation to do this
 
-    def addMessage(
+    def addTransmission(
             self,
             message: RequestMessage | ImageDataMessage | RespondMessage | ResponseNackMessage | ProcessedDataMessage
             ) -> None:
-        self.messageList.append(message)
+        self.transmissionQueue.append(message)
     
     def getTotalAcceptedTasks(self) -> int:
         return self.acceptedRequestsQueue.getLength()

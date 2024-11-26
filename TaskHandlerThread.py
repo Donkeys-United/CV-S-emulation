@@ -4,17 +4,17 @@ import threading
 from Task import Task
 from MessageClasses import *
 #from MissionThread import *
-#from CommunicationThread import * 
+from CommunicationThread import CommunicationThread
 
 
 class TaskHandlerThread(threading.Thread):
 
-    def __init__(self):
+    def __init__(self, communicationThread: CommunicationThread):
         super().__init__()
         self.running = True
         self.__allocatedTasks = []
         self.__unallocatedTasks = []
-        
+        self.communicationThread = communicationThread
 
 
     def run(self):
@@ -24,7 +24,8 @@ class TaskHandlerThread(threading.Thread):
         while self.running:
             pass
 
-
+    # Det her skal lige fikses, så det kører fra run().
+    # mucho fix
     def allocateTaskToSelf(self, task: Task, __unallocatedTasks: list, __allocatedTasks: list):
         """
         Method used to either allocate a task to a satellite itself, or send a request message to another satellite
@@ -55,23 +56,24 @@ class TaskHandlerThread(threading.Thread):
         print(f"Sending message: {sendRequestMessage}")
 
         # Add the message to the CommunicationThread
-        CommThread.addMessage(sendRequestMessage)
+        self.communicationThread.addTransmission(sendRequestMessage)
 
         # Return the task ID and time limit
         return sendRequestMessage.getTaskID(), sendRequestMessage.getUnixTimeLimit()
 
 
-    def sendRespond(self, task: Task):
+    def sendRespond(self, task: Task, message: Message):
         """
         Method to send a respond to other satellites telling them they can perform the requested task
         """
         sendRespondMessage = RespondMessage(
             taskID=task.getTaskID(),
-            source=task.getTaskID()
+            source=task.getSource(),
+            firstHopID = message.lastSenderID
         )
-
+        # Vi skal lige fikse naming og method her.
         # Add the message to the CommunicationThread
-        CommThread.addMessage(sendRespondMessage)
+        self.communicationThread.addTransmission(sendRespondMessage)
  
 
         # Print and return
@@ -80,20 +82,13 @@ class TaskHandlerThread(threading.Thread):
 
 
 
-    def sendDataPacket(self, task: Task):
+    def sendDataPacket(self, task: Task, message: Message):
         """
         Send task packet to 
         """
-        sendDataMessage = ImageDataMessage(
-            image = task.getImage(),
-            taskID = task.getTaskID(),
-            fileName = task.getFileName(),
-            location = task.getLocation(),
-            unixTimestamp = task.getUnixTimestamp(),
-            unixTimeLimit = task.getUnixTimestampLimit()
-            )
+        sendDataMessage = ImageDataMessage(payload=task, firstHopID=message.lastSenderID)
 
-        CommThread.addMessage(sendDataMessage)
+        self.communicationThread.addTransmission(sendDataMessage)
         return sendDataMessage
 
 
@@ -101,7 +96,7 @@ class TaskHandlerThread(threading.Thread):
         """
         Method to get the ammount of accepted tasks a satellite has
         """
-        return len(__allocatedTasks) + CommunicationThread.getTotalAcceptedTasks()
+        return len(__allocatedTasks) + self.communicationThread.getTotalAcceptedTasks()
 
 
     def enqueueUnallocatedTask(self, task: Task):
@@ -110,6 +105,9 @@ class TaskHandlerThread(threading.Thread):
 
     def appendTask(self, task: Task):
         self.__allocatedTasks.append(task)
+    
+    def appendUnallocatedTask(self, task: Task):
+        self.__unallocatedTasks.append(task)
 
 
 #####################################################################################################
@@ -120,7 +118,7 @@ class CommunicationThread(threading.Thread):
 
         self.tasklist = []
 
-    def addMessage(self, message: Message):
+    def addTransmission(self, message: Message):
         self.tasklist.append(message)
         print(f"The tasklist is now: {[str(msg) for msg in self.tasklist]}")
 

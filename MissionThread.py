@@ -1,11 +1,12 @@
 import json
 import logging.config
 import uuid
-from orbitalPositionThread_test import orbitalPositionThread_test # Import the other class
+from OrbitalPositionThread import OrbitalPositionThread # Import the other class
+from TaskHandlerThread import TaskHandlerThread
 import time
 import numpy as np
 import os
-from Task_test import Task
+from Task import Task
 import cv2
 import logging 
 import threading
@@ -23,7 +24,7 @@ logging.basicConfig(
 class MissionThread(threading.Thread):
     taskCounter=0
 
-    def __init__(self, configPath:json, group = None, target = None, name = None, args = ..., kwargs = None, *, daemon = None):
+    def __init__(self, configPath:json, group = None, target = None, name = None, args = ..., kwargs = None, *, daemon = None, satelliteID: int, orbitalPosistionThread: OrbitalPositionThread, taskHandlerThread: TaskHandlerThread):
         super().__init__(group, target, name, args, kwargs, daemon=daemon)
         """
         Initialize the MissionThread with configuration data.
@@ -32,10 +33,12 @@ class MissionThread(threading.Thread):
         # Instance Attributes
         self.configPath = configPath
         self.IMAGEPATH = r"C:\Users\Phuon\OneDrive\Dokumenter\GitHub\CV-S-emulation\test"
-        self.missions = []
+        self.missions = [] # Nina Ændrer
         self.myMissions = []
         self.files = [] 
-        self.satelliteID = uuid.getnode()
+        self.satelliteID = satelliteID
+        self.orbitalPosistionThread = orbitalPosistionThread
+        self.taskHandlerThread = taskHandlerThread
     
 
         logging.info("Initializing MissionThread for satelliteID: %s", self.satelliteID)
@@ -60,10 +63,9 @@ class MissionThread(threading.Thread):
              raise
          
         # Filter relevant missions 
-        orbital_thread = orbitalPositionThread_test()
         for mission in self.missions:
              logging.debug("Checking mission: %s", mission)
-             if mission.get("satellite_id") == self.satelliteID and orbital_thread.canExecuteMission(mission.get("location_radian"), mission.get("orbit_number")):
+             if mission.get("satellite_id") == self.satelliteID and self.orbitalPosistionThread.canExecuteMission(mission.get("location_radian"), mission.get("orbit_number")):
                  self.myMissions.append(mission)
                  logging.info("Mission added: %s", mission)
              else: 
@@ -72,13 +74,12 @@ class MissionThread(threading.Thread):
 
     # Method
 
-    def __createTask(self, MACaddr,timeLimit, file, location):
+    def __createTask(self, timeLimit, file, location):
         """
         Create a task 
         """
-        taskMAC = MACaddr
-        logging.debug("Creating task with taskMAC: %s, file: %s, location: %s", taskMAC, file, location)
-        task = Task(taskMAC, self.taskCounter, timeLimit)
+        logging.debug("Creating task with taskMAC: %s, file: %s, location: %s", self.satelliteID, file, location)
+        task = Task(self.satelliteID, self.taskCounter, timeLimit)
         if self.taskCounter == 255:
             self.taskCounter=0
         else:
@@ -92,6 +93,8 @@ class MissionThread(threading.Thread):
 
         task.appendImage(file,image,location)
         logging.info("Task created for file: %s", file)
+
+        return task
 
 
 
@@ -120,7 +123,11 @@ class MissionThread(threading.Thread):
                     for image in imageList:
                         # Load the image
                         file = os.path.join(self.IMAGEPATH, image)
-                        self.__createTask(self.satelliteID, time_limit, file, location_radian)
+                        task = self.__createTask(self.satelliteID, time_limit, file, location_radian)
+
+                        self.taskHandlerThread.appendUnallocatedTask(task)
+
+                        # Der skal 
                     
                     logging.info("Mission completed: %s", mission)
                     time.sleep(2) #sleep for 2 sec
