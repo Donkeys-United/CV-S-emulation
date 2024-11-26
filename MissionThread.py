@@ -21,6 +21,7 @@ logging.basicConfig(
 )
 
 class MissionThread(threading.Thread):
+    taskCounter=0
 
     def __init__(self, configPath:json, group = None, target = None, name = None, args = ..., kwargs = None, *, daemon = None):
         super().__init__(group, target, name, args, kwargs, daemon=daemon)
@@ -71,13 +72,17 @@ class MissionThread(threading.Thread):
 
     # Method
 
-    def __createTask(self, MACaddr ,timeLimit, file, location):
+    def __createTask(self, MACaddr,timeLimit, file, location):
         """
         Create a task 
         """
         taskMAC = MACaddr
         logging.debug("Creating task with taskMAC: %s, file: %s, location: %s", taskMAC, file, location)
-        task = Task(timeLimit)
+        task = Task(taskMAC, self.taskCounter, timeLimit)
+        if self.taskCounter == 255:
+            self.taskCounter=0
+        else:
+            self.taskCounter += 1
 
         image = cv2.imread(file)
 

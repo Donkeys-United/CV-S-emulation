@@ -1,23 +1,23 @@
 #Libraries
+import random
 import threading
 from Task import Task
 from MessageClasses import *
-from CommunicationThread import * 
+#from MissionThread import *
+#from CommunicationThread import * 
 
 
 class TaskHandlerThread(threading.Thread):
 
-    def __init__(self, name, delay):
+    def __init__(self):
         super().__init__()
-        self.name = name
-        self.delay = delay
         self.running = True
         self.__allocatedTasks = []
         self.__unallocatedTasks = []
         
 
 
-    def run(self, thread, CommThread):
+    def run(self):
         """
         Method to initiate the different threads in the system(Main loop maybe?)
         """
@@ -44,6 +44,7 @@ class TaskHandlerThread(threading.Thread):
         """
         Sends a request message for a task to the CommunicationThread.
         """
+        
         # Create a RequestMessage object
         sendRequestMessage = RequestMessage(
             unixTimeLimit=task.getUnixTimestampLimit(),
@@ -54,23 +55,24 @@ class TaskHandlerThread(threading.Thread):
         print(f"Sending message: {sendRequestMessage}")
 
         # Add the message to the CommunicationThread
-        #thread2.addMessage(sendRequestMessage)
+        CommThread.addMessage(sendRequestMessage)
 
         # Return the task ID and time limit
         return sendRequestMessage.getTaskID(), sendRequestMessage.getUnixTimeLimit()
 
 
-    def sendRespond(self, task: Task):
+    def sendRespond(self, task: Task, Message):
         """
         Method to send a respond to other satellites telling them they can perform the requested task
         """
         sendRespondMessage = RespondMessage(
             taskID=task.getTaskID(),
-            source=task.getTaskID()
+            source=task.getTaskID(),
+            firstHopID = RespondMessage.getLastSenderID()
         )
 
         # Add the message to the CommunicationThread
-        #thread2.addMessage(sendRespondMessage)
+        CommThread.addMessage(sendRespondMessage)
  
 
         # Print and return
@@ -95,37 +97,59 @@ class TaskHandlerThread(threading.Thread):
         CommThread.addMessage(sendDataMessage)
         return sendDataMessage
 
-    """
-    def changeFrequency(self, frequency: int):
-        pass
-    """
 
     def getAcceptedTaskTotal(self, __allocatedTasks: list):
         """
         Method to get the ammount of accepted tasks a satellite has
         """
-        return len(__allocatedTasks)
+        return len(__allocatedTasks) + CommunicationThread.getTotalAcceptedTasks()
 
 
     def enqueueUnallocatedTask(self, task: Task):
         self.__unallocatedTasks.append(task)
         
 
+
+#####################################################################################################
+class CommunicationThread(threading.Thread):
+
+    def __init__(self):
+        super().__init__()
+
+        self.tasklist = []
+
+    def addMessage(self, message: Message):
+        self.tasklist.append(message)
+        print(f"The tasklist is now: {[str(msg) for msg in self.tasklist]}")
+
+    def getTotalAcceptedTasks(self):
+        return 0
+
 #Test for the different messages
-thread = TaskHandlerThread(name="TaskHandler", delay = 1)
-CommThread = CommunicationThread(name="CommThread", delay = 1)
+thread = TaskHandlerThread()
+CommThread = CommunicationThread()
 
 thread.start()
 CommThread.start() 
 
 """
+Generate a random task
+"""
+# Generate a random 48-bit integer for satelliteID
+satelliteID = random.randint(0, 2**48 - 1)
+# Generate a random 8-bit integer for incrementingID (or use a counter if needed)
+incrementingID = random.randint(0, 255)
+
+# Construct self.taskID
+taskIDTest = satelliteID.to_bytes(6, 'big') + incrementingID.to_bytes(1, 'big')
+
 # Create instances
-task = Task(timeLimit=3600)  # Create a Task with a 1-hour limit
+task = Task(satelliteID, incrementingID, timeLimit=3600)  # Create a Task with a 1-hour limit
 
 # Send a task request
-taskID, timeLimit = thread.sendRequest(task)  # Call on the instance
+taskID, timeLimit, getLastSenderID = thread.sendRespond(task, 5)  # Call on the instance
 print(f"TaskID: {taskID}, TimeLimit: {timeLimit}")
 
 #send a task respond
 taskID, source= thread.sendRespond(task)  # Call on the instance
-"""
+#####################################################################################################
