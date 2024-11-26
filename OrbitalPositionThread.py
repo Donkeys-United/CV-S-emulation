@@ -7,13 +7,16 @@ class OrbitalPositionThread(Thread):
     RADIUS_EARTH: float = 6378000.0
     MASS_EARTH: float = 5.97219 * 10**24
     GRAVITATIONAL_CONSTANT: float = 6.6743 * 10**-11
-    GROUND_STATION_POSITION: complex = RADIUS_EARTH * (1 + 0j)
+    GROUND_STATION_ANGLE: float = 0.0
     altitude: float
     satelliteID: int
     orbitalPeriod: float
     neighbourSatDist: float
     currentAngle: dict[int, float] = {}
+    connections: dict[int, list[int, int]] = {}
     timeStamp: float = 0.0
+    satClosestToGround: int
+    orbitalRadius: float
     
     def __init__(self, config: str):
         config_json  = json.loads(config)
@@ -22,15 +25,17 @@ class OrbitalPositionThread(Thread):
         
         for i in config_json["satellites"]:
             self.currentAngle[i["id"]] = i["initial_angle"]
+            self.connections[i["id"]] = i["connections"]
         
         self.altitude = config_json["altitude"]
+        self.orbitalRadius = self.altitude + self.RADIUS_EARTH
         
         #Calculate the orbital period of the satellite
         self.orbitalPeriod = self.calculateOrbitalPeriodSeconds(self.altitude)
         
         #Calculate the distance to other satellites
         temp_list = list(self.currentAngle.values())
-        self.neighbourSatDist = self.calculateDistance(temp_list[0], temp_list[1])
+        self.neighbourSatDist = self.calculateDistance(temp_list[0], self.orbitalRadius ,temp_list[1], self.orbitalRadius)
     
     def run(self) -> None:
         print("Do stuff")
@@ -39,8 +44,8 @@ class OrbitalPositionThread(Thread):
         return 2*np.pi * np.sqrt((self.RADIUS_EARTH + altitude)**3 
                                 / (self.MASS_EARTH * self.GRAVITATIONAL_CONSTANT))
     
-    def calculateDistance(self, angle1: float, angle2: float) -> float:
-        return np.abs(self.calculateDistance(angle1) - self.calculateDistance(angle2))
+    def calculateDistance(self, angle1: float, radius1: float ,angle2: float, radius2: float) -> float:
+        return np.abs(self.calculatePosition(angle1, radius1) - self.calculatePosition(angle2, radius1))
     
     def canExecuteMission(self, radian: float, orbitNumber: int) -> bool:
         angle = radian * orbitNumber
@@ -57,26 +62,42 @@ class OrbitalPositionThread(Thread):
         print("Do stuff")
     
     def getPathDistanceToGround(self) -> float:
-        print("Do stuff")
+        nodes = list(self.currentAngle.keys())
+        N = len(nodes)
+        
+        targetIdx = nodes.index(self.satClosestToGround)
+        startIdx = nodes.index(self.satelliteID)
+        
+        clockwiseDistance = np.abs(targetIdx - startIdx)
+        counterclockwiseDistance = N - np.abs(startIdx - targetIdx)
+        
+        minimumHops = min(clockwiseDistance, counterclockwiseDistance)
+        
+        return minimumHops * self.neighbourSatDist + self.calculateDistance(self.currentAngle[self.satClosestToGround], 
+                                                                            self.orbitalRadius, 
+                                                                            self.GROUND_STATION_ANGLE, 
+                                                                            self.RADIUS_EARTH)
     
     def getSatClosestToGround(self) -> int:
+        return self.satClosestToGround
+                
+    def calculateSatClosestToGround(self) -> None:
         smallestDistance = float('inf')
         ID = 0
         for key in self.currentAngle.keys():
-            distance = self.calculateDistance(self.currentAngle[key], self.GROUND_STATION_POSITION)
+            distance = self.calculateDistance(self.currentAngle[key], 
+                                              self.orbitalRadius,
+                                              self.GROUND_STATION_ANGLE,
+                                              self.RADIUS_EARTH)
             if distance < smallestDistance:
                 ID = key
                 smallestDistance = distance
         
-        return ID
-                
-            
+        self.satClosestToGround = ID
         
-    def calculatePosition(self, angle:float) -> complex:
-        return (self.RADIUS_EARTH + self.altitude) * np.exp(angle*1j)
+    def calculatePosition(self, angle:float, radius: float) -> complex:
+        return radius * np.exp(angle*1j)
     
-
-
 if __name__ == "__main__":
     test_json = """{
     "satellites": [
@@ -114,3 +135,4 @@ if __name__ == "__main__":
     print(testObject.satelliteID)
     print(testObject.neighbourSatDist)
     print(testObject.currentAngle)
+    print(testObject.connections)
