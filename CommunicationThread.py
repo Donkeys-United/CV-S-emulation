@@ -55,9 +55,7 @@ class CommunicationThread(Thread):
         elif type(message) == ImageDataMessage:
             messagePayload = message.getPayload()
             if messagePayload.getTaskID() in self.acceptedRequestsQueue.getIDInQueue():
-                requestedTask = Task(messagePayload.getUnixTimestampLimit())
-                requestedTask.appendImage(messagePayload.getFileName(), messagePayload.getImage(), messagePayload.getLocation())
-                self.taskHandlerThread.appendTask(requestedTask) # payload er allerede Task Object Instance - Nicolai Fiks.
+                self.taskHandlerThread.appendTask(messagePayload)
             else:
                 pass
         elif type(message) == ResponseNackMessage:

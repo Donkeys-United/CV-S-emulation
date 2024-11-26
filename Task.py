@@ -12,8 +12,8 @@ class Task:
     image:ndarray
 
 
-    def __init__(self, satelliteID:int, incrementingID:int, timeLimit:int) -> None:
-        self.taskID = satelliteID.to_bytes(6, 'big') + incrementingID.to_bytes(1, 'big')
+    def __init__(self, satelliteID:int, taskCount:int, timeLimit:int) -> None:
+        self.taskID = satelliteID.to_bytes(6, 'big') + taskCount.to_bytes(1, 'big')
         self.unixTimestamp = time.time()
         self.unixTimestampLimit = self.unixTimestamp + timeLimit
 
