@@ -5,6 +5,8 @@ from MessageClasses import RequestMessage, RespondMessage, ImageDataMessage, Res
 from AcceptedRequestQueue import AcceptedRequestQueue
 from typing import Any, Iterable, List, Mapping
 from TransmissionThread import TransmissionThread
+import json
+from TaskHandlerThread import TaskHandlerThread
 
 class CommunicationThread(Thread):
     unAcceptedRequests:List[RequestMessage] = []
@@ -12,18 +14,28 @@ class CommunicationThread(Thread):
     messageList:List[RequestMessage | RespondMessage | ImageDataMessage | ResponseNackMessage | ProcessedDataMessage] = []
     acceptedRequestsQueue:AcceptedRequestQueue
     transmission:TransmissionThread
+    config: json
+    taskHandlerThread: TaskHandlerThread
 
     def __init__(
             self,
+            satelliteID: int,
+            config: json,
+            taskHandlerThread: TaskHandlerThread,
             group: None = None, target: Callable[..., object] | None = None, name: str | None = None,
             args: Iterable[Any] = ..., kwargs: Mapping[str, Any] | None = None,
             *,
             daemon: bool | None = None
             ) -> None:
         super().__init__(group, target, name, args, kwargs, daemon=daemon)
+        self.config = config
         self.acceptedRequestsQueue = AcceptedRequestQueue()
         self.acceptedRequestsQueue.start()
         self.transmission = TransmissionThread()
+        self.taskHandlerThread = taskHandlerThread
+        with open(config, 'r') as f:
+            config_data = json.load(f)
+            
 
 
     def run(self) -> None:
@@ -35,15 +47,18 @@ class CommunicationThread(Thread):
             ) -> None:
         
         if type(message) == RequestMessage:
-            pass #Insert allocation function
+            if self.taskHandlerThread.allocateTaskToSelf(): #add input
+                self.acceptedRequestsQueue.addMessage(message=message)
+            else:
+                pass #add send transmission
         elif type(message) == RespondMessage:
             pass
         elif type(message) == ImageDataMessage:
-            if message.getPayload() in self.acceptedRequestsQueue:
-                messagePayload = message.getPayload()
+            messagePayload = message.getPayload()
+            if messagePayload.getTaskID() in self.acceptedRequestsQueue.getIDInQueue():
                 requestedTask = Task(messagePayload.getUnixTimestampLimit())
                 requestedTask.appendImage(messagePayload.getFileName(), messagePayload.getImage(), messagePayload.getLocation())
-                #Insert TaskHandlerThread add to allocatedTasks
+                self.taskHandlerThread.appendTask(requestedTask)
             else:
                 pass
         elif type(message) == ResponseNackMessage:
@@ -56,3 +71,12 @@ class CommunicationThread(Thread):
     
     def priorityCheck(sourceMac:int) -> int:
         pass #I need constellation to do this
+
+    def addMessage(
+            self,
+            message: RequestMessage | ImageDataMessage | RespondMessage | ResponseNackMessage | ProcessedDataMessage
+            ) -> None:
+        self.messageList.append(message)
+    
+    def getTotalAcceptedTasks(self) -> int:
+        return self.acceptedRequestsQueue.getLength()
