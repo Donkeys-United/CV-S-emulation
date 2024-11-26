@@ -61,14 +61,13 @@ class TaskHandlerThread(threading.Thread):
         return sendRequestMessage.getTaskID(), sendRequestMessage.getUnixTimeLimit()
 
 
-    def sendRespond(self, task: Task, Message):
+    def sendRespond(self, task: Task):
         """
         Method to send a respond to other satellites telling them they can perform the requested task
         """
         sendRespondMessage = RespondMessage(
             taskID=task.getTaskID(),
-            source=task.getTaskID(),
-            firstHopID = RespondMessage.getLastSenderID()
+            source=task.getTaskID()
         )
 
         # Add the message to the CommunicationThread
@@ -109,6 +108,9 @@ class TaskHandlerThread(threading.Thread):
         self.__unallocatedTasks.append(task)
         
 
+    def appendTask(self, task: Task):
+        self.__allocatedTasks.append(task)
+
 
 #####################################################################################################
 class CommunicationThread(threading.Thread):
@@ -147,7 +149,7 @@ taskIDTest = satelliteID.to_bytes(6, 'big') + incrementingID.to_bytes(1, 'big')
 task = Task(satelliteID, incrementingID, timeLimit=3600)  # Create a Task with a 1-hour limit
 
 # Send a task request
-taskID, timeLimit, getLastSenderID = thread.sendRespond(task, 5)  # Call on the instance
+taskID, timeLimit = thread.sendRespond(task)  # Call on the instance
 print(f"TaskID: {taskID}, TimeLimit: {timeLimit}")
 
 #send a task respond
