@@ -1,0 +1,55 @@
+{
+  "satellites": [
+    {
+      "id": 1,
+      "ip_address": "192.168.1.101",
+      "connections": [1, 4],
+      "initial_angle": 0
+    },
+    {
+      "id": 2,
+      "ip_address": "192.168.1.102",
+      "connections": [2,3],
+      "initial_angle": 1.5707963268
+    },
+    {
+      "id": 3,
+      "ip_address": "192.168.1.103",
+      "connections": [2,3],
+      "initial_angle": 3.1415926536
+    },
+    {
+      "id": 4,
+      "ip_address": "192.168.1.104",
+      "connections": [3,1],
+      "initial_angle": 4.7123889804
+    }
+  ],
+  "missions": [
+    {
+      "satellite_id": 62156055568968,
+      "location_radian": 1.0471975512,
+      "orbit_number": 1,
+      "pictures_number": 5, 
+      "time_limit": 10
+    },
+    {
+      "satellite_id": 3,
+      "location_radian": 3.92699081699,
+      "orbit_number": 2,
+      "pictures_number": 20,
+      "time_limit": 20 
+
+    },
+
+    {
+      "satellite_id": 62156055568968,
+      "location_radian": 1.0471975512,
+      "orbit_number": 1,
+      "pictures_number": 3,
+      "time_limit": 20 
+
+    }
+  ],
+  "ground_station_ip": "192.168.1.105"
+}
