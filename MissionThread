@@ -42,7 +42,7 @@ class MissionThread:
          if not os.path.exists(self.IMAGEPATH):
              logging.critical("Image directory does not exist: %s", self.IMAGEPATH)
              raise FileNotFoundError(f"Directory not found {self.IMAGEPATH}")
-         self.file = os.listdir(self.IMAGEPATH)
+         self.files = os.listdir(self.IMAGEPATH)
          logging.debug("Image files found: %s", self.files)
 
 
@@ -105,7 +105,7 @@ class MissionThread:
                     pictures_number = mission.get("pictures_number", 0)
                     time_limit = mission.get("time_limit", 0)
 
-                    if None in (satellite_id, location_radian, orbit_number):
+                    if None in (satellite_id, location_radian, orbit_number, pictures_number, time_limit):
                         logging.error("Invalid mission data: %s", mission)
                         continue
 
@@ -114,7 +114,7 @@ class MissionThread:
                     for image in imageList:
                         # Load the image
                         file = os.path.join(self.IMAGEPATH, image)
-                        self.__createTask(time_limit, file, location_radian)
+                        self.__createTask(self.satelliteID, time_limit, file, location_radian)
                     
                     logging.info("Mission completed: %s", mission)
                     time.sleep(2) #sleep for 2 sec
