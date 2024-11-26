@@ -23,7 +23,7 @@ class Task:
         self.location = location
     
 
-    def getTaskID(self) -> int:
+    def getTaskID(self) -> bytes:
         return self.taskID
     
     def getFileName(self) -> str:
