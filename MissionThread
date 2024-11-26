@@ -8,6 +8,7 @@ import os
 from Task_test import Task
 import cv2
 import logging 
+import threading
 
 # Configure logging 
 logging.basicConfig(
@@ -19,47 +20,47 @@ logging.basicConfig(
     ]
 )
 
-class MissionThread:
+class MissionThread(threading.Thread):
 
-
-    def __init__(self, configPath:json):
-         """
+    def __init__(self, group = None, target = None, name = None, args = ..., kwargs = None, *, daemon = None):
+        super().__init__(group, target, name, args, kwargs, daemon=daemon)
+        """
         Initialize the MissionThread with configuration data.
         """
          
         # Instance Attributes
-         self.configPath = configPath
-         self.IMAGEPATH = r"C:\Users\Phuon\OneDrive\Dokumenter\GitHub\CV-S-emulation\test"
-         self.missions = []
-         self.myMissions = []
-         self.files = [] 
-         self.satelliteID = uuid.getnode()
+        self.configPath = configPath
+        self.IMAGEPATH = r"C:\Users\Phuon\OneDrive\Dokumenter\GitHub\CV-S-emulation\test"
+        self.missions = []
+        self.myMissions = []
+        self.files = [] 
+        self.satelliteID = uuid.getnode()
     
 
-         logging.info("Initializing MissionThread for satelliteID: %s", self.satelliteID)
+        logging.info("Initializing MissionThread for satelliteID: %s", self.satelliteID)
 
-         #Check if image directory exist 
-         if not os.path.exists(self.IMAGEPATH):
+        #Check if image directory exist 
+        if not os.path.exists(self.IMAGEPATH):
              logging.critical("Image directory does not exist: %s", self.IMAGEPATH)
              raise FileNotFoundError(f"Directory not found {self.IMAGEPATH}")
-         self.files = os.listdir(self.IMAGEPATH)
-         logging.debug("Image files found: %s", self.files)
+        self.files = os.listdir(self.IMAGEPATH)
+        logging.debug("Image files found: %s", self.files)
 
 
         # Load and parse JSON configuration 
-         try:
+        try:
             with open(self.configPath, 'r') as file: 
                 configData = json.load(file) # Parsed JSON data as a Python dictionary or list
             self.missions = configData.get("missions")  # Extract only the missions data 
             logging.info("Configuration loaded successfully from %s", self.configPath)
             logging.debug("Parsed missions: %s", self.missions)
-         except Exception as e:
+        except Exception as e:
              logging.error("Failed to load configuration: %s", e)
              raise
          
         # Filter relevant missions 
-         orbital_thread = orbitalPositionThread_test()
-         for mission in self.missions:
+        orbital_thread = orbitalPositionThread_test()
+        for mission in self.missions:
              logging.debug("Checking mission: %s", mission)
              if mission.get("satellite_id") == self.satelliteID and orbital_thread.canExecuteMission(mission.get("location_radian"), mission.get("orbit_number")):
                  self.myMissions.append(mission)
