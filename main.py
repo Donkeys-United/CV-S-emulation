@@ -9,5 +9,3 @@ taskHandlerThread = TaskHandlerThread.TaskHandlerThread()
 
 missionThread = MissionThread.MissionThread()
 
-
-task_1 = Task.Task(satelliteID, 1, 10)
