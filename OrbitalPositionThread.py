@@ -7,7 +7,7 @@ class OrbitalPositionThread(Thread):
     RADIUS_EARTH: float = 6378000.0
     MASS_EARTH: float = 5.97219 * 10**24
     GRAVITATIONAL_CONSTANT: float = 6.6743 * 10**-11
-    GROUND_STATION_POSITION: complex = 1 + 0j
+    GROUND_STATION_POSITION: complex = RADIUS_EARTH * (1 + 0j)
     altitude: float
     satelliteID: int
     orbitalPeriod: float
@@ -40,7 +40,7 @@ class OrbitalPositionThread(Thread):
                                 / (self.MASS_EARTH * self.GRAVITATIONAL_CONSTANT))
     
     def calculateDistance(self, angle1: float, angle2: float) -> float:
-        return np.abs((self.RADIUS_EARTH + self.altitude) * (np.exp(angle1*1j) - np.exp(angle2*1j)))
+        return np.abs(self.calculateDistance(angle1) - self.calculateDistance(angle2))
     
     def canExecuteMission(self, radian: float, orbitNumber: int) -> bool:
         angle = radian * orbitNumber
@@ -58,6 +58,22 @@ class OrbitalPositionThread(Thread):
     
     def getPathDistanceToGround(self) -> float:
         print("Do stuff")
+    
+    def getSatClosestToGround(self) -> int:
+        smallestDistance = float('inf')
+        ID = 0
+        for key in self.currentAngle.keys():
+            distance = self.calculateDistance(self.currentAngle[key], self.GROUND_STATION_POSITION)
+            if distance < smallestDistance:
+                ID = key
+                smallestDistance = distance
+        
+        return ID
+                
+            
+        
+    def calculatePosition(self, angle:float) -> complex:
+        return (self.RADIUS_EARTH + self.altitude) * np.exp(angle*1j)
     
 
 
