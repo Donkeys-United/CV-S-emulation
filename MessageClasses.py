@@ -2,7 +2,7 @@ import time
 from abc import ABC, abstractmethod
 from typing import Tuple
 from Task import Task
-#from cv2 import imread
+from cv2 import imread
 
 #Abstract class
 class Message():
