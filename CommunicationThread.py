@@ -9,7 +9,6 @@ import json
 from TaskHandlerThread import TaskHandlerThread
 
 class CommunicationThread(Thread):
-    unAcceptedRequests:List[RequestMessage] = []
     transmissionQueue:List[RequestMessage | RespondMessage | ImageDataMessage | ResponseNackMessage | ProcessedDataMessage] = []
     messageList:List[RequestMessage | RespondMessage | ImageDataMessage | ResponseNackMessage | ProcessedDataMessage] = []
     acceptedRequestsQueue:AcceptedRequestQueue
