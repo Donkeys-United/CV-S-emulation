@@ -1,1 +1,0 @@
-This folder contains a small selection of the test dataset for local use

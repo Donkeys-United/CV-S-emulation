@@ -1,7 +1,7 @@
 class orbitalPositionThread_test:
     
     def __init__(self):
-        self.radian = 1.0471975512
+        self.radian =  1.0471975512
         self.orbitNumber = 1
         
     def canExecuteMission(self, radian, orbitNumber):

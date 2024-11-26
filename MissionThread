@@ -1,52 +1,130 @@
 import json
+import logging.config
 import uuid
 from orbitalPositionThread_test import orbitalPositionThread_test # Import the other class
-import random
+import time
 import numpy as np
 import os
-from Task import Task
+from Task_test import Task
+import cv2
+import logging 
+
+# Configure logging 
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[
+        logging.FileHandler("task_logger.log"),     # Save logs into a file
+        logging.StreamHandler()     # Also log to the console
+    ]
+)
 
 class MissionThread:
-    # Attributes 
-    # IMAGEPATH = r"C:\Users\Phuon\OneDrive\Dokumenter\GitHub\CV-S-emulation\test"
-    # files = os.listdir(IMAGEPATH)
 
 
-    # def __init__(self, configPath):
-    #     # Attributes
-    #     self.configPath = configPath
+    def __init__(self, configPath:json):
+         """
+        Initialize the MissionThread with configuration data.
+        """
+         
+        # Instance Attributes
+         self.configPath = configPath
+         self.imagePath = r"C:\Users\Phuon\OneDrive\Dokumenter\GitHub\CV-S-emulation\test"
+         self.missions = []
+         self.myMissions = []
+         self.files = [] 
+         self.satelliteID = uuid.getnode()
+    
 
-    #     # Open and parse the JSON file
-    #     with open(self.configPath, 'r') as file: 
-    #         configData = json.load(file) 
+         logging.info("Initializing MissionThread for satelliteID: %s", self.satelliteID)
 
-
-    #     self.missions = configData.get("missions")
-
-    # def run(self):
-    #     # Create an instance of orbitalPositionThread_test
-    #     orbital_thread = orbitalPositionThread_test()
-
-    #     # Iterate through missions and call canExecuteMission
-    #     for mission in self.missions:
-    #         if (mission["satellite_id"] == uuid.getnode()) and orbital_thread.canExecuteMission(mission["satellite_id"], mission["orbit_number"]):
-    #             self.__createTask()
-
-    # def __createTask(self, location, timestamp, timeLimit):
-
-    #     task = Task(
-    #         taskID=uuid.getnode()+ random.getrandbits(1),
-    #         fileName=imagePath,
-    #         location=location,
-    #         unixTimestamp=timestamp,
-    #         unixTimeLimit=timeLimit,
-    #         image=image
-    #     )
+         #Check if image directory exist 
+         if not os.path.exists(self.imagePath):
+             logging.critical("Image directory does not exist: %s", self.imagePath)
+             raise FileNotFoundError(f"Directory not found {self.imagePath}")
+         self.file = os.listdir(self.imagePath)
+         logging.debug("Image files found: %s", self.files)
 
 
-# Pass the parsed dictionary to the constructor
+        # Load and parse JSON configuration 
+         try:
+            with open(self.configPath, 'r') as file: 
+                configData = json.load(file) # Parsed JSON data as a Python dictionary or list
+            self.missions = configData.get("missions")  # Extract only the missions data 
+            logging.info("Configuration loaded successfully from %s", self.configPath)
+            logging.debug("Parsed missions: %s", self.missions)
+         except Exception as e:
+             logging.error("Failed to load configuration: %s", e)
+             raise
+         
+        # Filter relevant missions 
+         orbital_thread = orbitalPositionThread_test()
+         for mission in self.missions:
+             logging.debug("Checking mission: %s", mission)
+             if mission.get("satellite_id") == self.satelliteID and orbital_thread.canExecuteMission(mission.get("location_radian"), mission.get("orbit_number")):
+                 self.myMissions.append(mission)
+                 logging.info("Mission added: %s", mission)
+             else: 
+                 logging.warning("No valid missions found for missions: %s", mission)
 
 
-# Example: Access the missions data
-IMAGEPATH = r"C:\Users\Phuon\OneDrive\Dokumenter\GitHub\CV-S-emulation\test"
-files = os.listdir(IMAGEPATH)
+    # Method
+
+    def __createTask(self, MACaddr ,timeLimit, file, location):
+        """
+        Create a task 
+        """
+        taskMAC = MACaddr
+        logging.debug("Creating task with taskMAC: %s, file: %s, location: %s", taskMAC, file, location)
+        task = Task(timeLimit)
+
+        image = cv2.imread(file)
+
+        if image is None:
+            logging.warning("Failed to load image: %s", file)
+            return
+
+        task.appendImage(file,image,location)
+        logging.info("Task created for file: %s", file)
+
+
+
+
+    def run(self):
+        """
+        Main loop for executing mission
+        """
+        try: 
+            logging.info("Starting mission thread")
+            while True:
+                for mission in self.myMissions:
+                    logging.debug("Processing mission: %s", mission)
+                    satellite_id = mission.get("satellite_id")
+                    location_radian = mission.get("location_radian")
+                    orbit_number = mission.get("orbit_number")
+                    pictures_number = mission.get("pictures_number", 0)
+                    time_limit = mission.get("time_limit", 0)
+
+                    if None in (satellite_id, location_radian, orbit_number):
+                        logging.error("Invalid mission data: %s", mission)
+                        continue
+
+                    # Select random images 
+
+
+                    imageList = np.random.choice(self.files, pictures_number, replace = True)
+                    for image in imageList:
+                        # Load the image
+                        file = os.path.join(self.IMAGEPATH, image)
+                        self.__createTask(mission["time_limit"], file, mission["location_radian"])
+                        print("created")
+                    time.sleep(2) #sleep for 2 sec
+
+        except KeyboardInterrupt:
+            print("Execution interrupted by user.")
+
+
+fileName = r"C:\Users\Phuon\OneDrive\Dokumenter\GitHub\CV-S-emulation\config_test.JSON"
+
+m1 = MissionThread(fileName)
+m1.run()
