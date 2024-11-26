@@ -14,11 +14,17 @@ class TaskHandlerThread(threading.Thread):
         self.running = True
         self.__allocatedTasks = []
         self.__unallocatedTasks = []
+        
 
 
-    def run(self,):
+    def run(self, thread, CommThread):
+        """
+        Method to initiate the different threads in the system(Main loop maybe?)
+        """
         while self.running:
             pass
+
+                
 
 
     def allocateTaskToSelf(self, task: Task, __unallocatedTasks: list, __allocatedTasks: list):
@@ -50,7 +56,7 @@ class TaskHandlerThread(threading.Thread):
         print(f"Sending message: {sendRequestMessage}")
 
         # Add the message to the CommunicationThread
-        thread2.addMessage(sendRequestMessage)
+        #thread2.addMessage(sendRequestMessage)
 
         # Return the task ID and time limit
         return sendRequestMessage.getTaskID(), sendRequestMessage.getUnixTimeLimit()
@@ -66,7 +72,7 @@ class TaskHandlerThread(threading.Thread):
         )
 
         # Add the message to the CommunicationThread
-        thread2.addMessage(sendRespondMessage)
+        #thread2.addMessage(sendRespondMessage)
  
 
         # Print and return
@@ -75,30 +81,38 @@ class TaskHandlerThread(threading.Thread):
 
 
 
-    def sendDataPacket(self,):
+    def sendDataPacket(self, task: Task):
         """
         Send task packet to 
         """
-        pass
+        sendDataMessage = ImageDataMessage(
+            image = task.getImage(),
+            taskID = task.getTaskID(),
+            fileName = task.getFileName(),
+            location = task.getLocation(),
+            unixTimestamp = task.getUnixTimestamp(),
+            unixTimeLimit = task.getUnixTimestampLimit()
+            )
 
+        CommThread.addMessage(sendDataMessage)
+        return sendDataMessage
 
+    """
     def changeFrequency(self, frequency: int):
-        """
-        Method to adjust the GPU frequency - maybe declared in another class, not this one. TBD
-        """
         pass
+    """
 
-
-    def getAcceptedTaskTotal(self, ):
+    def getAcceptedTaskTotal(self, __allocatedTasks: list):
         """
         Method to get the ammount of accepted tasks a satellite has
         """
-        pass
+        return len(__allocatedTasks)
 
 
     def enqueueUnallocatedTask(self, task: Task):
         self.__unallocatedTasks.append(task)
         
+
 
 class CommunicationThread(threading.Thread):
     
@@ -116,14 +130,18 @@ class CommunicationThread(threading.Thread):
         print(f"The tasklist is now: {[str(msg) for msg in self.tasklist]}")
 
 
+
+
+#Test for the different messages
+thread = TaskHandlerThread(name="TaskHandler", delay = 1)
+CommThread = CommunicationThread(name="CommThread", delay = 1)
+
+thread.start()
+CommThread.start() 
+
+"""
 # Create instances
 task = Task(timeLimit=3600)  # Create a Task with a 1-hour limit
-thread = TaskHandlerThread(name="TaskHandler", delay = 1)
-thread2 = CommunicationThread(name="CommThread", delay = 1)
-
-# Start the thread (if needed)
-thread.start()
-thread2.start()
 
 # Send a task request
 taskID, timeLimit = thread.sendRequest(task)  # Call on the instance
@@ -131,4 +149,4 @@ print(f"TaskID: {taskID}, TimeLimit: {timeLimit}")
 
 #send a task respond
 taskID, source= thread.sendRespond(task)  # Call on the instance
-
+"""
