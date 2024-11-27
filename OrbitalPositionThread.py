@@ -15,21 +15,19 @@ class OrbitalPositionThread(Thread):
     orbitalPeriod: float
     neighbourSatDist: float
     currentAngle: dict[int, float] = {}
-    connections: dict[int, list[int, int]] = {}
     timeStamp: float = 0.0
     satClosestToGround: int
     orbitalRadius: float
     tickRate: float
     
-    def __init__(self, config: str, tickRate: float):
+    def __init__(self, config: dict, tickRate: float):
         super().__init__()
-        config_json  = json.loads(config)
+        config_json  = config
         
         self.satelliteID = getnode()
         
         for i in config_json["satellites"]:
             self.currentAngle[i["id"]] = i["initial_angle"]
-            self.connections[i["id"]] = i["connections"]
         
         self.altitude = config_json["altitude"]
         self.orbitalRadius = self.altitude + self.RADIUS_EARTH
@@ -181,7 +179,7 @@ if __name__ == "__main__":
     "altitude": 200000
     }"""
 
-    testObject = OrbitalPositionThread(test_json, 5)
+    testObject = OrbitalPositionThread(json.loads(test_json), 5)
     testObject.satelliteID = 3
     print(testObject.currentAngle)
     print(testObject.orbitalPeriod)
