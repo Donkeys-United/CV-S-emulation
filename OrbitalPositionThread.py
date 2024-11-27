@@ -101,7 +101,7 @@ class OrbitalPositionThread(Thread):
         Returns:
             bool: Returns True if the mission should be performed
         """
-        angle = radian * orbitNumber
+        angle = radian + 2 * np.pi * orbitNumber
         return angle >= self.currentAngle[self.satelliteID]
     
     def getCurrentPosition(self) -> complex:
