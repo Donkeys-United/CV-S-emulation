@@ -5,6 +5,8 @@ import socket
 from pickle import loads
 
 class ListeningThread(threading.Thread):
+    """Class for Listening Thread. Used for listening on a specific port for incoming messages.
+    """
 
     HOSTNAME = socket.gethostname()
     IP_ADDR = socket.gethostbyname(HOSTNAME)
@@ -18,9 +20,18 @@ class ListeningThread(threading.Thread):
         self.IP_ADDR
     
     def addMessageList(self, message: Message):
+        """Adds an incoming messages to the message list in the communication thread.
+
+        Args:
+            message (Message): the incoming message.
+        """
+
         self.communicationThread.messageList.append(message)
     
     def activeListening(self):
+        """Method for making the thread listen to the specific port.
+        """
+
         connection = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         connection.bind((self.IP_ADDR, self.port))
         while not self._stop_event.is_set():
