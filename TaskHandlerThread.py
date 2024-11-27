@@ -1,6 +1,5 @@
 #Libraries
-import random
-import threading
+import random, threading, time
 from Task import Task
 from MessageClasses import *
 #from MissionThread import *
@@ -22,7 +21,18 @@ class TaskHandlerThread(threading.Thread):
         Method to initiate the different threads in the system(Main loop maybe?)
         """
         while self.running:
-            pass
+            if self.__unallocatedTasks != None:
+                allocateToSelf = self.allocateTaskToSelf(self.__unallocatedTasks.nextTask())
+                if allocateToSelf == True:
+                    self.__allocatedTasks.addTaskToQueue(self.__unallocatedTasks.nextTask())
+                else:
+                    self.sendRequest(self.__unallocatedTasks.nextTask())
+                    self.communicationThread.giveTask(self.__unallocatedTasks.nextTask())
+            else:
+                time.sleep(1)
+
+
+
 
     # Det her skal lige fikses, så det kører fra run().
     # mucho fix
@@ -30,14 +40,17 @@ class TaskHandlerThread(threading.Thread):
         """
         Method used to either allocate a task to a satellite itself, or send a request message to another satellite
         """
-        pass
+        trueFalseMethod = random.choice([True, False])
+        if trueFalseMethod == True:
+            return True
+        else: 
+            return False
         
 
     def sendRequest(self, task: Task):
         """
         Sends a request message for a task to the CommunicationThread.
         """
-        
         # Create a RequestMessage object
         sendRequestMessage = RequestMessage(
             unixTimeLimit=task.getUnixTimestampLimit(),
@@ -45,13 +58,13 @@ class TaskHandlerThread(threading.Thread):
         )
 
         # Print the message object directly
-        print(f"Sending message: {sendRequestMessage}")
+        #print(f"Sending message: {sendRequestMessage}")
 
         # Add the message to the CommunicationThread
         self.communicationThread.addTransmission(sendRequestMessage)
 
         # Return the task ID and time limit
-        return sendRequestMessage.getTaskID(), sendRequestMessage.getUnixTimeLimit()
+        #return sendRequestMessage.getTaskID(), sendRequestMessage.getUnixTimeLimit()
 
 
     def sendRespond(self, task: Task, message: Message):
@@ -63,8 +76,7 @@ class TaskHandlerThread(threading.Thread):
             source=task.getSource(),
             firstHopID = message.lastSenderID
         )
-        # Vi skal lige fikse naming og method her.
-        # Add the message to the CommunicationThread
+
         self.communicationThread.addTransmission(sendRespondMessage)
  
 
