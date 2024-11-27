@@ -20,6 +20,7 @@ class PriorityQueue:
                 if task.getUnixTimestampLimit() < min_limit:
                     min_limit = task.getUnixTimestampLimit()
                     next_task:Task = task
+                    self.__queue.remove(task)
             return next_task
         else:
             return None
