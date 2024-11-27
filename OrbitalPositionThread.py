@@ -130,6 +130,7 @@ class OrbitalPositionThread(Thread):
         priorityList = []
         priorityList.append(self.satelliteID)
         
+        #Base case if the satellites itself is closest to ground
         if self.satelliteID == self.satClosestToGround:
             priorityList.append("GROUND")
             return priorityList
@@ -140,6 +141,8 @@ class OrbitalPositionThread(Thread):
         startIdx = nodes.index(self.satelliteID)
         satClosestToGroundIdx = nodes.index(self.satClosestToGround)
         
+        #Iterates through the other satellites closest to the satellite itself and creates the priority list
+        #When the next priority is ground it will stop
         for i in range(1, ceil(N/2) + 1):
             counterclockwiseDistance = np.abs(satClosestToGroundIdx - (startIdx - i))
             clockwiseDistance = N - np.abs((startIdx + i) - satClosestToGroundIdx)
