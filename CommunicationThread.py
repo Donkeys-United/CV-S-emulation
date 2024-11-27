@@ -11,8 +11,9 @@ from TaskHandlerThread import TaskHandlerThread
 class CommunicationThread(Thread):
     transmissionQueue:List[RequestMessage | RespondMessage | ImageDataMessage | ResponseNackMessage | ProcessedDataMessage] = []
     messageList:List[RequestMessage | RespondMessage | ImageDataMessage | ResponseNackMessage | ProcessedDataMessage] = []
-    acceptedRequestsQueue:AcceptedRequestQueue
-    transmission:TransmissionThread
+    acceptedRequestsQueue:AcceptedRequestQueue = AcceptedRequestQueue()
+    transmissionThread:TransmissionThread
+    listeningThread
     config: dict
     taskHandlerThread: TaskHandlerThread
     taskWaitingList: List[Task] = []
@@ -40,17 +41,15 @@ class CommunicationThread(Thread):
                     connectionsIP.append(satellites['ip_address'])
         except:
             raise ValueError('Config file is not correct')
-        self.acceptedRequestsQueue = AcceptedRequestQueue()
         self.acceptedRequestsQueue.start()
-        self.transmission = TransmissionThread(
+        self.transmissionThread = TransmissionThread(
             satelliteID=satelliteID,
             neighbourSatelliteIDs=connections,
             neighbourSatelliteAddrs=connectionsIP,
             groundstationAddr=config['ground_station_ip']
             )
+        self.transmissionThread.start()
         self.taskHandlerThread = taskHandlerThread
-        with open(config, 'r') as f:
-            config_data = json.load(f)
             
 
 
