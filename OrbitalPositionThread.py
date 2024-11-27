@@ -21,6 +21,12 @@ class OrbitalPositionThread(Thread):
     tickRate: float
     
     def __init__(self, config: dict, tickRate: float):
+        """Init function of the orbital thread class
+
+        Args:
+            config (dict): The json config 
+            tickRate (float): How often in second the position should be updated
+        """
         super().__init__()
         config_json  = config
         
@@ -40,7 +46,10 @@ class OrbitalPositionThread(Thread):
         self.neighbourSatDist = self.calculateDistance(temp_list[0], self.orbitalRadius ,temp_list[1], self.orbitalRadius)
 
         self.tickRate = tickRate
+        
     def run(self) -> None:
+        """Main loop of the orbital position thread
+        """
         loopStartTime = 0
         loopEndTime = 0
         loopTimeTaken = 0
@@ -57,24 +66,67 @@ class OrbitalPositionThread(Thread):
                 sleep(self.tickRate - loopTimeTaken)
     
     def calculateOrbitalPeriodSeconds(self, altitude: float) -> float:
+        """Calculates the orbital period
+
+        Args:
+            altitude (float): altitude in meters
+
+        Returns:
+            float: The orbital period in seconds
+        """
         return 2*np.pi * np.sqrt((self.RADIUS_EARTH + altitude)**3 
                                 / (self.MASS_EARTH * self.GRAVITATIONAL_CONSTANT))
     
     def calculateDistance(self, angle1: float, radius1: float ,angle2: float, radius2: float) -> float:
+        """Calculates the distance between two points
+
+        Args:
+            angle1 (float): Angle of the first point
+            radius1 (float): Magnitude of the first point
+            angle2 (float): Angle of the second point
+            radius2 (float): Magnitude of the second point
+
+        Returns:
+            float: The distance between the points
+        """
         return np.abs(self.calculatePosition(angle1, radius1) - self.calculatePosition(angle2, radius1))
     
     def canExecuteMission(self, radian: float, orbitNumber: int) -> bool:
+        """Check whether a mission can be executed
+
+        Args:
+            radian (float): The angle which the mission should take place
+            orbitNumber (int): The orbit number the mission should take place
+
+        Returns:
+            bool: Returns True if the mission should be performed
+        """
         angle = radian * orbitNumber
         return angle >= self.currentAngle[self.satelliteID]
     
     def getCurrentPosition(self) -> complex:
+        """calculates and gets the position of the satellites itself
+
+        Returns:
+            complex: Satellites position in cartesian form
+        """
         return self.calculatePosition(self.currentAngle[self.satelliteID], self.orbitalRadius)
     
     def __updatePositions(self, forwardTime: float) -> None:
+        """Updates the angle of satellites by forwarding them in time by a specified amount
+
+        Args:
+            forwardTime (float): The forwarding time in second
+        """
         for key in self.currentAngle.keys():
             self.currentAngle[key] = self.currentAngle[key] + 2 * np.pi / self.orbitalPeriod * forwardTime
     
     def getSatellitePriorityList(self) -> list[int]:
+        """Calculates the priority list
+
+        Returns:
+            list[int]: The priority list
+        """
         priorityList = []
         priorityList.append(self.satelliteID)
         
@@ -106,6 +158,11 @@ class OrbitalPositionThread(Thread):
         return priorityList
     
     def getPathDistanceToGround(self) -> float:
+        """Calculates the path distance to ground station
+
+        Returns:
+            float: The path distance in meters
+        """
         nodes = list(self.currentAngle.keys())
         N = len(nodes)
         
@@ -123,9 +180,16 @@ class OrbitalPositionThread(Thread):
                                                                             self.RADIUS_EARTH)
     
     def getSatClosestToGround(self) -> int:
+        """Get the id of the satellite closest to ground
+
+        Returns:
+            int: Id of the satellite closest to ground
+        """
         return self.satClosestToGround
                 
     def calculateSatClosestToGround(self) -> None:
+        """Determines the satellites closest to ground and updates the internal information
+        """
         smallestDistance = float('inf')
         ID = 0
         for key in self.currentAngle.keys():
@@ -140,6 +204,15 @@ class OrbitalPositionThread(Thread):
         self.satClosestToGround = ID
         
     def calculatePosition(self, angle:float, radius: float) -> complex:
+        """Receives the satellites position in polar form and returns the cartesian form
+
+        Args:
+            angle (float): Satellites angle relative to ground
+            radius (float): Distance from center of the earth
+
+        Returns:
+            complex: Satellites position in cartesian form
+        """
         return radius * np.exp(angle*1j)
     
 if __name__ == "__main__":
