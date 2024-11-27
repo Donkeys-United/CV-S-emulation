@@ -6,7 +6,6 @@ from AcceptedRequestQueue import AcceptedRequestQueue
 from typing import Any, Iterable, List, Mapping
 from TransmissionThread import TransmissionThread
 from ListeningThread import ListeningThread
-import json
 from TaskHandlerThread import TaskHandlerThread
 
 class CommunicationThread(Thread):
@@ -96,12 +95,12 @@ class CommunicationThread(Thread):
             if messagePayload.getTaskID() in self.acceptedRequestsQueue.getIDInQueue():
                 self.taskHandlerThread.appendTask(messagePayload)
             else:
-                pass
+                self.addTransmission(message=message)
         elif type(message) == ResponseNackMessage:
             if message.getTaskID() in self.acceptedRequestsQueue.getIDInQueue():
                 self.acceptedRequestsQueue.removeMessage(message.getTaskID())
             else:
-                pass
+                self.addTransmission(message=message)
         elif type(message) == ProcessedDataMessage:
             pass
     
