@@ -28,7 +28,6 @@ class CommunicationThread(Thread):
     messageList:List[RequestMessage | RespondMessage | ImageDataMessage | ResponseNackMessage | ProcessedDataMessage] = []
     responseList: List[RespondMessage] = []
     config: dict
-    
     acceptedRequestsQueue:AcceptedRequestQueue = AcceptedRequestQueue()
 
     #Threads
@@ -109,6 +108,7 @@ class CommunicationThread(Thread):
                 self.acceptedRequestsQueue.addMessage(message=message)
             else:
                 self.addTransmission(message=message)
+
         elif type(message) == RespondMessage:
             messageID = message.getTaskID()
             for task in self.taskWaitingList:
@@ -117,17 +117,20 @@ class CommunicationThread(Thread):
                     break
                 elif task == self.taskWaitingList[-1]:
                     self.addTransmission(message=message)
+
         elif type(message) == ImageDataMessage:
             messagePayload = message.getPayload()
             if messagePayload.getTaskID() in self.acceptedRequestsQueue.getIDInQueue():
                 self.taskHandlerThread.appendTask(messagePayload)
             else:
                 self.addTransmission(message=message)
+
         elif type(message) == ResponseNackMessage:
             if message.getTaskID() in self.acceptedRequestsQueue.getIDInQueue():
                 self.acceptedRequestsQueue.removeMessage(message.getTaskID())
             else:
                 self.addTransmission(message=message)
+                
         elif type(message) == ProcessedDataMessage:
             pass
     
