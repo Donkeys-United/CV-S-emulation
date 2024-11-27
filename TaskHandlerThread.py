@@ -33,13 +33,11 @@ class TaskHandlerThread(threading.Thread):
 
 
 
-
-    # Det her skal lige fikses, så det kører fra run().
-    # mucho fix
     def allocateTaskToSelf(self, task: Task):
         """
         Method used to either allocate a task to a satellite itself, or send a request message to another satellite
         """
+        totalAcceptedTasks = self.getAcceptedTaskTotal()
         trueFalseMethod = random.choice([True, False])
         if trueFalseMethod == True:
             return True
@@ -60,7 +58,7 @@ class TaskHandlerThread(threading.Thread):
         # Print the message object directly
         #print(f"Sending message: {sendRequestMessage}")
 
-        # Add the message to the CommunicationThread
+        # Add the message to the CommunicationThread #Der var en nisse her
         self.communicationThread.addTransmission(sendRequestMessage)
 
         # Return the task ID and time limit
