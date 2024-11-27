@@ -3,6 +3,7 @@ import json
 import numpy as np
 from uuid import getnode
 from math import ceil
+from time import sleep, time
 
 class OrbitalPositionThread(Thread):
     RADIUS_EARTH: float = 6378000.0
@@ -21,6 +22,7 @@ class OrbitalPositionThread(Thread):
     tickRate: float
     
     def __init__(self, config: str, tickRate: float):
+        super().__init__()
         config_json  = json.loads(config)
         
         self.satelliteID = getnode()
@@ -41,7 +43,20 @@ class OrbitalPositionThread(Thread):
 
         self.tickRate = tickRate
     def run(self) -> None:
-        print("Do stuff")
+        loopStartTime = 0
+        loopEndTime = 0
+        loopTimeTaken = 0
+        
+        while True:
+            loopStartTime = time()
+            self.__updatePositions(self.tickRate)
+            self.calculateSatClosestToGround()
+            loopEndTime = time()
+            
+            loopTimeTaken = loopEndTime - loopStartTime
+            
+            if loopTimeTaken < self.tickRate:
+                sleep(self.tickRate - loopTimeTaken)
     
     def calculateOrbitalPeriodSeconds(self, altitude: float) -> float:
         return 2*np.pi * np.sqrt((self.RADIUS_EARTH + altitude)**3 
@@ -166,7 +181,7 @@ if __name__ == "__main__":
     "altitude": 200000
     }"""
 
-    testObject = OrbitalPositionThread(test_json)
+    testObject = OrbitalPositionThread(test_json, 5)
     testObject.satelliteID = 3
     print(testObject.currentAngle)
     print(testObject.orbitalPeriod)
@@ -177,3 +192,8 @@ if __name__ == "__main__":
     testObject.calculateSatClosestToGround()
     print(testObject.getSatClosestToGround())
     print(testObject.getSatellitePriorityList())
+    testObject.start()
+    while True:
+        print(testObject.currentAngle)
+        print(testObject.getSatClosestToGround())
+        sleep(1)
