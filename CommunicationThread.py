@@ -5,15 +5,20 @@ from MessageClasses import RequestMessage, RespondMessage, ImageDataMessage, Res
 from AcceptedRequestQueue import AcceptedRequestQueue
 from typing import Any, Iterable, List, Mapping
 from TransmissionThread import TransmissionThread
+from ListeningThread import ListeningThread
 import json
 from TaskHandlerThread import TaskHandlerThread
 
 class CommunicationThread(Thread):
+    LISTENING_PORTS_LEFT: int = 4500
+    LISTENING_PORTS_RIGHT: int = 4600
     transmissionQueue:List[RequestMessage | RespondMessage | ImageDataMessage | ResponseNackMessage | ProcessedDataMessage] = []
     messageList:List[RequestMessage | RespondMessage | ImageDataMessage | ResponseNackMessage | ProcessedDataMessage] = []
+    responseList: List[RespondMessage] = []
     acceptedRequestsQueue:AcceptedRequestQueue = AcceptedRequestQueue()
     transmissionThread:TransmissionThread
-    listeningThread
+    listeningThreadLeft: ListeningThread
+    listeningThreadRight: ListeningThread
     config: dict
     taskHandlerThread: TaskHandlerThread
     taskWaitingList: List[Task] = []
@@ -29,7 +34,11 @@ class CommunicationThread(Thread):
             daemon: bool | None = None
             ) -> None:
         super().__init__(group, target, name, args, kwargs, daemon=daemon)
+
+        #Get config dictionary
         self.config = config
+
+        #Setup and start transmissionThread using config
         try:
             for satellites in self.config['satellites']:
                 if satellites['id'] == satelliteID:
@@ -49,6 +58,14 @@ class CommunicationThread(Thread):
             groundstationAddr=config['ground_station_ip']
             )
         self.transmissionThread.start()
+        
+        #Initiate listeningThreads
+        self.listeningThreadLeft = ListeningThread(port=self.LISTENING_PORTS_LEFT, communicationThread=self)
+        self.listeningThreadRight = ListeningThread(port=self.LISTENING_PORTS_RIGHT, communicationThread=self)
+        self.listeningThreadLeft.start()
+        self.listeningThreadRight.start()
+
+        #Create reference to TaskHandlerThread
         self.taskHandlerThread = taskHandlerThread
             
 
@@ -65,9 +82,15 @@ class CommunicationThread(Thread):
             if self.taskHandlerThread.allocateTaskToSelf(): #add input - ONLY TIMELIMIT
                 self.acceptedRequestsQueue.addMessage(message=message)
             else:
-                pass #add send transmission
+                self.addTransmission(message=message)
         elif type(message) == RespondMessage:
-            pass
+            messageID = message.getTaskID()
+            for task in self.taskWaitingList:
+                if task.getTaskID() == messageID:
+                    self.responseList.append(message)
+                    break
+                elif task == self.taskWaitingList[-1]:
+                    self.addTransmission(message=message)
         elif type(message) == ImageDataMessage:
             messagePayload = message.getPayload()
             if messagePayload.getTaskID() in self.acceptedRequestsQueue.getIDInQueue():
