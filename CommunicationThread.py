@@ -9,18 +9,36 @@ from ListeningThread import ListeningThread
 from TaskHandlerThread import TaskHandlerThread
 
 class CommunicationThread(Thread):
+    """The CommunicationThread that handles incoming and outgoing messages
+
+    Args:
+        satelliteID (int): The local satellite ID
+        config (dict): The config json file loaded to a dictionary
+        taskHandlerThread (TaskHandlerThread): A reference to the local TaskHandlerThread
+    
+    """
+
+    #Constants
     LISTENING_PORTS_LEFT: int = 4500
     LISTENING_PORTS_RIGHT: int = 4600
+
+    #Variables
+    taskWaitingList: List[Task] = []
     transmissionQueue:List[RequestMessage | RespondMessage | ImageDataMessage | ResponseNackMessage | ProcessedDataMessage] = []
     messageList:List[RequestMessage | RespondMessage | ImageDataMessage | ResponseNackMessage | ProcessedDataMessage] = []
     responseList: List[RespondMessage] = []
+    config: dict
+    
     acceptedRequestsQueue:AcceptedRequestQueue = AcceptedRequestQueue()
+
+    #Threads
     transmissionThread:TransmissionThread
     listeningThreadLeft: ListeningThread
     listeningThreadRight: ListeningThread
-    config: dict
+    
+    #References
     taskHandlerThread: TaskHandlerThread
-    taskWaitingList: List[Task] = []
+    
 
     def __init__(
             self,
@@ -76,6 +94,15 @@ class CommunicationThread(Thread):
             self,
             message: RequestMessage | ImageDataMessage | RespondMessage | ResponseNackMessage | ProcessedDataMessage
             ) -> None:
+        """Method for handling incoming messages
+
+        Args:
+            message (Message): Incoming message
+
+        Returns:
+            None:
+        
+        """
         
         if type(message) == RequestMessage:
             if self.taskHandlerThread.allocateTaskToSelf(): #add input - ONLY TIMELIMIT
@@ -111,9 +138,27 @@ class CommunicationThread(Thread):
             self,
             message: RequestMessage | ImageDataMessage | RespondMessage | ResponseNackMessage | ProcessedDataMessage
             ) -> None:
+        """Method for adding a transmission that has to be sent by the transmissionThread
+
+        Args:
+            message (Message): Message that has to be sent
+
+        Returns:
+            None:
+        
+        """
         self.transmissionQueue.append(message)
     
     def getTotalAcceptedTasks(self) -> int:
+        """Method for getting the total amount of remote tasks accepted by the taskHandlerThread
+
+        Args:
+            None:
+        
+        Returns:
+            amount (int): Amount of tasks in acceptedTaskQueue
+        
+        """
         return self.acceptedRequestsQueue.getLength()
     
     def giveTask(self, task: Task) -> None:
