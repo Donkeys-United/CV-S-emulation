@@ -13,13 +13,14 @@ class CommunicationThread(Thread):
     messageList:List[RequestMessage | RespondMessage | ImageDataMessage | ResponseNackMessage | ProcessedDataMessage] = []
     acceptedRequestsQueue:AcceptedRequestQueue
     transmission:TransmissionThread
-    config: json
+    config: dict
     taskHandlerThread: TaskHandlerThread
+    taskWaitingList: List[Task] = []
 
     def __init__(
             self,
             satelliteID: int,
-            config: json,
+            config: dict,
             taskHandlerThread: TaskHandlerThread,
             group: None = None, target: Callable[..., object] | None = None, name: str | None = None,
             args: Iterable[Any] = ..., kwargs: Mapping[str, Any] | None = None,
@@ -28,9 +29,25 @@ class CommunicationThread(Thread):
             ) -> None:
         super().__init__(group, target, name, args, kwargs, daemon=daemon)
         self.config = config
+        try:
+            for satellites in self.config['satellites']:
+                if satellites['id'] == satelliteID:
+                    connections = satellites['connections']
+                    break
+            connectionsIP = []
+            for satellites in self.config['satellites']:
+                if satellites['id'] in connections:
+                    connectionsIP.append(satellites['ip_address'])
+        except:
+            raise ValueError('Config file is not correct')
         self.acceptedRequestsQueue = AcceptedRequestQueue()
         self.acceptedRequestsQueue.start()
-        self.transmission = TransmissionThread()
+        self.transmission = TransmissionThread(
+            satelliteID=satelliteID,
+            neighbourSatelliteIDs=connections,
+            neighbourSatelliteAddrs=connectionsIP,
+            groundstationAddr=config['ground_station_ip']
+            )
         self.taskHandlerThread = taskHandlerThread
         with open(config, 'r') as f:
             config_data = json.load(f)
@@ -77,3 +94,6 @@ class CommunicationThread(Thread):
     
     def getTotalAcceptedTasks(self) -> int:
         return self.acceptedRequestsQueue.getLength()
+    
+    def giveTask(self, task: Task) -> None:
+        self.taskWaitingList.append(task)
