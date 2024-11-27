@@ -2,6 +2,7 @@ from threading import Thread
 import json
 import numpy as np
 from uuid import getnode
+from math import ceil
 
 class OrbitalPositionThread(Thread):
     RADIUS_EARTH: float = 6378000.0
@@ -17,8 +18,9 @@ class OrbitalPositionThread(Thread):
     timeStamp: float = 0.0
     satClosestToGround: int
     orbitalRadius: float
+    tickRate: float
     
-    def __init__(self, config: str):
+    def __init__(self, config: str, tickRate: float):
         config_json  = json.loads(config)
         
         self.satelliteID = getnode()
@@ -36,7 +38,8 @@ class OrbitalPositionThread(Thread):
         #Calculate the distance to other satellites
         temp_list = list(self.currentAngle.values())
         self.neighbourSatDist = self.calculateDistance(temp_list[0], self.orbitalRadius ,temp_list[1], self.orbitalRadius)
-    
+
+        self.tickRate = tickRate
     def run(self) -> None:
         print("Do stuff")
     
@@ -52,14 +55,42 @@ class OrbitalPositionThread(Thread):
         return angle >= self.currentAngle[self.satelliteID]
     
     def getCurrentPosition(self) -> complex:
-        return np.exp(1j * self.currentAngle[self.satelliteID])
+        return self.calculatePosition(self.currentAngle[self.satelliteID], self.orbitalRadius)
     
     def __updatePositions(self, forwardTime: float) -> None:
         for key in self.currentAngle.keys():
             self.currentAngle[key] = self.currentAngle[key] + 2 * np.pi / self.orbitalPeriod * forwardTime
     
     def getSatellitePriorityList(self) -> list[int]:
-        print("Do stuff")
+        priorityList = []
+        priorityList.append(self.satelliteID)
+        
+        if self.satelliteID == self.satClosestToGround:
+            priorityList.append("GROUND")
+            return priorityList
+        
+        nodes = list(self.currentAngle.keys())
+        N = len(nodes)
+        
+        startIdx = nodes.index(self.satelliteID)
+        satClosestToGroundIdx = nodes.index(self.satClosestToGround)
+        
+        for i in range(1, ceil(N/2) + 1):
+            counterclockwiseDistance = np.abs(satClosestToGroundIdx - (startIdx - i))
+            clockwiseDistance = N - np.abs((startIdx + i) - satClosestToGroundIdx)
+            
+            if clockwiseDistance <= counterclockwiseDistance:
+                priorityList.append(nodes[(startIdx + i) % N])
+                priorityList.append(nodes[(startIdx - i) % N])
+            else:
+                priorityList.append(nodes[(startIdx - i) % N])
+                priorityList.append(nodes[(startIdx + i) % N])
+            
+            if (startIdx + i) % N == satClosestToGroundIdx or (startIdx - i) % N == satClosestToGroundIdx:
+                priorityList.append("GROUND")
+                break
+        
+        return priorityList
     
     def getPathDistanceToGround(self) -> float:
         nodes = list(self.currentAngle.keys())
@@ -68,8 +99,8 @@ class OrbitalPositionThread(Thread):
         targetIdx = nodes.index(self.satClosestToGround)
         startIdx = nodes.index(self.satelliteID)
         
-        clockwiseDistance = np.abs(targetIdx - startIdx)
-        counterclockwiseDistance = N - np.abs(startIdx - targetIdx)
+        counterclockwiseDistance = np.abs(targetIdx - startIdx) % N
+        clockwiseDistance = N - np.abs(startIdx - targetIdx) % N
         
         minimumHops = min(clockwiseDistance, counterclockwiseDistance)
         
@@ -124,15 +155,25 @@ if __name__ == "__main__":
         "ip_address": "192.168.1.104",
         "connections": [3,1],
         "initial_angle": 4.71239
+        },
+        {
+        "id": 5,
+        "ip_address": "192.168.1.104",
+        "connections": [3,1],
+        "initial_angle": 5.71239
         }
     ],
     "altitude": 200000
     }"""
 
     testObject = OrbitalPositionThread(test_json)
+    testObject.satelliteID = 3
     print(testObject.currentAngle)
     print(testObject.orbitalPeriod)
     print(testObject.satelliteID)
     print(testObject.neighbourSatDist)
     print(testObject.currentAngle)
     print(testObject.connections)
+    testObject.calculateSatClosestToGround()
+    print(testObject.getSatClosestToGround())
+    print(testObject.getSatellitePriorityList())
