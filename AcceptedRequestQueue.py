@@ -1,6 +1,6 @@
 from collections.abc import Callable
 from threading import Thread
-from typing import Any, Iterable, List, Mapping
+from typing import Any, Iterable, List, Mapping, Union
 from MessageClasses import RequestMessage
 
 
@@ -11,7 +11,7 @@ class AcceptedRequestQueue(Thread):
         None:
     
     """
-    __acceptedRequests:List[List[RequestMessage, int]]
+    __acceptedRequests:List[List[Union[RequestMessage, int]]]
     __TIME_TO_LIVE:int = 3600
 
     def __init__(
