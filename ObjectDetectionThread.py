@@ -1,18 +1,25 @@
 from ultralytics import YOLO
 from MessageClasses import ImageDataMessage, ProcessedDataMessage
-import CommunicationThread
+from CommunicationThread import CommunicationThread
+from TaskHandlerThread import TaskHandlerThread
 import os
 from pathlib import Path
 import Task
+import threading
 
 
-class ObjectDetectionThread:
+class ObjectDetectionThread(threading.Thread):
     """ Class used for running inference on images, using a YOLOv8 model.
     """
 
-    def __init__(self, PATH_TO_MODEL):
+    def __init__(self, PATH_TO_MODEL, communicationThread: CommunicationThread, taskHandlerThread: TaskHandlerThread):
+        super().__init__()
         self.PATH_TO_MODEL = PATH_TO_MODEL
         self.model = self.loadModel()
+        self.communicationThread = communicationThread
+        self.taskHandlerThread = taskHandlerThread
+        self._stop_event = threading.Event()
+        self.no_tasks = threading.Event()
     
     def loadModel(self):
         """Method which is automatically called when ObjectDetectionThread 
@@ -57,7 +64,7 @@ class ObjectDetectionThread:
             finished_message_list.append(ProcessedDataMessage(image_name_list[result], imageObject.getLocation(), imageObject.getUnixTimeStamp(), imageObject.getFileName(), ((bounding_box_xyxy[result][0], bounding_box_xyxy[result][1]),(bounding_box_xyxy[result][2], bounding_box_xyxy[result][4]))))
         return finished_message_list
 
-    def sendProcessedDataMessage(message_list: list[ProcessedDataMessage], communication_thread: CommunicationThread):
+    def sendProcessedDataMessage(self, message_list: list[ProcessedDataMessage]):
         """Simple method for moving the PrcessedDataMessage object instance to the transmission queue in the CommunicationThread object instance.
 
         Args:
@@ -68,5 +75,18 @@ class ObjectDetectionThread:
             None: none
         """
         for message in message_list:
-            communication_thread.transmissionQueue.append(message)
+            self.communicationThread.addTransmission(message)
         return None
+
+    def run(self):
+        # Det her skal ændres, således at der er en metode i stedet for at læse direkte fra __allocatedTasks
+        while not self._stop_event.is_set():
+            if self.taskHandlerThread.__allocatedTasks:
+                processedDataList = self.runInference(self.taskHandlerThread.__allocatedTasks.nextTask())
+                self.sendProcessedDataMessage(processedDataList)
+            else:
+                self.no_tasks.wait(1)
+
+
+    def stop(self):
+        self._stop_event.set()
