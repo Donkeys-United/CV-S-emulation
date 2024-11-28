@@ -38,6 +38,7 @@ class TaskHandlerThread(threading.Thread):
         Method used to either allocate a task to a satellite itself, or send a request message to another satellite
         """
         totalAcceptedTasks = self.getAcceptedTaskTotal()
+        
         trueFalseMethod = random.choice([True, False])
         if trueFalseMethod == True:
             return True
