@@ -29,7 +29,8 @@ with open(config_path, 'r') as config_file:
 missionThread = MissionThread(configPath=config_path,
                               satelliteID=satelliteID,
                               orbitalPosistionThread=orbitalPositionThread,
-                              taskHandlerThread=taskHandlerThread)
+                              taskHandlerThread=taskHandlerThread,
+                              imagePath=image_path)
 
 objectDetectionThread = ObjectDetectionThread(cv_model_path, 
                                               communicationThread = communicationThread, 

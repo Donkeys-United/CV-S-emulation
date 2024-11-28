@@ -24,7 +24,7 @@ logging.basicConfig(
 class MissionThread(threading.Thread):
     taskCounter=0
 
-    def __init__(self, configPath:json, group = None, target = None, name = None, args = ..., kwargs = None, *, daemon = None, satelliteID: int, orbitalPosistionThread: OrbitalPositionThread, taskHandlerThread: TaskHandlerThread):
+    def __init__(self, configPath:json, group = None, target = None, name = None, args = ..., kwargs = None, *, daemon = None, satelliteID: int, orbitalPosistionThread: OrbitalPositionThread, taskHandlerThread: TaskHandlerThread, imagePath):
         super().__init__(group, target, name, args, kwargs, daemon=daemon)
         """
         Initialize the MissionThread with configuration data.
@@ -32,7 +32,7 @@ class MissionThread(threading.Thread):
          
         # Instance Attributes
         self.configPath = configPath
-        self.IMAGEPATH = r"C:\Users\Phuon\OneDrive\Dokumenter\GitHub\CV-S-emulation\test"
+        self.IMAGEPATH = imagePath
         self.myMissions = []
         self.files = [] 
         self.satelliteID = satelliteID
@@ -133,7 +133,3 @@ class MissionThread(threading.Thread):
             print("Execution interrupted by user.")  
 
 
-fileName = r"C:\Users\Phuon\OneDrive\Dokumenter\GitHub\CV-S-emulation\config_test.JSON"
-
-m1 = MissionThread(fileName)
-m1.run()

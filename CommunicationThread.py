@@ -4,9 +4,9 @@ from threading import Thread
 from MessageClasses import RequestMessage, RespondMessage, ImageDataMessage, ResponseNackMessage, ProcessedDataMessage
 from AcceptedRequestQueue import AcceptedRequestQueue
 from typing import Any, Iterable, List, Mapping
-from TransmissionThread import TransmissionThread
-from ListeningThread import ListeningThread
-from TaskHandlerThread import TaskHandlerThread
+#from TransmissionThread import TransmissionThread
+#from ListeningThread import ListeningThread
+#from TaskHandlerThread import TaskHandlerThread
 
 class CommunicationThread(Thread):
     """The CommunicationThread that handles incoming and outgoing messages
@@ -31,25 +31,31 @@ class CommunicationThread(Thread):
     acceptedRequestsQueue:AcceptedRequestQueue = AcceptedRequestQueue()
 
     #Threads
-    transmissionThread:TransmissionThread
-    listeningThreadLeft: ListeningThread
-    listeningThreadRight: ListeningThread
+    #transmissionThread:TransmissionThread
+    #listeningThreadLeft: ListeningThread
+    #listeningThreadRight: ListeningThread
     
     #References
-    taskHandlerThread: TaskHandlerThread
+    #taskHandlerThread: TaskHandlerThread
     
 
     def __init__(
             self,
             satelliteID: int,
             config: dict,
-            taskHandlerThread: TaskHandlerThread,
+            taskHandlerThread,
             group: None = None, target: Callable[..., object] | None = None, name: str | None = None,
             args: Iterable[Any] = ..., kwargs: Mapping[str, Any] | None = None,
             *,
             daemon: bool | None = None
             ) -> None:
         super().__init__(group, target, name, args, kwargs, daemon=daemon)
+        from TransmissionThread import TransmissionThread
+        from ListeningThread import ListeningThread
+
+        self.taskHandlerThread = taskHandlerThread
+        self.acceptedRequestsQueue = AcceptedRequestQueue()
+        self.acceptedRequestsQueue.start()
 
         #Get config dictionary
         self.config = config

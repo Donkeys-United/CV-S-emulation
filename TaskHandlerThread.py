@@ -3,12 +3,12 @@ import random, threading, time
 from Task import Task
 from MessageClasses import *
 #from MissionThread import *
-from CommunicationThread import CommunicationThread
+#from CommunicationThread import CommunicationThread
 from PriorityQueue import PriorityQueue
 
 class TaskHandlerThread(threading.Thread):
 
-    def __init__(self, communicationThread: CommunicationThread):
+    def __init__(self, communicationThread):
         super().__init__()
         self.running = True
         self.__allocatedTasks = PriorityQueue()
@@ -108,7 +108,7 @@ class TaskHandlerThread(threading.Thread):
     def appendUnallocatedTask(self, task: Task):
         self.__unallocatedTasks.addTaskToQueue(task)
 
-
+"""
 #####################################################################################################
 class CommunicationThread(threading.Thread):
 
@@ -131,9 +131,9 @@ CommThread = CommunicationThread()
 thread.start()
 CommThread.start() 
 
-"""
+""
 Generate a random task
-"""
+""
 # Generate a random 48-bit integer for satelliteID
 satelliteID = random.randint(0, 2**48 - 1)
 # Generate a random 8-bit integer for incrementingID (or use a counter if needed)
@@ -152,3 +152,4 @@ print(f"TaskID: {taskID}, TimeLimit: {timeLimit}")
 #send a task respond
 taskID, source= thread.sendRespond(task)  # Call on the instance
 #####################################################################################################
+"""
