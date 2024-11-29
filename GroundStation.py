@@ -3,7 +3,7 @@ from MessageClasses import *
 from Task import Task
 from typing import Any, Iterable, List, Mapping, TYPE_CHECKING
 import socket
-from pickle import dumps
+from pickle import loads, dumps
 
 
 if TYPE_CHECKING:
@@ -15,13 +15,14 @@ if TYPE_CHECKING:
 class GroundStation(threading.Thread):
 
     #Change to your prefered directory location for the processed images
-    directory = "/Users/tobiaslundgaard/Desktop/Semester5"
+    directoryProcessed = "/Users/tobiaslundgaard/Desktop/Semester5"
+    directoryUnProcessed = "/Users/tobiaslundgaard/Desktop/Semester5"
 
     def __init__(self):
         super().__init__()
         
 
-    def saveImage(self, task: Task):
+    def saveProcessedImage(self, task: Task):
         """
         Saves the image gotten from the satellites to a specified file location
 
@@ -29,24 +30,37 @@ class GroundStation(threading.Thread):
             directory (str): The directory the files should be saved
             image (jpg): The image gotten from the ProcessedImageTask Message
         """
-
         image = cv2.imread(task.getImage())
 
         # Change the current directory to specified directory
-        os.chdir(self.directory)
+        os.chdir(self.directoryProcessed)
 
         #print the location of the directory (just for testing)
-        print("Before saving image:", os.listdir(self.directory))
+        print("Before saving image:", os.listdir(self.directoryProcessed))
 
 
         filename = task.getFileName()
         cv2.imwrite(filename, image)
         
         #Print the filename of the image and the location of the directory (just for testing)
-        print(f"Image saved as {filename} in the directory {self.directory}")
+        print(f"Image saved as {filename} in the directory {self.directoryProcessed}")
 
 
+    def saveUnProcessedImage(self, task: Task):
+        image = cv2.imread(task.getImage())
 
+        # Change the current directory to specified directory
+        os.chdir(self.directoryUnProcessed)
+
+        #print the location of the directory (just for testing)
+        print("Before saving image:", os.listdir(self.directoryUnProcessed))
+
+
+        filename = task.getFileName()
+        cv2.imwrite(filename, image)
+        
+        #Print the filename of the image and the location of the directory (just for testing)
+        print(f"Image saved as {filename} in the directory {self.directoryUnProcessed}")
 
 
     def sendRespond(self, task: Task, message: Message):
@@ -58,21 +72,22 @@ class GroundStation(threading.Thread):
             source=task.getSource(),
             firstHopID = message.lastSenderID
         )
-
         self.communicationThread.addTransmission(sendRespondMessage)
 
 
 class CommunicationThread(threading.Thread):
 
-    #Constants 
-    LISTENING_PORT: int 
-
-
+    #Constants
+    LISTENING_PORT: int = 4500
+    TRANSMISSION_PORT: int = 4600
   
-    def __init__(self, group: None = None, target: Callable[..., object] | None = None, name: str | None = None, args: random.Iterable[random.Any] = ..., kwargs: threading.Mapping[str, random.Any] | None = None, *, daemon: bool | None = None) -> None:
-        super().__init__(group, target, name, args, kwargs, daemon=daemon)
+    def __init__(self):
+        super().__init__()
 
         self.transmissionThread: TransmissionThread = TransmissionThread()
+        self.listeningThreadLeft = ListeningThread(port=self.LISTENING_PORT, communicationThread=self)
+        self.listeningThreadLeft.start()
+        self.transmissionThread.start()
         
 
         
@@ -80,91 +95,68 @@ class CommunicationThread(threading.Thread):
         pass
 
 
+class ListeningThread(threading.Thread):
+    """Class for Listening Thread. Used for listening on a specific port for incoming messages.
+    """
+    HOSTNAME = socket.gethostname()
+    IP_ADDR = socket.gethostbyname(HOSTNAME)
 
-class TransmissionThreadGS(threading.Thread):
-    """Class for creating the Ground Stations transmission thread 
+    def __init__(self, port: int, communicationThread: CommunicationThread):
+        super().__init__()
+        self.port = port
+        self.communicationThread = communicationThread
+        self._stop_event = threading.Event()
+        self.HOSTNAME
+        self.IP_ADDR
+        self.counter = 0
+    
+    def activeListening(self):
+        """Method for making the thread listen to the specific port.
+        """
+        connection = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        connection.bind((self.IP_ADDR, self.port))
+        while not self._stop_event.is_set():
+            connection.listen()
+            incoming_message = connection.accept()
+            unpickled_message = loads(incoming_message)
+            if unpickled_message == isinstance(unpickled_message, RequestMessage):
+                   GroundStation.sendRespond()
+                   GroundStation.saveUnProcessedImage(unpickled_message)
+                   self.counter += 1   
+            elif unpickled_message == isinstance(unpickled_message, ImageDataMessage):
+                #Add try except later
+                GroundStation.saveProcessedImage(unpickled_message)
+                print("Filed saved")
+            else:
+                pass
+
+    def run(self):
+        self.activeListening()
+
+    def stop(self):
+        self._stop_event.set()
+
+
+class TransmissionThread(threading.Thread):
+    """Class for creating the transmission thread.
     """
 
-    def __init__(self, communicationThread: CommunicationThread, group: None = None, target: Callable[..., object] | None = None, name: str | None = None, args: Iterable[Any] = ..., kwargs: Mapping[str, Any] | None = None, *, daemon: bool | None = None) -> None:
-        super().__init__(group, target, name, args, kwargs, daemon=daemon)
+    HOSTNAME = socket.gethostname()
+    IP_ADDR = socket.gethostbyname(HOSTNAME)
+    port = 6969 # Port selected for outgoing comms.
 
 
-    def getDataTransmitted(self):
-        """Method for reading the value of the __dataTransmittedBytes attribute.
-
-        Returns:
-            int: number of bytes transmitted.
-        """
-
-        return self.__dataTransmittedBytes
-    
-    
-    
+    def __init__(self, port: int, communicationThread: CommunicationThread):
+        super().__init__()
+        self.communicationThread = communicationThread
+        self._stop_event = threading.Event()
+        self.HOSTNAME
+        self.IP_ADDR
+        
+        
     def sendTransmission(self):
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as connection:
             connection.bind((self.IP_ADDR, self.port))
 
             while not self._stop_event.is_set():
-                if self.communicationThread.transmissionQueue:
-                    message = self.communicationThread.transmissionQueue.pop(0)
-                    if isinstance(message, Message):
-
-                        # Case 1: The satellite must relay a message to the next satellite in the chain.
-                        if (isinstance(message, ProcessedDataMessage) == False) and (message.lastSenderID != None):
-                            if message.lastSenderID == self.leftSatelliteID:
-                                connection.connect(self.rightSatelliteAddr)
-                            else:
-                                connection.connect(self.leftSatelliteAddr)
-
-                        # Case 2: The satellite must relay the result message to either the groundstation or the next satellite.
-                        elif isinstance(message, ProcessedDataMessage) and (message.lastSenderID != None):
-                            try:
-                                connection.connect(self.groundstationAddr)
-                            except:
-                                if message.lastSenderID == self.leftSatelliteID:
-                                    connection.connect(self.rightSatelliteAddr)
-                                else:
-                                    connection.connect(self.leftSatelliteAddr)
-
-                        # Case 3: The satellite must send its own results to the groundstation, or another satellite.
-                        elif isinstance(message, ProcessedDataMessage):
-                            try:
-                                connection.connect(self.groundstationAddr)
-                            except:
-                                if message.firstHopID == self.leftSatelliteID:
-                                    connection.connect(self.rightSatelliteAddr)
-                                else:
-                                    connection.connect(self.leftSatelliteAddr)
-
-                        # Case 4: The satellite sends out its own RequestMessage - which must be sent to both neighbouring satellites.
-                        elif isinstance(message, RequestMessage):
-                            message.lastSenderID = self.__satelliteID
-                            pickled_message = dumps(message)
-                            self.__dataTransmittedBytes += len(pickled_message)
-
-                            connection.connect(self.rightSatelliteAddr)
-                            connection.send(pickled_message)
-                            connection.shutdown()
-
-                            connection.connect(self.leftSatelliteAddr)
-                            connection.send(pickled_message)
-                            connection.shutdown()
-
-                            continue
-
-                        # Case 5: The satellite sends any other message created by itself to one of its neighbouring satellites.
-                        else:
-                            if message.firstHopID == self.leftSatelliteID:
-                                connection.connect(self.rightSatelliteAddr)
-                            else:
-                                connection.connect(self.leftSatelliteAddr)
-
-                        message.lastSenderID = self.__satelliteID
-                        pickled_message = dumps(message)
-                        self.__dataTransmittedBytes += len(pickled_message)
-                        connection.send(pickled_message)
-                        connection.shutdown()
-
-
-
-
+                pass
