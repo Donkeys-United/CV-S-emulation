@@ -17,7 +17,6 @@ class CommunicationThread(Thread):
         satelliteID (int): The local satellite ID
         config (dict): The config json file loaded to a dictionary
         taskHandlerThread (TaskHandlerThread): A reference to the local TaskHandlerThread
-    
     """
 
     #Constants
