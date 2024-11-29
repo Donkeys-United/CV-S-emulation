@@ -2,6 +2,8 @@ import random, threading, cv2, os
 from MessageClasses import *
 from Task import Task
 from typing import Any, Iterable, List, Mapping, TYPE_CHECKING
+import socket
+from pickle import dumps
 
 
 if TYPE_CHECKING:
@@ -12,6 +14,7 @@ if TYPE_CHECKING:
 
 class GroundStation(threading.Thread):
 
+    #Change to your prefered directory location for the processed images
     directory = "/Users/tobiaslundgaard/Desktop/Semester5"
 
     def __init__(self):
@@ -32,12 +35,14 @@ class GroundStation(threading.Thread):
         # Change the current directory to specified directory
         os.chdir(self.directory)
 
-        #print the location of the directory
+        #print the location of the directory (just for testing)
         print("Before saving image:", os.listdir(self.directory))
 
 
         filename = task.getFileName()
         cv2.imwrite(filename, image)
+        
+        #Print the filename of the image and the location of the directory (just for testing)
         print(f"Image saved as {filename} in the directory {self.directory}")
 
 
@@ -77,7 +82,7 @@ class CommunicationThread(threading.Thread):
 
 
 class TransmissionThreadGS(threading.Thread):
-    """Class for creating the GS's transmission thread 
+    """Class for creating the Ground Stations transmission thread 
     """
 
     def __init__(self, communicationThread: CommunicationThread, group: None = None, target: Callable[..., object] | None = None, name: str | None = None, args: Iterable[Any] = ..., kwargs: Mapping[str, Any] | None = None, *, daemon: bool | None = None) -> None:
