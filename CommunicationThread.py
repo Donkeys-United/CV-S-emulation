@@ -3,10 +3,12 @@ from Task import Task
 from threading import Thread
 from MessageClasses import RequestMessage, RespondMessage, ImageDataMessage, ResponseNackMessage, ProcessedDataMessage
 from AcceptedRequestQueue import AcceptedRequestQueue
-from typing import Any, Iterable, List, Mapping
-#from TransmissionThread import TransmissionThread
-#from ListeningThread import ListeningThread
-#from TaskHandlerThread import TaskHandlerThread
+from typing import Any, Iterable, List, Mapping, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from TaskHandlerThread import TaskHandlerThread
+    from TransmissionThread import TransmissionThread
+    from ListeningThread import ListeningThread
 
 class CommunicationThread(Thread):
     """The CommunicationThread that handles incoming and outgoing messages
@@ -31,13 +33,9 @@ class CommunicationThread(Thread):
     acceptedRequestsQueue:AcceptedRequestQueue = AcceptedRequestQueue()
 
     #Threads
-    #transmissionThread:TransmissionThread
-    #listeningThreadLeft: ListeningThread
-    #listeningThreadRight: ListeningThread
-    
-    #References
-    #taskHandlerThread: TaskHandlerThread
-    
+    listeningThreadLeft: ListeningThread
+    listeningThreadRight: ListeningThread
+    taskHandlerThread: TaskHandlerThread
 
     def __init__(
             self,
@@ -50,8 +48,6 @@ class CommunicationThread(Thread):
             daemon: bool | None = None
             ) -> None:
         super().__init__(group, target, name, args, kwargs, daemon=daemon)
-        from TransmissionThread import TransmissionThread
-        from ListeningThread import ListeningThread
 
         self.taskHandlerThread = taskHandlerThread
         self.acceptedRequestsQueue = AcceptedRequestQueue()
@@ -119,7 +115,12 @@ class CommunicationThread(Thread):
             messageID = message.getTaskID()
             for task in self.taskWaitingList:
                 if task.getTaskID() == messageID:
-                    self.responseList.append(message)
+                    for response in self.responseList:
+                        if response.getTaskID() == messageID:
+                            
+                            break
+                        else:
+                            self.responseList.append(message)
                     break
                 elif task == self.taskWaitingList[-1]:
                     self.addTransmission(message=message)
