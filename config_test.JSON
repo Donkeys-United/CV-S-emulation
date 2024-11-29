@@ -1,7 +1,7 @@
 {
   "satellites": [
     {
-      "id": 1,
+      "id": 14529641688528,
       "ip_address": "192.168.1.101",
       "connections": [1, 4],
       "initial_angle": 0
