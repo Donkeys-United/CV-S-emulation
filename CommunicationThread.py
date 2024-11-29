@@ -54,6 +54,7 @@ class CommunicationThread(Thread):
         #Setup and start transmissionThread using config
         try:
             for satellites in self.config['satellites']:
+                print(f"Satellite ID: {satellites['id']}")
                 if satellites['id'] == satelliteID:
                     connections = satellites['connections']
                     break
