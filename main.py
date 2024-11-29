@@ -21,6 +21,7 @@ taskHandlerThread = TaskHandlerThread(communicationThread=communicationThread)
 
 with open(config_path, 'r') as config_file:
     loaded_config_file = json.load(config_file)
+    print(f"Config_file = {loaded_config_file}")
     communicationThread = CommunicationThread(satelliteID=satelliteID, 
                                               config=config_file,
                                               taskHandlerThread=taskHandlerThread,
