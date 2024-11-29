@@ -84,9 +84,9 @@ class CommunicationThread(threading.Thread):
     def __init__(self):
         super().__init__()
 
-        self.transmissionThread: TransmissionThread = TransmissionThread()
-        self.listeningThreadLeft = ListeningThread(port=self.LISTENING_PORT, communicationThread=self)
-        self.listeningThreadLeft.start()
+        self.transmissionThread = TransmissionThread(port=self.TRANSMISSION_PORT, communicationThread=self)
+        self.listeningThread = ListeningThread(port=self.LISTENING_PORT, communicationThread=self)
+        self.listeningThread.start()
         self.transmissionThread.start()
         
 
