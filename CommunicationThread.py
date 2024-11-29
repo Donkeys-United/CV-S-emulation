@@ -32,11 +32,6 @@ class CommunicationThread(Thread):
     config: dict
     acceptedRequestsQueue:AcceptedRequestQueue = AcceptedRequestQueue()
 
-    #Threads
-    listeningThreadLeft: ListeningThread
-    listeningThreadRight: ListeningThread
-    taskHandlerThread: TaskHandlerThread
-
     def __init__(
             self,
             satelliteID: int,
@@ -69,7 +64,7 @@ class CommunicationThread(Thread):
         except:
             raise ValueError('Config file is not correct')
         self.acceptedRequestsQueue.start()
-        self.transmissionThread = TransmissionThread(
+        self.transmissionThread: TransmissionThread = TransmissionThread(
             satelliteID=satelliteID,
             neighbourSatelliteIDs=connections,
             neighbourSatelliteAddrs=connectionsIP,
@@ -78,13 +73,13 @@ class CommunicationThread(Thread):
         self.transmissionThread.start()
         
         #Initiate listeningThreads
-        self.listeningThreadLeft = ListeningThread(port=self.LISTENING_PORTS_LEFT, communicationThread=self)
-        self.listeningThreadRight = ListeningThread(port=self.LISTENING_PORTS_RIGHT, communicationThread=self)
+        self.listeningThreadLeft: ListeningThread = ListeningThread(port=self.LISTENING_PORTS_LEFT, communicationThread=self)
+        self.listeningThreadRight: ListeningThread = ListeningThread(port=self.LISTENING_PORTS_RIGHT, communicationThread=self)
         self.listeningThreadLeft.start()
         self.listeningThreadRight.start()
 
         #Create reference to TaskHandlerThread
-        self.taskHandlerThread = taskHandlerThread
+        self.taskHandlerThread: TaskHandlerThread = taskHandlerThread
             
 
 
