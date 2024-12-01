@@ -7,7 +7,6 @@ from typing import Any, Iterable, List, Mapping, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from TaskHandlerThread import TaskHandlerThread
-    from TransmissionThread import TransmissionThread
     from ListeningThread import ListeningThread
 
 class CommunicationThread(Thread):
@@ -43,7 +42,7 @@ class CommunicationThread(Thread):
             daemon: bool | None = None
             ) -> None:
         super().__init__(group, target, name, args, kwargs, daemon=daemon)
-
+        from TransmissionThread import TransmissionThread
         self.taskHandlerThread = taskHandlerThread
         self.acceptedRequestsQueue = AcceptedRequestQueue()
         self.acceptedRequestsQueue.start()
