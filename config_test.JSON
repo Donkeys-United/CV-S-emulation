@@ -51,5 +51,6 @@
 
     }
   ],
-  "ground_station_ip": "192.168.1.105"
+  "ground_station_ip": "192.168.1.105",
+  "altitude": 200000
 }
