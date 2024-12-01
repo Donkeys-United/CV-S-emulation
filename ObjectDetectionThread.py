@@ -1,11 +1,13 @@
 from ultralytics import YOLO
+from torch import device
 from MessageClasses import ImageDataMessage, ProcessedDataMessage
 from CommunicationThread import CommunicationThread
 from TaskHandlerThread import TaskHandlerThread
 import os
 from pathlib import Path
-import Task
+from Task import Task
 import threading
+import subprocess
 
 
 class ObjectDetectionThread(threading.Thread):
@@ -15,6 +17,9 @@ class ObjectDetectionThread(threading.Thread):
     def __init__(self, PATH_TO_MODEL, communicationThread: CommunicationThread, taskHandlerThread: TaskHandlerThread):
         super().__init__()
         self.PATH_TO_MODEL = PATH_TO_MODEL
+        self.FREQUENCY_PATH = "/sys/devices/platform/17000000.gpu/devfreq/17000000.gpu/"
+        self.SUDO_PASSWORD = "1234"
+        self.AVAILABLE_FREQUENCIES = [306000000, 408000000, 510000000, 612000000,642750000]
         self.model = self.loadModel()
         self.communicationThread = communicationThread
         self.taskHandlerThread = taskHandlerThread
@@ -29,9 +34,10 @@ class ObjectDetectionThread(threading.Thread):
             YOLO: a YOLO object instance, using the model specified by PATH_TO_MODEL.
         """
         model = YOLO(self.PATH_TO_MODEL)
-        return model
+        device = device("cuda")
+        return model.to(device)
     
-    def runInference(self, imageObject: Task):
+    def runInference(self, TaskFrequencyList: list[Task, float]):
         """Method used for running inference on a specific imageDataMessage object instance - which the satellite would have received or captured itself.
 
         Args:
@@ -40,7 +46,8 @@ class ObjectDetectionThread(threading.Thread):
         Returns:
             ProcessedDataMessage: a object instance, ready to be sent to the ground station, with the results of the inference.
         """
-        image = imageObject.getImage()
+        image = TaskFrequencyList[0].getImage()
+        self.changeFrequency(TaskFrequencyList[1])
         results = self.model.predict(image, 
                                     save = True, 
                                     show_labels = True, 
@@ -63,6 +70,16 @@ class ObjectDetectionThread(threading.Thread):
         for result in len(results):
             finished_message_list.append(ProcessedDataMessage(image_name_list[result], imageObject.getLocation(), imageObject.getUnixTimeStamp(), imageObject.getFileName(), ((bounding_box_xyxy[result][0], bounding_box_xyxy[result][1]),(bounding_box_xyxy[result][2], bounding_box_xyxy[result][4]))))
         return finished_message_list
+    
+    def changeFrequency(self, frequency: float) -> None:
+        """This function fixes the gpu at the closest frequency available to the input frequency
+        Args:
+            frequency (float): The desired frequency
+        """
+        frequencies = [f for f in self.AVAILABLE_FREQUENCIES if f >= frequency]
+        subprocess.run(
+            f'echo {self.SUDO_PASSWORD} | sudo -S su -c "cd {self.FREQUENCY_PATH} && echo {min(frequencies)} | tee min_freq max_freq"'
+        )
 
     def sendProcessedDataMessage(self, message_list: list[ProcessedDataMessage]):
         """Simple method for moving the PrcessedDataMessage object instance to the transmission queue in the CommunicationThread object instance.
