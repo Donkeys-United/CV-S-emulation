@@ -102,6 +102,8 @@ class ObjectDetectionThread(threading.Thread):
                 processedDataList = self.runInference(self.taskHandlerThread.__allocatedTasks.nextTask())
                 self.sendProcessedDataMessage(processedDataList)
             else:
+                #Set the gpu frequency to smallest possible frequency to save on power
+                self.changeFrequency(self.AVAILABLE_FREQUENCIES[0])
                 self.no_tasks.wait(1)
 
 
