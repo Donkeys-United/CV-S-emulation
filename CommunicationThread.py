@@ -64,9 +64,9 @@ class CommunicationThread(Thread):
                     connectionsIP.append(satellites['ip_address'])
         except:
             raise ValueError('Config file is not correct')
-        self.acceptedRequestsQueue.start()
+        
         self.transmissionThread: TransmissionThread = TransmissionThread(
-            satelliteID=satelliteID,
+            communicationThread=self,
             neighbourSatelliteIDs=connections,
             neighbourSatelliteAddrs=connectionsIP,
             groundstationAddr=config['ground_station_ip']
