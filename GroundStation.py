@@ -7,6 +7,7 @@ from Task import Task
 from typing import TYPE_CHECKING
 import socket
 from pickle import loads, dumps
+import uuid
 
 if TYPE_CHECKING:
     from TaskHandlerThread import TaskHandlerThread
@@ -14,14 +15,15 @@ if TYPE_CHECKING:
     from ListeningThread import ListeningThread
 
 
-class GroundStation:
+class GroundStation():
     
-    #Change to your prefered directory location for the processed images and unprocessed images
+    # Change to your preferred directory location for the processed images and unprocessed images
     directoryProcessed = "/Users/tobiaslundgaard/Desktop/Semester5"
     directoryUnProcessed = "/Users/tobiaslundgaard/Desktop/Semester5"
 
-    def __init__(self):
-        self.transmissionThread = None
+    def __init__(self, transmissionThread: 'TransmissionThread'):
+        # Make sure transmissionThread is set during initialization
+        self.transmissionThread = transmissionThread
 
     def saveProcessedImage(self, task: Task):
         image = cv2.imread(task.getImage())
@@ -37,13 +39,22 @@ class GroundStation:
         cv2.imwrite(filename, image)
         print(f"Unprocessed image saved as {filename}")
 
-    def sendRespond(self, task: Task, message: Message):
+    def sendRespond(self, message: Message):
+        print("I AM HERE")
         respond_message = RespondMessage(
-            taskID=task.getTaskID(),
-            source=task.getSource(),
-            firstHopID=message.lastSenderID
+            taskID = message.getTaskID(),  # Corrected method usage
+            source = uuid.getnode(),
+            firstHopID = message.lastSenderID
         )
-        self.transmissionThread.sendTransmission(respond_message)
+        print("I AM HERE2")
+        if self.transmissionThread:
+            print("I AM HERE3")
+            self.transmissionThread.sendTransmission(respond_message)
+            print(self.transmissionThread.sendTransmission(respond_message))
+            print("I AM HERE4")
+        else:
+            print("Error: transmissionThread is not initialized.")
+            print("I AM HERE5")
 
 
 class CommunicationThread(threading.Thread):
@@ -52,16 +63,14 @@ class CommunicationThread(threading.Thread):
 
     def __init__(self):
         super().__init__()
-        self.groundStation = GroundStation()
         self.transmissionThread = TransmissionThread(port=self.TRANSMISSION_PORT, communicationThread=self)
+        self.groundStation = GroundStation(transmissionThread=self.transmissionThread)  # Pass transmissionThread
         self.listeningThread = ListeningThread(port=self.LISTENING_PORT, communicationThread=self, groundStation=self.groundStation)
 
     def run(self):
-        print("CommunicationThread started")
+        # Start both threads
         self.listeningThread.start()
-        print("ListeningThread started from CommunicationThread")
         self.transmissionThread.start()
-        print("TransmissionThread started from CommunicationThread")
 
 
 class ListeningThread(threading.Thread):
@@ -79,11 +88,12 @@ class ListeningThread(threading.Thread):
             try:
                 data, _ = self.connection.recvfrom(4096)
                 message = loads(data)
+                print(f"Received message: {message}")
                 if isinstance(message, RequestMessage):
-                    self.groundStation.sendRespond(message.task, message)
-                    self.groundStation.saveUnProcessedImage(message.task)
+                    self.groundStation.sendRespond(message)
+                    self.groundStation.saveUnProcessedImage(message)
                 elif isinstance(message, ImageDataMessage):
-                    self.groundStation.saveProcessedImage(message.task)
+                    self.groundStation.saveProcessedImage(message)
                 else:
                     print("Unknown message received.")
             except Exception as e:
@@ -112,12 +122,14 @@ class TransmissionThread(threading.Thread):
 
     def run(self):
         while not self._stop_event.is_set():
-            pass  
+            pass  # Placeholder for future logic
 
     def stop(self):
         self._stop_event.set()
 
 
 if __name__ == "__main__":
+    print("Starting CommunicationThread...")
     comm_thread = CommunicationThread()
     comm_thread.start()
+    print("CommunicationThread has been started")
