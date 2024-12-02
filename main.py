@@ -6,7 +6,9 @@ from ObjectDetectionThread import ObjectDetectionThread
 from OrbitalPositionThread import OrbitalPositionThread
 from getmac import get_mac_address
 from pathlib import Path
-import json 
+import json
+import pstats
+
 
 satelliteID = int(get_mac_address("usb0").replace(":",""),16)
 print(satelliteID)
@@ -23,6 +25,10 @@ with open(config_path, 'r') as config_file:
     loaded_config_file = json.load(config_file)
     print(f"Config_file = {loaded_config_file}")
 
+objectDetectionThread = ObjectDetectionThread(cv_model_path, 
+                                              communicationThread = communicationThread, 
+                                              taskHandlerThread = taskHandlerThread)
+
 communicationThread = CommunicationThread(satelliteID=satelliteID, 
                                               config=loaded_config_file,
                                               taskHandlerThread=taskHandlerThread,
@@ -37,9 +43,6 @@ missionThread = MissionThread(configPath=config_path,
                               taskHandlerThread=taskHandlerThread,
                               imagePath=image_path)
 
-objectDetectionThread = ObjectDetectionThread(cv_model_path, 
-                                              communicationThread = communicationThread, 
-                                              taskHandlerThread = taskHandlerThread)
 print("Startin orbitlal thread")
 orbitalPositionThread.start()
 print("Starting taskhandler")
@@ -48,4 +51,3 @@ print("Starting mission thread")
 missionThread.start()
 print("Starting ObjectDetection thread")
 objectDetectionThread.start()
-

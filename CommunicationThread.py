@@ -76,6 +76,7 @@ class CommunicationThread(Thread):
             )
         self.transmissionThread.start()
         
+
         #Initiate listeningThreads
         self.listeningThreadLeft: ListeningThread = ListeningThread(port=self.LISTENING_PORTS_LEFT, communicationThread=self)
         self.listeningThreadRight: ListeningThread = ListeningThread(port=self.LISTENING_PORTS_RIGHT, communicationThread=self)

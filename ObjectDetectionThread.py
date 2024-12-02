@@ -8,6 +8,9 @@ from pathlib import Path
 from Task import Task
 import threading
 import subprocess
+import cProfile
+import pstats
+import torch
 
 
 class ObjectDetectionThread(threading.Thread):
@@ -25,6 +28,8 @@ class ObjectDetectionThread(threading.Thread):
         self.taskHandlerThread = taskHandlerThread
         self._stop_event = threading.Event()
         self.no_tasks = threading.Event()
+        dummy_input = torch.rand(1, 3, 640, 640).to('cuda')
+        self.model.predict(dummy_input)
     
     def loadModel(self):
         """Method which is automatically called when ObjectDetectionThread 
@@ -50,11 +55,18 @@ class ObjectDetectionThread(threading.Thread):
         image = imageObject.getImage()
         #self.changeFrequency(TaskFrequencyList[1])
         print("Now applying model")
-        results = self.model.predict(image, 
-                                    save = True, 
-                                    show_labels = True, 
-                                    show_boxes = True, 
-                                    show_conf = True)
+        with cProfile.Profile() as pr:
+            results = self.model.predict(image, 
+                                        save = True, 
+                                        show_labels = True, 
+                                        show_boxes = True, 
+                                        show_conf = True)
+        pr.create_stats()
+        pr.dump_stats('object_detection_profile.prof')
+        stats = pstats.Stats('object_detection_profile.prof')
+        stats.strip_dirs()
+        stats.sort_stats('cumulative')
+        stats.print_stats(10)
         bounding_boxes = [result.boxes for result in results]
         bounding_box_xyxy = [box.xyxy for box in bounding_boxes]
 
@@ -71,7 +83,12 @@ class ObjectDetectionThread(threading.Thread):
 
         finished_message_list = []
         for result in range(len(results)):
-            finished_message_list.append(ProcessedDataMessage(image_name_list[result], imageObject.getLocation(), imageObject.getUnixTimestamp(), imageObject.getFileName(), ((bounding_box_xyxy[result][0], bounding_box_xyxy[result][1]),(bounding_box_xyxy[result][2], bounding_box_xyxy[result][4]))))
+            finished_message_list.append(ProcessedDataMessage(image_name_list[result], 
+                                                              imageObject.getLocation(), 
+                                                              imageObject.getUnixTimestamp(), 
+                                                              imageObject.getFileName(), 
+                                                              ((bounding_box_xyxy[result][0][0], bounding_box_xyxy[result][0][1]),(bounding_box_xyxy[result][0][2], bounding_box_xyxy[result][0][3])), 
+                                                              firstHopID=1))
         return finished_message_list
     
     def changeFrequency(self, frequency: float) -> None:
