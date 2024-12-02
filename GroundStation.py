@@ -1,10 +1,12 @@
-import random, threading, cv2, os
+import random
+import threading
+import cv2
+import os
 from MessageClasses import *
 from Task import Task
-from typing import Any, Iterable, List, Mapping, TYPE_CHECKING
+from typing import TYPE_CHECKING
 import socket
 from pickle import loads, dumps
-
 
 if TYPE_CHECKING:
     from TaskHandlerThread import TaskHandlerThread
@@ -12,123 +14,80 @@ if TYPE_CHECKING:
     from ListeningThread import ListeningThread
 
 
-class GroundStation(threading.Thread):
-
-    #Change to your prefered directory location for the processed images
+class GroundStation:
+    
+    #Change to your prefered directory location for the processed images and unprocessed images
     directoryProcessed = "/Users/tobiaslundgaard/Desktop/Semester5"
     directoryUnProcessed = "/Users/tobiaslundgaard/Desktop/Semester5"
 
     def __init__(self):
-        super().__init__()
-        
+        self.transmissionThread = None
 
     def saveProcessedImage(self, task: Task):
-        """
-        Saves the image gotten from the satellites to a specified file location
-
-        Args:
-            directory (str): The directory the files should be saved
-            image (jpg): The image gotten from the ProcessedImageTask Message
-        """
         image = cv2.imread(task.getImage())
-
-        # Change the current directory to specified directory
         os.chdir(self.directoryProcessed)
-
-        #print the location of the directory (just for testing)
-        print("Before saving image:", os.listdir(self.directoryProcessed))
-
-
         filename = task.getFileName()
         cv2.imwrite(filename, image)
-        
-        #Print the filename of the image and the location of the directory (just for testing)
-        print(f"Image saved as {filename} in the directory {self.directoryProcessed}")
-
+        print(f"Processed image saved as {filename}")
 
     def saveUnProcessedImage(self, task: Task):
         image = cv2.imread(task.getImage())
-
-        # Change the current directory to specified directory
         os.chdir(self.directoryUnProcessed)
-
-        #print the location of the directory (just for testing)
-        print("Before saving image:", os.listdir(self.directoryUnProcessed))
-
-
         filename = task.getFileName()
         cv2.imwrite(filename, image)
-        
-        #Print the filename of the image and the location of the directory (just for testing)
-        print(f"Image saved as {filename} in the directory {self.directoryUnProcessed}")
-
+        print(f"Unprocessed image saved as {filename}")
 
     def sendRespond(self, task: Task, message: Message):
-        """
-        Method to send a respond to other satellites telling them they can perform the requested task
-        """
-        sendRespondMessage = RespondMessage(
+        respond_message = RespondMessage(
             taskID=task.getTaskID(),
             source=task.getSource(),
-            firstHopID = message.lastSenderID
+            firstHopID=message.lastSenderID
         )
-        self.communicationThread.addTransmission(sendRespondMessage)
+        self.transmissionThread.sendTransmission(respond_message)
 
 
 class CommunicationThread(threading.Thread):
+    LISTENING_PORT = 4500
+    TRANSMISSION_PORT = 4600
 
-    #Constants
-    LISTENING_PORT: int = 4500
-    TRANSMISSION_PORT: int = 4600
-  
     def __init__(self):
         super().__init__()
-
+        self.groundStation = GroundStation()
         self.transmissionThread = TransmissionThread(port=self.TRANSMISSION_PORT, communicationThread=self)
-        self.listeningThread = ListeningThread(port=self.LISTENING_PORT, communicationThread=self)
-        self.listeningThread.start()
-        self.transmissionThread.start()
-        
+        self.listeningThread = ListeningThread(port=self.LISTENING_PORT, communicationThread=self, groundStation=self.groundStation)
 
-        
-    def run():
-        pass
+    def run(self):
+        print("CommunicationThread started")
+        self.listeningThread.start()
+        print("ListeningThread started from CommunicationThread")
+        self.transmissionThread.start()
+        print("TransmissionThread started from CommunicationThread")
 
 
 class ListeningThread(threading.Thread):
-    """Class for Listening Thread. Used for listening on a specific port for incoming messages.
-    """
-    HOSTNAME = socket.gethostname()
-    IP_ADDR = socket.gethostbyname(HOSTNAME)
-
-    def __init__(self, port: int, communicationThread: CommunicationThread):
+    def __init__(self, port: int, communicationThread: CommunicationThread, groundStation: GroundStation):
         super().__init__()
         self.port = port
         self.communicationThread = communicationThread
+        self.groundStation = groundStation
         self._stop_event = threading.Event()
-        self.HOSTNAME
-        self.IP_ADDR
-        self.counter = 0
-    
+        self.connection = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.connection.bind((socket.gethostname(), self.port))
+
     def activeListening(self):
-        """Method for making the thread listen to the specific port.
-        """
-        connection = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        connection.bind((self.IP_ADDR, self.port))
         while not self._stop_event.is_set():
-            connection.listen()
-            incoming_message = connection.accept()
-            unpickled_message = loads(incoming_message)
-            if unpickled_message == isinstance(unpickled_message, RequestMessage):
-                   GroundStation.sendRespond()
-                   GroundStation.saveUnProcessedImage(unpickled_message)
-                   self.counter += 1   
-            elif unpickled_message == isinstance(unpickled_message, ImageDataMessage):
-                #Add try except later
-                GroundStation.saveProcessedImage(unpickled_message)
-                print("Filed saved")
-            else:
-                pass
+            try:
+                data, _ = self.connection.recvfrom(4096)
+                message = loads(data)
+                if isinstance(message, RequestMessage):
+                    self.groundStation.sendRespond(message.task, message)
+                    self.groundStation.saveUnProcessedImage(message.task)
+                elif isinstance(message, ImageDataMessage):
+                    self.groundStation.saveProcessedImage(message.task)
+                else:
+                    print("Unknown message received.")
+            except Exception as e:
+                print(f"Error in listening thread: {e}")
 
     def run(self):
         self.activeListening()
@@ -138,25 +97,27 @@ class ListeningThread(threading.Thread):
 
 
 class TransmissionThread(threading.Thread):
-    """Class for creating the transmission thread.
-    """
-
-    HOSTNAME = socket.gethostname()
-    IP_ADDR = socket.gethostbyname(HOSTNAME)
-    port = 6969 # Port selected for outgoing comms.
-
-
     def __init__(self, port: int, communicationThread: CommunicationThread):
         super().__init__()
+        self.port = port
         self.communicationThread = communicationThread
         self._stop_event = threading.Event()
-        self.HOSTNAME
-        self.IP_ADDR
-        
-        
-    def sendTransmission(self):
-        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as connection:
-            connection.bind((self.IP_ADDR, self.port))
+        self.connection = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-            while not self._stop_event.is_set():
-                pass
+    def sendTransmission(self, message):
+        try:
+            self.connection.sendto(dumps(message), (socket.gethostname(), self.port))
+        except Exception as e:
+            print(f"Error in transmission: {e}")
+
+    def run(self):
+        while not self._stop_event.is_set():
+            pass  
+
+    def stop(self):
+        self._stop_event.set()
+
+
+if __name__ == "__main__":
+    comm_thread = CommunicationThread()
+    comm_thread.start()
