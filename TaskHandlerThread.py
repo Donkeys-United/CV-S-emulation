@@ -14,6 +14,7 @@ class TaskHandlerThread(threading.Thread):
         self.allocatedTasks = PriorityQueue()
         self.__unallocatedTasks = PriorityQueue()
         self.communicationThread = communicationThread
+        self.wait = threading.Event()
 
 
     def run(self):
@@ -30,7 +31,7 @@ class TaskHandlerThread(threading.Thread):
                 else:
                     self.sendRequest(self.__unallocatedTasks.nextTask())
                     self.communicationThread.giveTask(self.__unallocatedTasks.nextTask())
-            time.sleep(1)
+            self.wait.wait(1)
 
 
 

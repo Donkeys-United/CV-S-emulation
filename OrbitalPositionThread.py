@@ -1,4 +1,4 @@
-from threading import Thread
+from threading import Thread, Event
 import json
 import numpy as np
 from uuid import getnode
@@ -46,6 +46,8 @@ class OrbitalPositionThread(Thread):
         self.neighbourSatDist = self.calculateDistance(temp_list[0], self.orbitalRadius ,temp_list[1], self.orbitalRadius)
 
         self.tickRate = tickRate
+
+        self.wait = Event()
         
     def run(self) -> None:
         """Main loop of the orbital position thread
@@ -63,7 +65,7 @@ class OrbitalPositionThread(Thread):
             loopTimeTaken = loopEndTime - loopStartTime
             
             if loopTimeTaken < self.tickRate:
-                sleep(self.tickRate - loopTimeTaken)
+                self.wait.wait(self.tickRate - loopTimeTaken)
     
     def calculateOrbitalPeriodSeconds(self, altitude: float) -> float:
         """Calculates the orbital period

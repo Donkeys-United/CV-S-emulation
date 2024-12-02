@@ -35,7 +35,7 @@ class ObjectDetectionThread(threading.Thread):
         """
         model = YOLO(self.PATH_TO_MODEL)
         cuda_device = device("cuda")
-        return model#.to(cuda_device)
+        return model.to(cuda_device)
     
     def runInference(self, TaskFrequencyList: list[Task, float]):
         """Method used for running inference on a specific imageDataMessage object instance - which the satellite would have received or captured itself.
@@ -46,8 +46,10 @@ class ObjectDetectionThread(threading.Thread):
         Returns:
             ProcessedDataMessage: a object instance, ready to be sent to the ground station, with the results of the inference.
         """
-        image = TaskFrequencyList[0].getImage()
+        imageObject = TaskFrequencyList[0]
+        image = imageObject.getImage()
         #self.changeFrequency(TaskFrequencyList[1])
+        print("Now applying model")
         results = self.model.predict(image, 
                                     save = True, 
                                     show_labels = True, 
@@ -56,20 +58,20 @@ class ObjectDetectionThread(threading.Thread):
         bounding_boxes = [result.boxes for result in results]
         bounding_box_xyxy = [box.xyxy for box in bounding_boxes]
 
-        print(bounding_boxes)
-        save_dir = results[0].save_dir
+        print(bounding_box_xyxy)
+        save_dir = Path(results[0].save_dir)
 
         image_name_list = []
 
         # Rename saved files (example logic)
         for image_path in Path(save_dir).glob("*.jpg"):  # Adjust extension if not .jpg
             new_name = f"processed_{image_path.stem}.jpg"
-            image_name_list.append(f"{save_dir}/{new_name}")
-            os.rename(image_path, save_dir / new_name)
+            image_name_list.append(save_dir / new_name)
+            image_path.rename(save_dir / new_name)
 
         finished_message_list = []
-        for result in len(results):
-            finished_message_list.append(ProcessedDataMessage(image_name_list[result], imageObject.getLocation(), imageObject.getUnixTimeStamp(), imageObject.getFileName(), ((bounding_box_xyxy[result][0], bounding_box_xyxy[result][1]),(bounding_box_xyxy[result][2], bounding_box_xyxy[result][4]))))
+        for result in range(len(results)):
+            finished_message_list.append(ProcessedDataMessage(image_name_list[result], imageObject.getLocation(), imageObject.getUnixTimestamp(), imageObject.getFileName(), ((bounding_box_xyxy[result][0], bounding_box_xyxy[result][1]),(bounding_box_xyxy[result][2], bounding_box_xyxy[result][4]))))
         return finished_message_list
     
     def changeFrequency(self, frequency: float) -> None:
@@ -102,7 +104,7 @@ class ObjectDetectionThread(threading.Thread):
             if not self.taskHandlerThread.allocatedTasks.isEmpty():
                 print("Running Object detection")
                 processedDataList = self.runInference(self.taskHandlerThread.allocatedTasks.nextTask())
-                self.sendProcessedDataMessage(processedDataList)
+                #self.sendProcessedDataMessage(processedDataList)
             else:
                 #Set the gpu frequency to smallest possible frequency to save on power
                 #self.changeFrequency(self.AVAILABLE_FREQUENCIES[0])
@@ -112,3 +114,15 @@ class ObjectDetectionThread(threading.Thread):
 
     def stop(self):
         self._stop_event.set()
+        
+if __name__ == "__main__":
+    import cv2
+    current_dir = Path(__file__).parent.resolve()
+    cv_model_path = current_dir / "models" / "yolov8m_best.pt"
+    taskHandler = TaskHandlerThread(None) 
+    objectThread = ObjectDetectionThread(cv_model_path,None,taskHandler)
+    task = Task(1,1,10)
+    image_dir = current_dir / "images" / "GE_1_jpg.rf.4247084b7a777fee8a12057bce802026.jpg"
+    task.appendImage("GE_1_jpg.rf.4247084b7a777fee8a12057bce802026.jpg",cv2.imread(image_dir), 0 + 0j)
+    taskHandler.allocatedTasks.addTaskToQueue(task)
+    objectThread.start()
