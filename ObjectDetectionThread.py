@@ -100,11 +100,13 @@ class ObjectDetectionThread(threading.Thread):
         # Det her skal ændres, således at der er en metode i stedet for at læse direkte fra __allocatedTasks
         while not self._stop_event.is_set():
             if not self.taskHandlerThread.allocatedTasks.isEmpty():
+                print("Running Object detection")
                 processedDataList = self.runInference(self.taskHandlerThread.allocatedTasks.nextTask())
                 self.sendProcessedDataMessage(processedDataList)
             else:
                 #Set the gpu frequency to smallest possible frequency to save on power
                 #self.changeFrequency(self.AVAILABLE_FREQUENCIES[0])
+                print("No tasks")
                 self.no_tasks.wait(1)
 
 

@@ -20,7 +20,7 @@ class OrbitalPositionThread(Thread):
     orbitalRadius: float
     tickRate: float
     
-    def __init__(self, config: dict, tickRate: float):
+    def __init__(self, config: dict, tickRate: float, satelliteID):
         """Init function of the orbital thread class
 
         Args:
@@ -30,7 +30,7 @@ class OrbitalPositionThread(Thread):
         super().__init__()
         config_json  = config
         
-        self.satelliteID = getnode()
+        self.satelliteID = satelliteID
         
         for i in config_json["satellites"]:
             self.currentAngle[i["id"]] = i["initial_angle"]

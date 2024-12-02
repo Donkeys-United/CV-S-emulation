@@ -26,10 +26,10 @@ class TaskHandlerThread(threading.Thread):
                 if allocateToSelf == True:
                     task = self.__unallocatedTasks.nextTask()
                     self.allocatedTasks.addTaskToQueue(task[0])
+                    self.allocatedTasks.printQueue()
                 else:
                     self.sendRequest(self.__unallocatedTasks.nextTask())
                     self.communicationThread.giveTask(self.__unallocatedTasks.nextTask())
-            self.__unallocatedTasks.printQueue()
             time.sleep(1)
 
 
