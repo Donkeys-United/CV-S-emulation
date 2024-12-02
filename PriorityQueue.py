@@ -8,7 +8,8 @@ class PriorityQueue:
         None:
     
     """
-    __queue:List[list[Task, float]] = []
+    def __init__(self):
+        self.__queue: list[list[Task, float]] = []
 
     def addTaskToQueue(self, task:Task, frequency: float = 0.0) -> None:
         """Method that adds task to queue
