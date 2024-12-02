@@ -23,10 +23,10 @@ with open(config_path, 'r') as config_file:
     loaded_config_file = json.load(config_file)
     print(f"Config_file = {loaded_config_file}")
     communicationThread = CommunicationThread(satelliteID=satelliteID, 
-                                              config=config_file,
+                                              config=loaded_config_file,
                                               taskHandlerThread=taskHandlerThread,
                                               )
-    orbitalPositionThread = OrbitalPositionThread(config=config_file,
+    orbitalPositionThread = OrbitalPositionThread(config=loaded_config_file,
                                                   tickRate=1.0)
 
 missionThread = MissionThread(configPath=config_path,

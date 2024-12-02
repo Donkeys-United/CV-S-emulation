@@ -7,8 +7,8 @@ from typing import Any, Iterable, List, Mapping, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from TaskHandlerThread import TaskHandlerThread
-    from TransmissionThread import TransmissionThread
-    from ListeningThread import ListeningThread
+    #from TransmissionThread import TransmissionThread
+    #from ListeningThread import ListeningThread
 
 class CommunicationThread(Thread):
     """The CommunicationThread that handles incoming and outgoing messages
@@ -54,7 +54,6 @@ class CommunicationThread(Thread):
         #Setup and start transmissionThread using config
         try:
             for satellites in self.config['satellites']:
-                print(f"Satellite ID: {satellites['id']}")
                 if satellites['id'] == satelliteID:
                     connections = satellites['connections']
                     break
@@ -64,9 +63,11 @@ class CommunicationThread(Thread):
                     connectionsIP.append(satellites['ip_address'])
         except:
             raise ValueError('Config file is not correct')
-        self.acceptedRequestsQueue.start()
+        #self.acceptedRequestsQueue.start()
+        print(f"connections = {connections}")
+        from TransmissionThread import TransmissionThread
         self.transmissionThread: TransmissionThread = TransmissionThread(
-            satelliteID=satelliteID,
+            communicationThread=self,
             neighbourSatelliteIDs=connections,
             neighbourSatelliteAddrs=connectionsIP,
             groundstationAddr=config['ground_station_ip']
@@ -74,6 +75,7 @@ class CommunicationThread(Thread):
         self.transmissionThread.start()
         
         #Initiate listeningThreads
+        from ListeningThread import ListeningThread
         self.listeningThreadLeft: ListeningThread = ListeningThread(port=self.LISTENING_PORTS_LEFT, communicationThread=self)
         self.listeningThreadRight: ListeningThread = ListeningThread(port=self.LISTENING_PORTS_RIGHT, communicationThread=self)
         self.listeningThreadLeft.start()
