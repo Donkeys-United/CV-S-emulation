@@ -4,12 +4,10 @@ from MessageClasses import ImageDataMessage, ProcessedDataMessage
 from CommunicationThread import CommunicationThread
 from TaskHandlerThread import TaskHandlerThread
 import os
-from pathlib import Path
+from pathlib import Path, PurePath
 from Task import Task
 import threading
 import subprocess
-import cProfile
-import pstats
 import torch
 
 
@@ -55,31 +53,31 @@ class ObjectDetectionThread(threading.Thread):
         image = imageObject.getImage()
         #self.changeFrequency(TaskFrequencyList[1])
         print("Now applying model")
-        with cProfile.Profile() as pr:
-            results = self.model.predict(image, 
-                                        save = True, 
-                                        show_labels = True, 
-                                        show_boxes = True, 
-                                        show_conf = True)
-        pr.create_stats()
-        pr.dump_stats('object_detection_profile.prof')
-        stats = pstats.Stats('object_detection_profile.prof')
-        stats.strip_dirs()
-        stats.sort_stats('cumulative')
-        stats.print_stats(10)
+        results = self.model.predict(image, 
+                                    save = True, 
+                                    show_labels = True, 
+                                    show_boxes = True, 
+                                    show_conf = True)
         bounding_boxes = [result.boxes for result in results]
         bounding_box_xyxy = [box.xyxy for box in bounding_boxes]
 
         print(bounding_box_xyxy)
+        bounding_box_list = []
+        for i in range(len(bounding_box_xyxy[0])):
+            bounding_box_list.append([(bounding_box_xyxy[0][i][0], bounding_box_xyxy[0][i][1]),(bounding_box_xyxy[0][i][2], bounding_box_xyxy[0][i][3])])
+
         save_dir = Path(results[0].save_dir)
 
         image_name_list = []
 
+        image_file_name = PurePath(imageObject.getFileName()).name
+
         # Rename saved files (example logic)
         for image_path in Path(save_dir).glob("*.jpg"):  # Adjust extension if not .jpg
-            new_name = f"processed_{image_path.stem}.jpg"
-            image_name_list.append(save_dir / new_name)
-            image_path.rename(save_dir / new_name)
+            if not image_path.name.startswith("processed_"):
+                new_name = f"processed_{image_file_name}"
+                image_name_list.append(save_dir / new_name)
+                image_path.rename(save_dir / new_name)
 
         finished_message_list = []
         for result in range(len(results)):
@@ -87,7 +85,7 @@ class ObjectDetectionThread(threading.Thread):
                                                               imageObject.getLocation(), 
                                                               imageObject.getUnixTimestamp(), 
                                                               imageObject.getFileName(), 
-                                                              ((bounding_box_xyxy[result][0][0], bounding_box_xyxy[result][0][1]),(bounding_box_xyxy[result][0][2], bounding_box_xyxy[result][0][3])), 
+                                                              bounding_box_list,
                                                               firstHopID=1))
         return finished_message_list
     
