@@ -13,7 +13,7 @@ import threading
 
 # Configure logging 
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
     handlers=[
         logging.FileHandler("task_logger.log"),     # Save logs into a file
@@ -104,30 +104,34 @@ class MissionThread(threading.Thread):
         try: 
             logging.info("Starting mission thread")
             while True:
-                for mission in self.myMissions:
-                    logging.debug("Processing mission: %s", mission)
-                    satellite_id = mission.get("satellite_id")
-                    location_radian = mission.get("location_radian")
-                    orbit_number = mission.get("orbit_number")
-                    pictures_number = mission.get("pictures_number", 0)
-                    time_limit = mission.get("time_limit", 0)
+                for i in range(len(self.myMissions)):
+                    logging.info("Processing mission: %s", self.myMissions[i])
+                    
+                    location_radian = self.myMissions[i].get("location_radian")
+                    orbit_number = self.myMissions[i].get("orbit_number")
+                    if self.orbitalPosistionThread.canExecuteMission(location_radian, orbit_number):
+                        satellite_id = self.myMissions[i].get("satellite_id")
+                        pictures_number = self.myMissions[i].get("pictures_number", 0)
+                        time_limit = self.myMissions[i].get("time_limit", 0)
 
-                    if None in (satellite_id, location_radian, orbit_number, pictures_number, time_limit):
-                        logging.error("Invalid mission data: %s", mission)
-                        continue
+                        if None in (satellite_id, location_radian, orbit_number, pictures_number, time_limit):
+                            logging.error("Invalid mission data: %s", self.myMissions[i])
+                            continue
 
-                    imageList = np.random.choice(self.files, pictures_number, replace = True) #replace change to false, when there is enough images
-                    logging.debug("Selected images: %s", imageList)
-                    for image in imageList:
-                        # Load the image
-                        file = os.path.join(self.IMAGEPATH, image)
-                        task = self.__createTask(self.satelliteID, time_limit, file, location_radian)
+                        imageList = np.random.choice(self.files, pictures_number, replace = True) #replace change to false, when there is enough images
+                        logging.debug("Selected images: %s", imageList)
+                        for image in imageList:
+                            # Load the image
+                            file = os.path.join(self.IMAGEPATH, image)
+                            task = self.__createTask(time_limit, file, location_radian)
 
-                        self.taskHandlerThread.appendUnallocatedTask(task)
+                            self.taskHandlerThread.appendUnallocatedTask(task)
 
                     
-                    logging.info("Mission completed: %s", mission)
-                    time.sleep(2) #sleep for 2 sec
+                        logging.info("Mission completed: %s", self.myMissions[i])
+                        self.myMissions.pop(i)
+                        break
+                time.sleep(2) #sleep for 2 sec
 
         except KeyboardInterrupt:  #bare for at stoppe 
             print("Execution interrupted by user.")  

@@ -7,7 +7,7 @@ from typing import Any, Iterable, List, Mapping, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from TaskHandlerThread import TaskHandlerThread
-    from ListeningThread import ListeningThread
+    
 
 class CommunicationThread(Thread):
     """The CommunicationThread that handles incoming and outgoing messages
@@ -18,7 +18,7 @@ class CommunicationThread(Thread):
         taskHandlerThread (TaskHandlerThread): A reference to the local TaskHandlerThread
     
     """
-
+    
     #Constants
     LISTENING_PORTS_LEFT: int = 4500
     LISTENING_PORTS_RIGHT: int = 4600
@@ -41,8 +41,11 @@ class CommunicationThread(Thread):
             *,
             daemon: bool | None = None
             ) -> None:
-        super().__init__(group, target, name, args, kwargs, daemon=daemon)
         from TransmissionThread import TransmissionThread
+        from ListeningThread import ListeningThread
+
+        super().__init__(group, target, name, args, kwargs, daemon=daemon)
+        
         self.taskHandlerThread = taskHandlerThread
         self.acceptedRequestsQueue = AcceptedRequestQueue()
         self.acceptedRequestsQueue.start()
@@ -64,6 +67,7 @@ class CommunicationThread(Thread):
         except:
             raise ValueError('Config file is not correct')
         
+        print(connections, connectionsIP)
         self.transmissionThread: TransmissionThread = TransmissionThread(
             communicationThread=self,
             neighbourSatelliteIDs=connections,

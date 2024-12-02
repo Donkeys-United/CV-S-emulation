@@ -11,7 +11,7 @@ class TaskHandlerThread(threading.Thread):
     def __init__(self, communicationThread):
         super().__init__()
         self.running = True
-        self.__allocatedTasks = PriorityQueue()
+        self.allocatedTasks = PriorityQueue()
         self.__unallocatedTasks = PriorityQueue()
         self.communicationThread = communicationThread
 
@@ -21,15 +21,16 @@ class TaskHandlerThread(threading.Thread):
         Method to initiate the different threads in the system(Main loop maybe?)
         """
         while self.running:
-            if self.__unallocatedTasks != None:
-                allocateToSelf = self.allocateTaskToSelf(self.__unallocatedTasks.nextTask())
+            if not self.__unallocatedTasks.isEmpty():
+                allocateToSelf = True #self.allocateTaskToSelf(None)
                 if allocateToSelf == True:
-                    self.__allocatedTasks.addTaskToQueue(self.__unallocatedTasks.nextTask())
+                    task = self.__unallocatedTasks.nextTask()
+                    self.allocatedTasks.addTaskToQueue(task[0])
                 else:
                     self.sendRequest(self.__unallocatedTasks.nextTask())
                     self.communicationThread.giveTask(self.__unallocatedTasks.nextTask())
-            else:
-                time.sleep(1)
+            self.__unallocatedTasks.printQueue()
+            time.sleep(1)
 
 
 
@@ -99,11 +100,11 @@ class TaskHandlerThread(threading.Thread):
         """
         Method to get the ammount of accepted tasks a satellite has
         """
-        return len(self.__allocatedTasks) + self.communicationThread.getTotalAcceptedTasks()
+        return len(self.allocatedTasks) + self.communicationThread.getTotalAcceptedTasks()
 
 
     def appendTask(self, task: Task):
-        self.__allocatedTasks.addTaskToQueue(task)
+        self.allocatedTasks.addTaskToQueue(task)
     
     def appendUnallocatedTask(self, task: Task):
         self.__unallocatedTasks.addTaskToQueue(task)

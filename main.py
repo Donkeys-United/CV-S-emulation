@@ -37,8 +37,15 @@ missionThread = MissionThread(configPath=config_path,
                               taskHandlerThread=taskHandlerThread,
                               imagePath=image_path)
 
-objectDetectionThread = ObjectDetectionThread(cv_model_path, 
-                                              communicationThread = communicationThread, 
-                                              taskHandlerThread = taskHandlerThread)
-
+#objectDetectionThread = ObjectDetectionThread(cv_model_path, 
+#                                              communicationThread = communicationThread, 
+#                                              taskHandlerThread = taskHandlerThread)
+print("Startin orbitlal thread")
+orbitalPositionThread.start()
+print("Starting taskhandler")
+taskHandlerThread.start()
+print("Starting mission thread")
+#missionThread.start()
+print("Starting ObjectDetection thread")
+#objectDetectionThread.start()
 

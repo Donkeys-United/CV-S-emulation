@@ -3,13 +3,13 @@
     {
       "id": 214466116409440,
       "ip_address": "192.168.1.101",
-      "connections": [1, 4],
+      "connections": [4, 2],
       "initial_angle": 0
     },
     {
       "id": 2,
       "ip_address": "192.168.1.102",
-      "connections": [2,3],
+      "connections": [214466116409440,3],
       "initial_angle": 1.5707963268
     },
     {
@@ -21,14 +21,14 @@
     {
       "id": 4,
       "ip_address": "192.168.1.104",
-      "connections": [3,1],
+      "connections": [3,214466116409440],
       "initial_angle": 4.7123889804
     }
   ],
   "missions": [
     {
-      "satellite_id": 14529641688528,
-      "location_radian": 1.0471975512,
+      "satellite_id": 214466116409440,
+      "location_radian": 0.1,
       "orbit_number": 1,
       "pictures_number": 5, 
       "time_limit": 10

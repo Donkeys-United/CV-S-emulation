@@ -48,12 +48,16 @@ class PriorityQueue:
         
         """
         if not self.isEmpty():
-            min_limit:float = self.__queue[0].getUnixTimestampLimit()
-            for task in self.__queue:
-                if task.getUnixTimestampLimit() < min_limit:
-                    min_limit = task.getUnixTimestampLimit()
-                    next_task:Task = task
-                    self.__queue.remove(task)
+            min_limit:float = self.__queue[0][0].getUnixTimestampLimit()
+            next_task = self.__queue[0]
+            next_task_index = 0
+            for i in range(len(self.__queue)):
+                if self.__queue[i][0].getUnixTimestampLimit() < min_limit:
+                    min_limit = self.__queue[i][0].getUnixTimestampLimit()
+                    next_task = self.__queue[i]
+                    next_task_index = i
+            
+            self.__queue.pop(next_task_index)
             return next_task
         else:
             return None
@@ -61,15 +65,19 @@ class PriorityQueue:
     def getSortedQueueList(self) -> List[list[Task, float]]:
         return sorted(self.__queue, key=lambda task: task[0].getUnixTimestampLimit())
 
+    def printQueue(self):
+        print(self.__queue)
+
 
 if __name__ == "__main__":
     from random import randint
     queue = PriorityQueue()
 
-    for i in range(50):
+    for i in range(3):
         queue.addTaskToQueue(Task(1,i, randint(1,20)))
     
-    sorted_queue = queue.getSortedQueueList()
-    
-    for i in sorted_queue:
-        print(i[0].getUnixTimestampLimit(), i[1])
+    queue.printQueue()
+
+    task = queue.nextTask()
+
+    queue.printQueue()

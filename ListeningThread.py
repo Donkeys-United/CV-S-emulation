@@ -1,5 +1,4 @@
 import threading
-from CommunicationThread import CommunicationThread
 from MessageClasses import Message
 import socket
 from pickle import loads
@@ -7,11 +6,12 @@ from pickle import loads
 class ListeningThread(threading.Thread):
     """Class for Listening Thread. Used for listening on a specific port for incoming messages.
     """
-
+    from CommunicationThread import CommunicationThread
     HOSTNAME = socket.gethostname()
     IP_ADDR = socket.gethostbyname(HOSTNAME)
 
     def __init__(self, port: int, communicationThread: CommunicationThread):
+        
         super().__init__()
         self.port = port
         self.communicationThread = communicationThread

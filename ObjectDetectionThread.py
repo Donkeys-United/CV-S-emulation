@@ -34,8 +34,8 @@ class ObjectDetectionThread(threading.Thread):
             YOLO: a YOLO object instance, using the model specified by PATH_TO_MODEL.
         """
         model = YOLO(self.PATH_TO_MODEL)
-        device = device("cuda")
-        return model.to(device)
+        cuda_device = device("cuda")
+        return model#.to(cuda_device)
     
     def runInference(self, TaskFrequencyList: list[Task, float]):
         """Method used for running inference on a specific imageDataMessage object instance - which the satellite would have received or captured itself.
@@ -47,7 +47,7 @@ class ObjectDetectionThread(threading.Thread):
             ProcessedDataMessage: a object instance, ready to be sent to the ground station, with the results of the inference.
         """
         image = TaskFrequencyList[0].getImage()
-        self.changeFrequency(TaskFrequencyList[1])
+        #self.changeFrequency(TaskFrequencyList[1])
         results = self.model.predict(image, 
                                     save = True, 
                                     show_labels = True, 
@@ -56,6 +56,7 @@ class ObjectDetectionThread(threading.Thread):
         bounding_boxes = [result.boxes for result in results]
         bounding_box_xyxy = [box.xyxy for box in bounding_boxes]
 
+        print(bounding_boxes)
         save_dir = results[0].save_dir
 
         image_name_list = []
@@ -98,12 +99,12 @@ class ObjectDetectionThread(threading.Thread):
     def run(self):
         # Det her skal ændres, således at der er en metode i stedet for at læse direkte fra __allocatedTasks
         while not self._stop_event.is_set():
-            if self.taskHandlerThread.__allocatedTasks:
-                processedDataList = self.runInference(self.taskHandlerThread.__allocatedTasks.nextTask())
+            if not self.taskHandlerThread.allocatedTasks.isEmpty():
+                processedDataList = self.runInference(self.taskHandlerThread.allocatedTasks.nextTask())
                 self.sendProcessedDataMessage(processedDataList)
             else:
                 #Set the gpu frequency to smallest possible frequency to save on power
-                self.changeFrequency(self.AVAILABLE_FREQUENCIES[0])
+                #self.changeFrequency(self.AVAILABLE_FREQUENCIES[0])
                 self.no_tasks.wait(1)
 
 
