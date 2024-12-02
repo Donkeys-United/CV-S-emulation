@@ -66,13 +66,14 @@ class TaskHandlerThread(threading.Thread):
         #return sendRequestMessage.getTaskID(), sendRequestMessage.getUnixTimeLimit()
 
 
-    def sendRespond(self, task: Task, message: Message):
+    def sendRespond(self, message: RequestMessage):
         """
         Method to send a respond to other satellites telling them they can perform the requested task
         """
+        taskID = message.getTaskID()
         sendRespondMessage = RespondMessage(
-            taskID=task.getTaskID(),
-            source=task.getSource(),
+            taskID=taskID,
+            source=int(taskID.to_bytes(7,'big')[-1])
             firstHopID = message.lastSenderID
         )
 
