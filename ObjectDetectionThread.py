@@ -51,7 +51,7 @@ class ObjectDetectionThread(threading.Thread):
         """
         imageObject = TaskFrequencyList[0]
         image = imageObject.getImage()
-        #self.changeFrequency(TaskFrequencyList[1])
+        self.changeFrequency(TaskFrequencyList[1])
         print("Now applying model")
         results = self.model.predict(image, 
                                     save = True, 
@@ -95,8 +95,12 @@ class ObjectDetectionThread(threading.Thread):
             frequency (float): The desired frequency
         """
         frequencies = [f for f in self.AVAILABLE_FREQUENCIES if f >= frequency]
+        command = (
+            'echo 1234 | sudo -S sh -c "cd /sys/devices/platform/17000000.gpu/devfreq/17000000.gpu && '
+            'echo 306000000 | tee min_freq max_freq"'
+        )
         subprocess.run(
-            f'echo {self.SUDO_PASSWORD} | sudo -S su -c "cd {self.FREQUENCY_PATH} && echo {min(frequencies)} | tee min_freq max_freq"'
+            command, shell=True
         )
 
     def sendProcessedDataMessage(self, message_list: list[ProcessedDataMessage]):
