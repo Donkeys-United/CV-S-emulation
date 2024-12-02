@@ -91,8 +91,9 @@ class ListeningThread(threading.Thread):
                 print(f"Received message: {message}")
                 if isinstance(message, RequestMessage):
                     self.groundStation.sendRespond(message)
-                    self.groundStation.saveUnProcessedImage(message)
                 elif isinstance(message, ImageDataMessage):
+                    self.groundStation.saveUnProcessedImage(message)
+                elif isinstance(message, ProcessedDataMessage):
                     self.groundStation.saveProcessedImage(message)
                 else:
                     print("Unknown message received.")
