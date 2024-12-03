@@ -18,8 +18,8 @@ if TYPE_CHECKING:
 class GroundStation():
     
     # Change to your preferred directory location for the processed images and unprocessed images
-    directoryProcessed = "/Users/tobiaslundgaard/Desktop/Semester5"
-    directoryUnProcessed = "/Users/tobiaslundgaard/Desktop/Semester5"
+    directoryProcessed = "/Users/tobiaslundgaard/Desktop/Semester 5/Projekt5"
+    directoryUnProcessed = "/Users/tobiaslundgaard/Desktop/Semester 5/Projekt5"
 
     def __init__(self, transmissionThread: 'TransmissionThread'):
         # Make sure transmissionThread is set during initialization
@@ -33,11 +33,16 @@ class GroundStation():
         print(f"Processed image saved as {filename}")
 
     def saveUnProcessedImage(self, message: ImageDataMessage):
-        image = cv2.imread(message.getPayload().getImage())
+        payload = message.getPayload()
+        if not hasattr(payload, 'image'):
+            print("Error: Payload does not contain image data.")
+            return
+        image = payload.getImage()
         os.chdir(self.directoryUnProcessed)
-        filename = message.getPayload().getFileName()
+        filename = payload.getFileName()
         cv2.imwrite(filename, image)
         print(f"Unprocessed image saved as {filename}")
+
 
     def sendRespond(self, message: RequestMessage):
         print("I AM HERE")
