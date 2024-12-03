@@ -36,7 +36,7 @@ class ObjectDetectionThread(threading.Thread):
         Returns:
             YOLO: a YOLO object instance, using the model specified by PATH_TO_MODEL.
         """
-        model = YOLO(self.PATH_TO_MODEL, task="detect")
+        model = YOLO(self.PATH_TO_MODEL)
         return model
     
     def runInference(self, TaskFrequencyList: list[Task, float]):
@@ -48,11 +48,10 @@ class ObjectDetectionThread(threading.Thread):
         Returns:
             ProcessedDataMessage: a object instance, ready to be sent to the ground station, with the results of the inference.
         """
+        
         imageObject = TaskFrequencyList[0]
+        
         image = imageObject.getImage()
-        self.changeFrequency(TaskFrequencyList[1])
-        print("Now applying model")
-
         """
         results = self.model.predict(image, 
                                     save = True, 
@@ -69,18 +68,19 @@ class ObjectDetectionThread(threading.Thread):
         bounding_boxes = [result.boxes for result in results]
         bounding_box_xyxy = [box.xyxy for box in bounding_boxes]
 
+        print(bounding_box_xyxy)
         bounding_box_list = []
         for i in range(len(bounding_box_xyxy[0])):
             bounding_box_list.append([(bounding_box_xyxy[0][i][0], bounding_box_xyxy[0][i][1]),(bounding_box_xyxy[0][i][2], bounding_box_xyxy[0][i][3])])
 
         save_dir = Path(results[0].save_dir)
-        print(save_dir)
 
         image_name_list = []
 
         image_file_name = PurePath(imageObject.getFileName()).name
 
         crop_number = 0
+
         # Rename saved files (example logic)
         for image_path in Path(save_dir / "boat").glob("*.jpg"):  # Adjust extension if not .jpg
             if not image_path.name.startswith("processed_"):

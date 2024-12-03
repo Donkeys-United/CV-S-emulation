@@ -3,10 +3,11 @@ from Task import Task
 from threading import Thread
 from MessageClasses import RequestMessage, RespondMessage, ImageDataMessage, ResponseNackMessage, ProcessedDataMessage
 from AcceptedRequestQueue import AcceptedRequestQueue
-from typing import Any, Iterable, List, Mapping
-from TransmissionThread import TransmissionThread
-from ListeningThread import ListeningThread
-from TaskHandlerThread import TaskHandlerThread
+from typing import Any, Iterable, List, Mapping, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from TaskHandlerThread import TaskHandlerThread
+    
 
 class CommunicationThread(Thread):
     """The CommunicationThread that handles incoming and outgoing messages
@@ -17,7 +18,7 @@ class CommunicationThread(Thread):
         taskHandlerThread (TaskHandlerThread): A reference to the local TaskHandlerThread
     
     """
-
+    
     #Constants
     LISTENING_PORTS_LEFT: int = 4500
     LISTENING_PORTS_RIGHT: int = 4600
@@ -30,26 +31,24 @@ class CommunicationThread(Thread):
     config: dict
     acceptedRequestsQueue:AcceptedRequestQueue = AcceptedRequestQueue()
 
-    #Threads
-    transmissionThread:TransmissionThread
-    listeningThreadLeft: ListeningThread
-    listeningThreadRight: ListeningThread
-    
-    #References
-    taskHandlerThread: TaskHandlerThread
-    
-
     def __init__(
             self,
             satelliteID: int,
             config: dict,
-            taskHandlerThread: TaskHandlerThread,
+            taskHandlerThread,
             group: None = None, target: Callable[..., object] | None = None, name: str | None = None,
             args: Iterable[Any] = ..., kwargs: Mapping[str, Any] | None = None,
             *,
             daemon: bool | None = None
             ) -> None:
+        from TransmissionThread import TransmissionThread
+        from ListeningThread import ListeningThread
+
         super().__init__(group, target, name, args, kwargs, daemon=daemon)
+        
+        self.taskHandlerThread = taskHandlerThread
+        self.acceptedRequestsQueue = AcceptedRequestQueue()
+        self.acceptedRequestsQueue.start()
 
         #Get config dictionary
         self.config = config
@@ -57,6 +56,7 @@ class CommunicationThread(Thread):
         #Setup and start transmissionThread using config
         try:
             for satellites in self.config['satellites']:
+                print(f"Satellite ID: {satellites['id']}")
                 if satellites['id'] == satelliteID:
                     connections = satellites['connections']
                     break
@@ -66,28 +66,33 @@ class CommunicationThread(Thread):
                     connectionsIP.append(satellites['ip_address'])
         except:
             raise ValueError('Config file is not correct')
-        self.acceptedRequestsQueue.start()
-        self.transmissionThread = TransmissionThread(
-            satelliteID=satelliteID,
+        
+        print(connections, connectionsIP)
+        self.transmissionThread: TransmissionThread = TransmissionThread(
+            communicationThread=self,
             neighbourSatelliteIDs=connections,
             neighbourSatelliteAddrs=connectionsIP,
             groundstationAddr=config['ground_station_ip']
             )
         self.transmissionThread.start()
         
+
         #Initiate listeningThreads
-        self.listeningThreadLeft = ListeningThread(port=self.LISTENING_PORTS_LEFT, communicationThread=self)
-        self.listeningThreadRight = ListeningThread(port=self.LISTENING_PORTS_RIGHT, communicationThread=self)
+        self.listeningThreadLeft: ListeningThread = ListeningThread(port=self.LISTENING_PORTS_LEFT, communicationThread=self)
+        self.listeningThreadRight: ListeningThread = ListeningThread(port=self.LISTENING_PORTS_RIGHT, communicationThread=self)
         self.listeningThreadLeft.start()
         self.listeningThreadRight.start()
 
         #Create reference to TaskHandlerThread
-        self.taskHandlerThread = taskHandlerThread
+        self.taskHandlerThread: TaskHandlerThread = taskHandlerThread
             
 
 
     def run(self) -> None:
-        return super().run()
+        while len(self.messageList) != 0:
+            for message in self.messageList:
+                self.messageTypeHandle(message=message)
+                self.messageList.remove(message)
     
     def messageTypeHandle(
             self,
@@ -113,7 +118,12 @@ class CommunicationThread(Thread):
             messageID = message.getTaskID()
             for task in self.taskWaitingList:
                 if task.getTaskID() == messageID:
-                    self.responseList.append(message)
+                    for response in self.responseList:
+                        if response.getTaskID() == messageID:
+                            
+                            break
+                        else:
+                            self.responseList.append(message)
                     break
                 elif task == self.taskWaitingList[-1]:
                     self.addTransmission(message=message)

@@ -3,17 +3,18 @@ import random, threading, time
 from Task import Task
 from MessageClasses import *
 #from MissionThread import *
-from CommunicationThread import CommunicationThread
+#from CommunicationThread import CommunicationThread
 from PriorityQueue import PriorityQueue
 
 class TaskHandlerThread(threading.Thread):
 
-    def __init__(self, communicationThread: CommunicationThread):
+    def __init__(self, communicationThread):
         super().__init__()
         self.running = True
-        self.__allocatedTasks = PriorityQueue()
+        self.allocatedTasks = PriorityQueue()
         self.__unallocatedTasks = PriorityQueue()
         self.communicationThread = communicationThread
+        self.wait = threading.Event()
 
 
     def run(self):
@@ -21,15 +22,16 @@ class TaskHandlerThread(threading.Thread):
         Method to initiate the different threads in the system(Main loop maybe?)
         """
         while self.running:
-            if self.__unallocatedTasks != None:
-                allocateToSelf = self.allocateTaskToSelf(self.__unallocatedTasks.nextTask())
+            if not self.__unallocatedTasks.isEmpty():
+                allocateToSelf = True #self.allocateTaskToSelf(None)
                 if allocateToSelf == True:
-                    self.__allocatedTasks.addTaskToQueue(self.__unallocatedTasks.nextTask())
+                    task = self.__unallocatedTasks.nextTask()
+                    self.allocatedTasks.addTaskToQueue(task[0])
+                    self.allocatedTasks.printQueue()
                 else:
                     self.sendRequest(self.__unallocatedTasks.nextTask())
                     self.communicationThread.giveTask(self.__unallocatedTasks.nextTask())
-            else:
-                time.sleep(1)
+            self.wait.wait(1)
 
 
 
@@ -99,16 +101,16 @@ class TaskHandlerThread(threading.Thread):
         """
         Method to get the ammount of accepted tasks a satellite has
         """
-        return len(self.__allocatedTasks) + self.communicationThread.getTotalAcceptedTasks()
+        return len(self.allocatedTasks) + self.communicationThread.getTotalAcceptedTasks()
 
 
     def appendTask(self, task: Task):
-        self.__allocatedTasks.addTaskToQueue(task)
+        self.allocatedTasks.addTaskToQueue(task)
     
     def appendUnallocatedTask(self, task: Task):
         self.__unallocatedTasks.addTaskToQueue(task)
 
-
+"""
 #####################################################################################################
 class CommunicationThread(threading.Thread):
 
@@ -131,9 +133,9 @@ CommThread = CommunicationThread()
 thread.start()
 CommThread.start() 
 
-"""
+""
 Generate a random task
-"""
+""
 # Generate a random 48-bit integer for satelliteID
 satelliteID = random.randint(0, 2**48 - 1)
 # Generate a random 8-bit integer for incrementingID (or use a counter if needed)
@@ -152,3 +154,4 @@ print(f"TaskID: {taskID}, TimeLimit: {timeLimit}")
 #send a task respond
 taskID, source= thread.sendRespond(task)  # Call on the instance
 #####################################################################################################
+"""

@@ -1,5 +1,4 @@
 import threading
-from CommunicationThread import CommunicationThread
 from MessageClasses import Message, RequestMessage, RespondMessage, ResponseNackMessage, ProcessedDataMessage, ImageDataMessage
 import socket
 from pickle import dumps
@@ -8,6 +7,7 @@ from uuid import getnode
 class TransmissionThread(threading.Thread):
     """Class for creating the transmission thread.
     """
+    from CommunicationThread import CommunicationThread
 
     HOSTNAME = socket.gethostname()
     IP_ADDR = socket.gethostbyname(HOSTNAME)

@@ -8,9 +8,10 @@ class PriorityQueue:
         None:
     
     """
-    __queue:List[Task] = []
+    def __init__(self):
+        self.__queue: list[list[Task, float]] = []
 
-    def addTaskToQueue(self, task:Task) -> None:
+    def addTaskToQueue(self, task:Task, frequency: float = 0.0) -> None:
         """Method that adds task to queue
 
         Args:
@@ -20,7 +21,7 @@ class PriorityQueue:
             None:
         
         """
-        self.__queue.append(task)
+        self.__queue.append([task, frequency])
     
     def isEmpty(self) -> bool:
         """Method that checks if queue is empty
@@ -37,7 +38,7 @@ class PriorityQueue:
         else:
             return False
 
-    def nextTask(self) -> Optional[Task]:
+    def nextTask(self) -> Optional[list[Task, float]]:
         """Method for getting the next task in the queue. Method removes the task retrieved
 
         Args:
@@ -48,12 +49,36 @@ class PriorityQueue:
         
         """
         if not self.isEmpty():
-            min_limit:float = self.__queue[0].getUnixTimestampLimit()
-            for task in self.__queue:
-                if task.getUnixTimestampLimit() < min_limit:
-                    min_limit = task.getUnixTimestampLimit()
-                    next_task:Task = task
-                    self.__queue.remove(task)
+            min_limit:float = self.__queue[0][0].getUnixTimestampLimit()
+            next_task = self.__queue[0]
+            next_task_index = 0
+            for i in range(len(self.__queue)):
+                if self.__queue[i][0].getUnixTimestampLimit() < min_limit:
+                    min_limit = self.__queue[i][0].getUnixTimestampLimit()
+                    next_task = self.__queue[i]
+                    next_task_index = i
+            
+            self.__queue.pop(next_task_index)
             return next_task
         else:
             return None
+    
+    def getSortedQueueList(self) -> List[list[Task, float]]:
+        return sorted(self.__queue, key=lambda task: task[0].getUnixTimestampLimit())
+
+    def printQueue(self):
+        print(self.__queue)
+
+
+if __name__ == "__main__":
+    from random import randint
+    queue = PriorityQueue()
+
+    for i in range(3):
+        queue.addTaskToQueue(Task(1,i, randint(1,20)))
+    
+    queue.printQueue()
+
+    task = queue.nextTask()
+
+    queue.printQueue()

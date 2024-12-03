@@ -24,6 +24,7 @@ class AcceptedRequestQueue(Thread):
             daemon: bool | None = None
             ) -> None:
         super().__init__(group, target, name, args, kwargs, daemon=daemon)
+        self.__acceptedRequests = []
 
     def run(self) -> None:
         while True:
