@@ -38,6 +38,7 @@ class MissionThread(threading.Thread):
         self.satelliteID = satelliteID
         self.orbitalPosistionThread = orbitalPosistionThread
         self.taskHandlerThread = taskHandlerThread
+        self.wait = threading.Event()
     
 
         logging.info("Initializing MissionThread for satelliteID: %s", self.satelliteID)
@@ -131,7 +132,7 @@ class MissionThread(threading.Thread):
                         logging.info("Mission completed: %s", self.myMissions[i])
                         self.myMissions.pop(i)
                         break
-                time.sleep(2) #sleep for 2 sec
+                self.wait.wait(2) #sleep for 2 sec
 
         except KeyboardInterrupt:  #bare for at stoppe 
             print("Execution interrupted by user.")  

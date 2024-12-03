@@ -35,8 +35,7 @@ class ListeningThread(threading.Thread):
         connection = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         connection.bind((self.IP_ADDR, self.port))
         while not self._stop_event.is_set():
-            connection.listen()
-            incoming_message = connection.accept()
+            incoming_message, addr = connection.recvfrom(1024)
             unpickled_message = loads(incoming_message)
             self.addMessageList(unpickled_message)
 

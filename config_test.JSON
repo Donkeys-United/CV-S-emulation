@@ -1,8 +1,14 @@
 {
   "satellites": [
     {
-      "id": 214466116409440,
+      "id": 201170498634677,
       "ip_address": "192.168.1.101",
+      "connections": [4, 2],
+      "initial_angle": 0
+    },
+    {
+      "id": 64058203556573,
+      "ip_address": "192.168.1.106",
       "connections": [4, 2],
       "initial_angle": 0
     },
@@ -27,7 +33,14 @@
   ],
   "missions": [
     {
-      "satellite_id": 214466116409440,
+      "satellite_id": 201170498634677,
+      "location_radian": 0.1,
+      "orbit_number": 1,
+      "pictures_number": 5, 
+      "time_limit": 10
+    },
+    {
+      "satellite_id": 64058203556573,
       "location_radian": 0.1,
       "orbit_number": 1,
       "pictures_number": 5, 
