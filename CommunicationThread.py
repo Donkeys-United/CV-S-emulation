@@ -111,6 +111,7 @@ class CommunicationThread(Thread):
         if type(message) == RequestMessage:
             if self.taskHandlerThread.allocateTaskToSelf(): #add input - ONLY TIMELIMIT
                 self.acceptedRequestsQueue.addMessage(message=message)
+                self.sendRespond(message=message)
             else:
                 self.addTransmission(message=message)
 
