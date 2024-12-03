@@ -46,6 +46,7 @@ class OrbitalPositionThread(Thread):
         self.neighbourSatDist = self.calculateDistance(temp_list[0], self.orbitalRadius ,temp_list[1], self.orbitalRadius)
 
         self.tickRate = tickRate
+        self.calculateSatClosestToGround()
 
         self.wait = Event()
         
@@ -91,7 +92,7 @@ class OrbitalPositionThread(Thread):
         Returns:
             float: The distance between the points
         """
-        return np.abs(self.calculatePosition(angle1, radius1) - self.calculatePosition(angle2, radius1))
+        return np.abs(self.calculatePosition(angle1, radius1) - self.calculatePosition(angle2, radius2))
     
     def canExecuteMission(self, radian: float, orbitNumber: int) -> bool:
         """Check whether a mission can be executed
@@ -276,7 +277,7 @@ if __name__ == "__main__":
     }"""
 
     testObject = OrbitalPositionThread(json.loads(test_json), 5, 1)
-    testObject.satelliteID = 3
+    testObject.satelliteID = 1
     print(testObject.currentAngle)
     print(testObject.orbitalPeriod)
     print(testObject.satelliteID)
@@ -285,6 +286,7 @@ if __name__ == "__main__":
     testObject.calculateSatClosestToGround()
     print(testObject.getSatClosestToGround())
     print(testObject.getSatellitePriorityList())
+    print(testObject.calculateDistance(testObject.currentAngle[testObject.satelliteID], testObject.orbitalRadius, 0, testObject.RADIUS_EARTH))
     testObject.start()
     print(testObject.getPathDistanceToGround(testObject.satelliteID))
     while True:
