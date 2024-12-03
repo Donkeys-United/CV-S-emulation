@@ -1,7 +1,7 @@
 from collections.abc import Callable
 from Task import Task
 from threading import Thread
-from MessageClasses import RequestMessage, RespondMessage, ImageDataMessage, ResponseNackMessage, ProcessedDataMessage
+from MessageClasses import RequestMessage, RespondMessage, ImageDataMessage, ResponseNackMessage, ProcessedDataMessage, Message
 from AcceptedRequestQueue import AcceptedRequestQueue
 from typing import Any, Iterable, List, Mapping, TYPE_CHECKING
 
@@ -176,3 +176,31 @@ class CommunicationThread(Thread):
     
     def giveTask(self, task: Task) -> None:
         self.taskWaitingList.append(task)
+    
+    def sendRespond(self, task: Task, message: Message):
+        """
+        Method to send a respond to other satellites telling them they can perform the requested task
+        """
+        sendRespondMessage = RespondMessage(
+            taskID=task.getTaskID(),
+            source=task.getSource(),
+            firstHopID = message.lastSenderID
+        )
+
+        self.communicationThread.addTransmission(sendRespondMessage)
+ 
+
+        # Print and return
+        print(f"Sending: {sendRespondMessage}")
+        return sendRespondMessage.getTaskID(), sendRespondMessage.getTaskID()
+
+
+
+    def sendDataPacket(self, task: Task, message: Message):
+        """
+        Send task packet to 
+        """
+        sendDataMessage = ImageDataMessage(payload=task, firstHopID=message.lastSenderID)
+
+        self.communicationThread.addTransmission(sendDataMessage)
+        return sendDataMessage
