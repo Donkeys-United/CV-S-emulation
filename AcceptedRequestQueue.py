@@ -61,7 +61,7 @@ class AcceptedRequestQueue(Thread):
         return IDList
 
     
-    def addMessage(self, message:RequestMessage, time) -> None:
+    def addMessage(self, message:RequestMessage, frequency: float) -> None:
         """Method for adding request to list
 
         Args:
@@ -71,7 +71,7 @@ class AcceptedRequestQueue(Thread):
             None:
         
         """
-        self.__acceptedRequests.append([message, self.__TIME_TO_LIVE])
+        self.__acceptedRequests.append([message, frequency, self.__TIME_TO_LIVE])
     
     def removeMessage(self, taskID:int) -> None:
         """Method for removing request with ID
@@ -102,7 +102,7 @@ class AcceptedRequestQueue(Thread):
                 if message[1] == 0:
                     self.__acceptedRequests.remove(message)
                 else:
-                    message[1] -= 1
+                    message[-1] -= 1
     
     def getLength(self) -> int:
         """Method for getting amount of accepted requests
