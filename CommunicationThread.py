@@ -177,13 +177,13 @@ class CommunicationThread(Thread):
     def giveTask(self, task: Task) -> None:
         self.taskWaitingList.append(task)
     
-    def sendRespond(self, task: Task, message: Message):
+    def sendRespond(self,  message: RequestMessage):
         """
         Method to send a respond to other satellites telling them they can perform the requested task
         """
         sendRespondMessage = RespondMessage(
-            taskID=task.getTaskID(),
-            source=task.getSource(),
+            taskID=message.getTaskID(),
+            source=message.getTaskID() & 0x0000FFFFFFFFFFFF,
             firstHopID = message.lastSenderID
         )
 
