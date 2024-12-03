@@ -48,18 +48,11 @@ class GroundStation():
         print(f"Unprocessed image saved as {save_path}")
 
     def saveUnProcessedImage(self, message: ImageDataMessage):
-        print("I AM HERE NOW")
         payload = message.getPayload()
-        print("I AM HERE NOW")
-        
         # Get the full file name (with the directory)
         filename = payload.getFileName()
-        print(f"Filename is now: {filename}")
-
         # Load the image using the full path (filename includes full path)
         image = cv2.imread(filename)
-        print("I AM HERE NOW", image)
-
         if image is None:
             print(f"Error loading image: {payload.getImage()}")
         else:
@@ -67,13 +60,9 @@ class GroundStation():
         
         # Extract the file name from the full path (remove the directory)
         base_filename = os.path.basename(filename)
-        print(f"Base filename: {base_filename}")
-        
-        # Define the target directory where you want to save the image
-        target_directory = "/Users/tobiaslundgaard/Desktop/Semester 5/Projekt5/Nicolai"
         
         # Construct the full save path by joining the target directory and the base filename
-        save_path = os.path.join(target_directory, base_filename)
+        save_path = os.path.join(self.directoryUnProcessed, base_filename)
         
         # Print the save path for debugging
         print(f"Saving image as: {save_path}")
@@ -81,7 +70,6 @@ class GroundStation():
         # Save the image to the target directory
         cv2.imwrite(save_path, image)
         print(f"Unprocessed image saved as {save_path}")
-
 
 
 
@@ -172,7 +160,8 @@ class TransmissionThread(threading.Thread):
             pass  # Placeholder for future logic
 
     def stop(self):
-        self._stop_event.set()
+        pass
+        #self._stop_event.set()
 
 
 if __name__ == "__main__":
