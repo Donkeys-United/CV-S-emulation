@@ -3,8 +3,8 @@ from scipy.optimize import minimize, OptimizeResult
 class EnergyOptimiser:
     MU_INFERENCE: float = 5.0
     F_FIXED: int = 1*10**6
-    F_MIN: int =  5*10**5
-    F_MAX: int = 2*10**6
+    F_MIN: int = 306000000
+    F_MAX: int = 642750000
     
     def totalEnergy(self, frequencies: list[float]) -> float:
         """Calculates the total amount of energy it would take to calculate some tasks at some frequencies
