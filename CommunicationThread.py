@@ -87,7 +87,10 @@ class CommunicationThread(Thread):
 
 
     def run(self) -> None:
-        return super().run()
+        while len(self.messageList) != 0:
+            for message in self.messageList:
+                self.messageTypeHandle(message=message)
+                self.messageList.remove(message)
     
     def messageTypeHandle(
             self,
