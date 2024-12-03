@@ -32,14 +32,14 @@ class GroundStation():
         cv2.imwrite(filename, image)
         print(f"Processed image saved as {filename}")
 
-    def saveUnProcessedImage(self, task: Task):
-        image = cv2.imread(task.getImage())
+    def saveUnProcessedImage(self, message: ImageDataMessage):
+        image = cv2.imread(message.getPayload().getImage())
         os.chdir(self.directoryUnProcessed)
-        filename = task.getFileName()
+        filename = message.getPayload().getFileName()
         cv2.imwrite(filename, image)
         print(f"Unprocessed image saved as {filename}")
 
-    def sendRespond(self, message: Message):
+    def sendRespond(self, message: RequestMessage):
         print("I AM HERE")
         respond_message = RespondMessage(
             taskID = message.getTaskID(),  # Corrected method usage
