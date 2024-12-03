@@ -23,10 +23,7 @@ taskHandlerThread = TaskHandlerThread(communicationThread=communicationThread)
 
 with open(config_path, 'r') as config_file:
     loaded_config_file = json.load(config_file)
-<<<<<<< HEAD
-=======
     print(f"Config_file = {loaded_config_file}")
->>>>>>> c118836ae949bd1f63d869d86bc57060d5b7f5a7
 
 objectDetectionThread = ObjectDetectionThread(cv_model_path, 
                                               communicationThread = communicationThread, 
@@ -46,11 +43,7 @@ missionThread = MissionThread(configPath=config_path,
                               taskHandlerThread=taskHandlerThread,
                               imagePath=image_path)
 
-<<<<<<< HEAD
-print("Starting orbitlal thread")
-=======
 print("Startin orbitlal thread")
->>>>>>> c118836ae949bd1f63d869d86bc57060d5b7f5a7
 orbitalPositionThread.start()
 print("Starting taskhandler")
 taskHandlerThread.start()
