@@ -18,29 +18,43 @@ if TYPE_CHECKING:
 class GroundStation():
     
     # Change to your preferred directory location for the processed images and unprocessed images
-    directoryProcessed = "/Users/tobiaslundgaard/Desktop/Semester 5/Projekt5"
-    directoryUnProcessed = "/Users/tobiaslundgaard/Desktop/Semester 5/Projekt5"
+    
 
     def __init__(self, transmissionThread: 'TransmissionThread'):
         # Make sure transmissionThread is set during initialization
         self.transmissionThread = transmissionThread
+        self.directoryProcessed = "/Users/tobiaslundgaard/Desktop/Semester 5/Projekt5/Nicolai"
+        self.directoryUnProcessed = "/Users/tobiaslundgaard/Desktop/Semester 5/Projekt5/Nicolai"
 
     def saveProcessedImage(self, task: Task):
         image = cv2.imread(task.getImage())
-        os.chdir(self.directoryProcessed)
+        if image is None:
+            print(f"Error loading image: {task.getImage()}")
+        else:
+            print(f"Image loaded successfully: {task.getImage()}")
+        os.chdir("/Users/tobiaslundgaard/Desktop/Semester 5/Projekt5/Nicolai")
         filename = task.getFileName()
-        cv2.imwrite(filename, image)
+        cv2.imwrite(filename+"testing", image)
         print(f"Processed image saved as {filename}")
 
     def saveUnProcessedImage(self, message: ImageDataMessage):
+        print("I AM HERE NOW")
         payload = message.getPayload()
-        if not hasattr(payload, 'image'):
-            print("Error: Payload does not contain image data.")
-            return
-        image = payload.getImage()
+        print("I AM HERE NOW")
+        #Error occurs here
+        image = cv2.imread(message.getPayload().getFileName())
+        print("I AM HERE NOW")
+        if image is None:
+            print(f"Error loading image: {payload.getImage()}")
+        else:
+            print(f"Image loaded successfully: {payload.getImage()}")
+        
         os.chdir(self.directoryUnProcessed)
+        print("I AM HERE NOW",os.chdir(self.directoryUnProcessed))
         filename = payload.getFileName()
-        cv2.imwrite(filename, image)
+        print("I AM HERE NOW")
+        print("Filename is now:", filename)
+        cv2.imwrite(f"test{filename}", image)
         print(f"Unprocessed image saved as {filename}")
 
 
