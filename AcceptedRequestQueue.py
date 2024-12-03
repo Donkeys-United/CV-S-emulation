@@ -61,7 +61,7 @@ class AcceptedRequestQueue(Thread):
         return IDList
 
     
-    def addMessage(self, message:RequestMessage, time) -> None:
+    def addMessage(self, message:RequestMessage) -> None:
         """Method for adding request to list
 
         Args:
