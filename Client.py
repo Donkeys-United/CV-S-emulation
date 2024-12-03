@@ -15,7 +15,7 @@ SERVER_PORT = 4500
 
 
 # Load image
-image_path = '/Users/tobiaslundgaard/Desktop/Semester 5/Projekt5/test1.jpg'
+image_path = '/Users/tobiaslundgaard/Desktop/Semester 5/Projekt5/test.jpg'
 #image = cv2.imread(image_path)
 image = Image.open(image_path)
 width, height = image.size
@@ -26,7 +26,7 @@ numpydata = asarray(resized_image)
 
 # Create Task and append compressed image
 task = Task(satelliteID=1, taskCount=1, timeLimit=300)
-task.appendImage(fileName=str(image_path), image=resized_image, location=complex(10.0, 20.0))
+task.appendImage(fileName=image_path, image=resized_image, location=complex(10.0, 20.0))
 
 # Create and serialize ImageDataMessage
 first_hop_id = 100

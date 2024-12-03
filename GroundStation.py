@@ -16,46 +16,73 @@ if TYPE_CHECKING:
 
 
 class GroundStation():
+    directoryProcessed = "/Users/tobiaslundgaard/Desktop/Semester 5/Projekt5/Processed/"
+    directoryUnProcessed = "/Users/tobiaslundgaard/Desktop/Semester 5/Projekt5/UnProcessed"
     
-    # Change to your preferred directory location for the processed images and unprocessed images
-    
-
     def __init__(self, transmissionThread: 'TransmissionThread'):
         # Make sure transmissionThread is set during initialization
         self.transmissionThread = transmissionThread
-        self.directoryProcessed = "/Users/tobiaslundgaard/Desktop/Semester 5/Projekt5/Nicolai"
-        self.directoryUnProcessed = "/Users/tobiaslundgaard/Desktop/Semester 5/Projekt5/Nicolai"
 
-    def saveProcessedImage(self, task: Task):
-        image = cv2.imread(task.getImage())
-        if image is None:
-            print(f"Error loading image: {task.getImage()}")
-        else:
-            print(f"Image loaded successfully: {task.getImage()}")
-        os.chdir("/Users/tobiaslundgaard/Desktop/Semester 5/Projekt5/Nicolai")
-        filename = task.getFileName()
-        cv2.imwrite(filename+"testing", image)
-        print(f"Processed image saved as {filename}")
 
-    def saveUnProcessedImage(self, message: ImageDataMessage):
-        print("I AM HERE NOW")
+    def saveProcessedImage(self, message: ProcessedDataMessage):
+
+        """
+        Mangler at fikse og teste med ProcessedDataMessage pakke, og fikse logik
+        """
         payload = message.getPayload()
-        print("I AM HERE NOW")
-        #Error occurs here
-        image = cv2.imread(message.getPayload().getFileName())
-        print("I AM HERE NOW")
+        # Get the full file name (with the directory)
+        filename = payload.getFileName()
+
+        # Load the image using the full path (filename includes full path)
+        image = cv2.imread(filename)
         if image is None:
             print(f"Error loading image: {payload.getImage()}")
         else:
             print(f"Image loaded successfully: {payload.getImage()}")
         
-        os.chdir(self.directoryUnProcessed)
-        print("I AM HERE NOW",os.chdir(self.directoryUnProcessed))
-        filename = payload.getFileName()
+        # Extract the file name from the full path (remove the directory)
+        base_filename = os.path.basename(filename)    
+        # Construct the full save path by joining the target directory and the base filename
+        save_path = os.path.join(self.directoryProcessed, base_filename)
+        cv2.imwrite(save_path, image)
+        print(f"Unprocessed image saved as {save_path}")
+
+    def saveUnProcessedImage(self, message: ImageDataMessage):
         print("I AM HERE NOW")
-        print("Filename is now:", filename)
-        cv2.imwrite(f"test{filename}", image)
-        print(f"Unprocessed image saved as {filename}")
+        payload = message.getPayload()
+        print("I AM HERE NOW")
+        
+        # Get the full file name (with the directory)
+        filename = payload.getFileName()
+        print(f"Filename is now: {filename}")
+
+        # Load the image using the full path (filename includes full path)
+        image = cv2.imread(filename)
+        print("I AM HERE NOW", image)
+
+        if image is None:
+            print(f"Error loading image: {payload.getImage()}")
+        else:
+            print(f"Image loaded successfully: {payload.getImage()}")
+        
+        # Extract the file name from the full path (remove the directory)
+        base_filename = os.path.basename(filename)
+        print(f"Base filename: {base_filename}")
+        
+        # Define the target directory where you want to save the image
+        target_directory = "/Users/tobiaslundgaard/Desktop/Semester 5/Projekt5/Nicolai"
+        
+        # Construct the full save path by joining the target directory and the base filename
+        save_path = os.path.join(target_directory, base_filename)
+        
+        # Print the save path for debugging
+        print(f"Saving image as: {save_path}")
+        
+        # Save the image to the target directory
+        cv2.imwrite(save_path, image)
+        print(f"Unprocessed image saved as {save_path}")
+
+
 
 
     def sendRespond(self, message: RequestMessage):
