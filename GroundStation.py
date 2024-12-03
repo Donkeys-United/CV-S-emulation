@@ -86,7 +86,7 @@ class ListeningThread(threading.Thread):
     def activeListening(self):
         while not self._stop_event.is_set():
             try:
-                data, _ = self.connection.recvfrom(4096)
+                data, _ = self.connection.recvfrom(100000)
                 message = loads(data)
                 print(f"Received message: {message}")
                 if isinstance(message, RequestMessage):
