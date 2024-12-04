@@ -28,12 +28,12 @@ class TaskHandlerThread(threading.Thread):
         while self.running:
             if not self.__unallocatedTasks.isEmpty():
                 nextUnallocatedTask = self.__unallocatedTasks.nextTask()
-                allocateToSelf = self.allocateTaskToSelf(nextUnallocatedTask[0].getUnixTimestampLimit())
-                if allocateToSelf == True:
-                    self.allocatedTasks.addTaskToQueue(nextUnallocatedTask)
+                allocateToSelf = self.allocateTaskToSelf(nextUnallocatedTask[0].getUnixTimestampLimit(), nextUnallocatedTask[0].getSource())
+                if allocateToSelf[0] == True:
+                    self.allocatedTasks.addTaskToQueue(nextUnallocatedTask[0])
                 else:
-                    self.sendRequest(nextUnallocatedTask)
-                    self.communicationThread.giveTask(self.__unallocatedTasks.nextTask())
+                    self.sendRequest(nextUnallocatedTask[0])
+                    self.communicationThread.giveTask(nextUnallocatedTask[0])
             time.sleep(1)
 
 
