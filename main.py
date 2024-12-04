@@ -27,7 +27,7 @@ orbitalPositionThread = OrbitalPositionThread(config=loaded_config_file,
                                                   tickRate=1.0,
                                                   satelliteID=satelliteID)
 
-taskHandlerThread = TaskHandlerThread(communicationThread=communicationThread)
+taskHandlerThread = TaskHandlerThread(communicationThread=communicationThread, orbitalPositionThread=orbitalPositionThread)
 
 
 
@@ -37,7 +37,7 @@ objectDetectionThread = ObjectDetectionThread(cv_model_path,
 
 communicationThread = CommunicationThread(satelliteID=satelliteID, 
                                               config=loaded_config_file,
-                                              taskHandlerThread=taskHandlerThread,
+                                              taskHandlerThread=taskHandlerThread, orbitalPositionThread=orbitalPositionThread
                                               )
 
 

@@ -142,7 +142,7 @@ class TaskHandlerThread(threading.Thread):
         taskID = message.getTaskID()
         sendRespondMessage = RespondMessage(
             taskID=taskID,
-            source=int.from_bytes(taskID[0:6], byteorder='big')
+            source=int.from_bytes(taskID[0:6], byteorder='big'),
             firstHopID = message.lastSenderID
         )
 
