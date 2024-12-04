@@ -126,10 +126,19 @@ class CommunicationThread(Thread):
         elif type(message) == RespondMessage:
             messageID = message.getTaskID()
             for task in self.taskWaitingList:
-                if task.getTaskID() == messageID:
+                messageID2 = task.getTaskID()
+                if messageID2 == messageID:
                     for response in self.responseList:
                         if response.getTaskID() == messageID:
                             priorityList = self.orbitalPositionThread.getSatellitePriorityList()
+                            source1 = int.from_bytes(messageID[0:6], byteorder='big')
+                            source2 = int.from_bytes(messageID2[0:6], byteorder='big')
+                            for priority in priorityList:
+                                if priority == source1 or priority == source2:
+                                    selected_source = source1 if priority == source1 else source2
+                                    dataPacket = ImageDataMessage(payload=task, selected_source)
+                                    self.transmissionQueue.append(dataPacket)
+                                    break
                             break
                         else:
                             self.responseList.append(message)
@@ -151,7 +160,7 @@ class CommunicationThread(Thread):
                 self.addTransmission(message=message)
                 
         elif type(message) == ProcessedDataMessage:
-            pass
+            self.transmissionQueue.append(message)
     
 
     def addTransmission(
@@ -200,14 +209,3 @@ class CommunicationThread(Thread):
         # Print and return
         print(f"Sending: {sendRespondMessage}")
         return sendRespondMessage.getTaskID(), sendRespondMessage.getTaskID()
-
-
-
-    def sendDataPacket(self, task: Task, message: Message):
-        """
-        Send task packet to 
-        """
-        sendDataMessage = ImageDataMessage(payload=task, firstHopID=message.lastSenderID)
-
-        self.communicationThread.addTransmission(sendDataMessage)
-        return sendDataMessage
