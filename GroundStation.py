@@ -25,27 +25,24 @@ class GroundStation():
 
 
     def saveProcessedImage(self, message: ProcessedDataMessage):
-
-        """
-        Mangler at fikse og teste med ProcessedDataMessage pakke, og fikse logik
-        """
-        payload = message.getPayload()
+        image = message.getImage()
+        print(image)
         # Get the full file name (with the directory)
-        filename = payload.getFileName()
+        filename = message.getFileName()
 
         # Load the image using the full path (filename includes full path)
         image = cv2.imread(filename)
         if image is None:
-            print(f"Error loading image: {payload.getImage()}")
+            print(f"Error loading image: {message.getImage()}")
         else:
-            print(f"Image loaded successfully: {payload.getImage()}")
+            print(f"Image loaded successfully: {message.getImage()}")
         
         # Extract the file name from the full path (remove the directory)
         base_filename = os.path.basename(filename)    
         # Construct the full save path by joining the target directory and the base filename
         save_path = os.path.join(self.directoryProcessed, base_filename)
         cv2.imwrite(save_path, image)
-        print(f"Unprocessed image saved as {save_path}")
+        print(f"Processed image saved as {save_path}")
 
     def saveUnProcessedImage(self, message: ImageDataMessage):
         payload = message.getPayload()
@@ -157,11 +154,8 @@ class TransmissionThread(threading.Thread):
 
     def run(self):
         while not self._stop_event.is_set():
-            pass  # Placeholder for future logic
+            pass
 
-    def stop(self):
-        pass
-        #self._stop_event.set()
 
 
 if __name__ == "__main__":

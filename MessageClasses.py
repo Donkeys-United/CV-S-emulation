@@ -120,7 +120,7 @@ class ProcessedDataMessage(Message):
                  boundingBox: Tuple[Tuple[int, int], Tuple[int, int]],
                  firstHopID: int
                  ) -> None:
-        self.__image = imread(image)
+        self.__image = image
         self.__location = location
         self.__unixTimeStamp = unixTimeStamp
         self.__fileName = fileName
