@@ -136,7 +136,7 @@ class CommunicationThread(Thread):
                             for priority in priorityList:
                                 if priority == source1 or priority == source2:
                                     selected_source = source1 if priority == source1 else source2
-                                    dataPacket = ImageDataMessage(payload=task, selected_source)
+                                    dataPacket = ImageDataMessage(payload=task, firstHopID=selected_source)
                                     self.transmissionQueue.append(dataPacket)
                                     break
                             break
