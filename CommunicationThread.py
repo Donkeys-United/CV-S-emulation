@@ -8,6 +8,7 @@ import time
 
 if TYPE_CHECKING:
     from TaskHandlerThread import TaskHandlerThread
+    from OrbitalPositionThread import OrbitalPositionThread
     
 
 class CommunicationThread(Thread):
@@ -36,7 +37,8 @@ class CommunicationThread(Thread):
             self,
             satelliteID: int,
             config: dict,
-            taskHandlerThread,
+            taskHandlerThread: TaskHandlerThread,
+            orbitalPositionThread: OrbitalPositionThread,
             group: None = None, target: Callable[..., object] | None = None, name: str | None = None,
             args: Iterable[Any] = ..., kwargs: Mapping[str, Any] | None = None,
             *,
@@ -148,8 +150,6 @@ class CommunicationThread(Thread):
         elif type(message) == ProcessedDataMessage:
             pass
     
-    def priorityCheck(sourceMac:int) -> int:
-        pass #I need constellation to do this
 
     def addTransmission(
             self,
