@@ -1,9 +1,7 @@
 import json
 import logging.config
-import uuid
 from OrbitalPositionThread import OrbitalPositionThread # Import the other class
 from TaskHandlerThread import TaskHandlerThread
-import time
 import numpy as np
 import os
 from Task import Task
@@ -24,7 +22,7 @@ logging.basicConfig(
 class MissionThread(threading.Thread):
     taskCounter=0
 
-    def __init__(self, configPath:json, group = None, target = None, name = None, args = ..., kwargs = None, *, daemon = None, satelliteID: int, orbitalPosistionThread: OrbitalPositionThread, taskHandlerThread: TaskHandlerThread, imagePath):
+    def __init__(self, configPath:json, group = None, target = None, name = None, args = ..., kwargs = None, *, daemon = None, satelliteID: int, orbitalPositionThread: OrbitalPositionThread, taskHandlerThread: TaskHandlerThread, imagePath):
         super().__init__(group, target, name, args, kwargs, daemon=daemon)
         """
         Initialize the MissionThread with configuration data.
@@ -36,7 +34,7 @@ class MissionThread(threading.Thread):
         self.myMissions = []
         self.files = [] 
         self.satelliteID = satelliteID
-        self.orbitalPosistionThread = orbitalPosistionThread
+        self.orbitalPositionThread = orbitalPositionThread
         self.taskHandlerThread = taskHandlerThread
         self.wait = threading.Event()
     
@@ -62,7 +60,7 @@ class MissionThread(threading.Thread):
         # Filter relevant missions 
         for mission in configData.get("missions"): # Extract only the missions data 
              logging.debug("Checking mission: %s", mission)
-             if mission.get("satellite_id") == self.satelliteID and self.orbitalPosistionThread.canExecuteMission(mission.get("location_radian"), mission.get("orbit_number")):
+             if mission.get("satellite_id") == self.satelliteID:
                  self.myMissions.append(mission)
                  logging.info("Mission added: %s", mission)
              else: 
@@ -110,10 +108,11 @@ class MissionThread(threading.Thread):
                     
                     location_radian = self.myMissions[i].get("location_radian")
                     orbit_number = self.myMissions[i].get("orbit_number")
-                    if self.orbitalPosistionThread.canExecuteMission(location_radian, orbit_number):
+
+                    if self.orbitalPositionThread.canExecuteMission(location_radian, orbit_number):
                         satellite_id = self.myMissions[i].get("satellite_id")
-                        pictures_number = self.myMissions[i].get("pictures_number", 0)
-                        time_limit = self.myMissions[i].get("time_limit", 0)
+                        pictures_number = self.myMissions[i].get("pictures_number")
+                        time_limit = self.myMissions[i].get("time_limit")
 
                         if None in (satellite_id, location_radian, orbit_number, pictures_number, time_limit):
                             logging.error("Invalid mission data: %s", self.myMissions[i])
@@ -129,12 +128,10 @@ class MissionThread(threading.Thread):
                             self.taskHandlerThread.appendUnallocatedTask(task)
 
                     
-                        logging.info("Mission completed: %s", self.myMissions[i])
+                        logging.info("Mission append: %s", self.myMissions[i])
                         self.myMissions.pop(i)
                         break
                 self.wait.wait(2) #sleep for 2 sec
 
         except KeyboardInterrupt:  #bare for at stoppe 
             print("Execution interrupted by user.")  
-
-
