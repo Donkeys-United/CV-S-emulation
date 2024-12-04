@@ -40,7 +40,7 @@ communicationThread = CommunicationThread(satelliteID=satelliteID,
                                               taskHandlerThread=taskHandlerThread, orbitalPositionThread=orbitalPositionThread
                                               )
 
-
+taskHandlerThread.communicationThread = communicationThread
 
 missionThread = MissionThread(configPath=config_path,
                               satelliteID=satelliteID,
