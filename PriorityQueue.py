@@ -52,6 +52,7 @@ class PriorityQueue:
         
         """
         if not self.isEmpty():
+            print(self.__queue[0][0])
             min_limit:float = self.__queue[0][0].getUnixTimestampLimit()
             next_task = self.__queue[0]
             next_task_index = 0
