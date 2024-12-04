@@ -1,7 +1,8 @@
 from collections.abc import Callable
-from threading import Thread
+from threading import Thread, Lock
 from typing import Any, Iterable, List, Mapping, Union
 from MessageClasses import RequestMessage
+import time
 
 
 class AcceptedRequestQueue(Thread):
@@ -11,7 +12,7 @@ class AcceptedRequestQueue(Thread):
         None:
     
     """
-    __acceptedRequests:List[List[Union[RequestMessage, int]]]
+    __acceptedRequests:list[list[Union[RequestMessage, float, int]]]
     __TIME_TO_LIVE:int = 3600
 
     def __init__(
@@ -25,10 +26,12 @@ class AcceptedRequestQueue(Thread):
             ) -> None:
         super().__init__(group, target, name, args, kwargs, daemon=daemon)
         self.__acceptedRequests = []
+        self.lock = Lock()
 
     def run(self) -> None:
         while True:
             self.decrementTime()
+            time.sleep(1)
     
     def isEmpty(self) -> bool:
         """Method for checking if there are any accepted requests
@@ -84,7 +87,7 @@ class AcceptedRequestQueue(Thread):
         
         """
         for message in self.__acceptedRequests:
-            if message[0].get_task_id() == taskID:
+            if message[0].getTaskID() == taskID:
                 self.__acceptedRequests.remove(message)
     
     def decrementTime(self) -> None:
@@ -116,4 +119,24 @@ class AcceptedRequestQueue(Thread):
         """
         return len(self.__acceptedRequests)
     
+    def sortQueue(self) -> None:
+        self.__acceptedRequests = sorted(self.__acceptedRequests, key=lambda message: message[0].getUnixTimestampLimit())
+    
+    def getSortedQueueList(self) -> list[list[Union[RequestMessage, float]]]:
+        self.sortQueue()
+        return self.__acceptedRequests
+    
+    def updateFrequencies(self, frequencies: list[float]) -> None:
+        self.sortQueue()
+        for i in range(len(frequencies)):
+            self.__acceptedRequests[i][1] = frequencies[i]
+    
+    def getQueue(self) -> List[List[Union[RequestMessage, float, int]]]:
+        return self.__acceptedRequests
+    
+    def lockQueue(self) -> None:
+        self.lock.acquire()
+    
+    def releaseQueue(self) -> None:
+        self.lock.release()
     

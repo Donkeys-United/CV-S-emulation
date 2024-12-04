@@ -3,18 +3,22 @@ import random, threading, time
 from Task import Task
 from MessageClasses import *
 #from MissionThread import *
-#from CommunicationThread import CommunicationThread
+from CommunicationThread import CommunicationThread
 from PriorityQueue import PriorityQueue
+from OrbitalPositionThread import OrbitalPositionThread
+from EnergyOptimiser import EnergyOptimiser
+import numpy as np
 
 class TaskHandlerThread(threading.Thread):
 
-    def __init__(self, communicationThread):
+    def __init__(self, communicationThread: CommunicationThread, orbitalPositionThread: OrbitalPositionThread):
         super().__init__()
         self.running = True
-        self.allocatedTasks = PriorityQueue()
-        self.__unallocatedTasks = PriorityQueue()
-        self.communicationThread = communicationThread
-        self.wait = threading.Event()
+        self.allocatedTasks: PriorityQueue = PriorityQueue()
+        self.__unallocatedTasks: PriorityQueue = PriorityQueue()
+        self.communicationThread: CommunicationThread = communicationThread
+        self.orbitalPositionThread: OrbitalPositionThread = orbitalPositionThread
+        self.energyOptimiser = EnergyOptimiser()
 
 
     def run(self):
@@ -23,29 +27,91 @@ class TaskHandlerThread(threading.Thread):
         """
         while self.running:
             if not self.__unallocatedTasks.isEmpty():
-                allocateToSelf = True #self.allocateTaskToSelf(None)
+                nextUnallocatedTask = self.__unallocatedTasks.nextTask()
+                allocateToSelf = self.allocateTaskToSelf(nextUnallocatedTask[0].getUnixTimestampLimit())
                 if allocateToSelf == True:
-                    task = self.__unallocatedTasks.nextTask()
-                    self.allocatedTasks.addTaskToQueue(task[0])
-                    self.allocatedTasks.printQueue()
+                    self.allocatedTasks.addTaskToQueue(nextUnallocatedTask)
                 else:
-                    self.sendRequest(self.__unallocatedTasks.nextTask())
+                    self.sendRequest(nextUnallocatedTask)
                     self.communicationThread.giveTask(self.__unallocatedTasks.nextTask())
-            self.wait.wait(1)
+            time.sleep(1)
 
 
 
-    def allocateTaskToSelf(self, task: Task):
+    def allocateTaskToSelf(self, timeLimitUnixTime: float, taskSource: int) -> Tuple[bool, float]:
+        """Function check wether a task should be allocated to the current satellite as well as determines the frequency it should run at.
+
+        Args:
+            timeLimitUnixTime (float): The time limit of the new task in unix time
+            taskSource (int): The source satellite of the task
+
+        Returns:
+            Tuple[bool, float]: Returns true with a optimised frequency if the task should be allocated to self
+                                Returns false with a frequency of 0 if the task should not be allocated to self
         """
-        Method used to either allocate a task to a satellite itself, or send a request message to another satellite
-        """
-        totalAcceptedTasks = self.getAcceptedTaskTotal()
+        #Lock the queue so they cant be modified during this process
+        self.allocatedTasks.lockQueue()
+        self.communicationThread.acceptedRequestsQueue.lockQueue()
         
-        trueFalseMethod = random.choice([True, False])
-        if trueFalseMethod == True:
-            return True
-        else: 
-            return False
+        allocatedTasksQueue = self.allocatedTasks.getSortedQueueList()
+        acceptedRequestQueue = self.communicationThread.acceptedRequestsQueue.getSortedQueueList()
+        
+        currentFrequencies = []
+        
+        
+        timestamp = time.time()
+        allocatedAcceptedTasksQueueID = []
+        for i in allocatedTasksQueue:
+            allocatedAcceptedTasksQueueID.append([i[0].getTaskID(),i[0].getUnixTimestampLimit() - timestamp])
+            currentFrequencies.append(i[1])
+        
+        for i in acceptedRequestQueue:
+            allocatedAcceptedTasksQueueID.append([i[0].getTaskID(), i[0].getUnixTimestampLimit() - timestamp])
+            currentFrequencies.append(i[1]) 
+        
+        currentEnergyEstimate = self.energyOptimiser.totalEnergy(currentFrequencies)
+        
+        allocatedAcceptedTasksQueueID.append([0, timeLimitUnixTime-timestamp])
+        allocatedAcceptedTasksQueueID = sorted(allocatedAcceptedTasksQueueID, key=lambda list: list[1])
+        
+        timeLimits = [i[1] for i in allocatedAcceptedTasksQueueID]
+        
+        result = self.energyOptimiser.minimiseEnergyConsumption(timeLimits, 0)
+        optimisedFrequencies = result.x
+        
+        optimisedEnergyEstimate = self.energyOptimiser.totalEnergy(optimisedFrequencies)
+        
+        if optimisedEnergyEstimate - currentEnergyEstimate > self.estimateTransmissionEnergyToGround(taskSource):
+            return False, 0.0
+        
+        allocatedTaskOptimisedFreq = []
+        acceptedTaskOptimisedFreq = []
+        allocatedTaskID = {task[0].getTaskID() for task in allocatedTasksQueue}
+        
+        for (taskID, _), frequency in zip(allocatedAcceptedTasksQueueID, optimisedFrequencies):
+            if taskID == 0:
+                newTaskOptimisedFrequency = frequency
+            elif taskID in allocatedTaskID:
+                allocatedTaskOptimisedFreq.append(frequency)
+            else:
+                acceptedTaskOptimisedFreq.append(frequency)
+                
+        self.allocatedTasks.updateFrequencies(allocatedTaskOptimisedFreq)
+        self.communicationThread.acceptedRequestsQueue.updateFrequencies(acceptedTaskOptimisedFreq)
+        
+        #Release the queue
+        self.allocatedTasks.releaseQueue()
+        self.communicationThread.acceptedRequestsQueue.releaseQueue()
+        
+        return True, newTaskOptimisedFrequency
+        
+        
+        # This must not be deleted :)
+        # trueFalseMethod = random.choice([True, False])
+        # if trueFalseMethod == True:
+        #     return True
+        # else: 
+        #     return False
         
 
     def sendRequest(self, task: Task):
@@ -68,35 +134,6 @@ class TaskHandlerThread(threading.Thread):
         #return sendRequestMessage.getTaskID(), sendRequestMessage.getUnixTimeLimit()
 
 
-    def sendRespond(self, task: Task, message: Message):
-        """
-        Method to send a respond to other satellites telling them they can perform the requested task
-        """
-        sendRespondMessage = RespondMessage(
-            taskID=task.getTaskID(),
-            source=task.getSource(),
-            firstHopID = message.lastSenderID
-        )
-
-        self.communicationThread.addTransmission(sendRespondMessage)
- 
-
-        # Print and return
-        print(f"Sending: {sendRespondMessage}")
-        return sendRespondMessage.getTaskID(), sendRespondMessage.getTaskID()
-
-
-
-    def sendDataPacket(self, task: Task, message: Message):
-        """
-        Send task packet to 
-        """
-        sendDataMessage = ImageDataMessage(payload=task, firstHopID=message.lastSenderID)
-
-        self.communicationThread.addTransmission(sendDataMessage)
-        return sendDataMessage
-
-
     def getAcceptedTaskTotal(self):
         """
         Method to get the ammount of accepted tasks a satellite has
@@ -104,11 +141,20 @@ class TaskHandlerThread(threading.Thread):
         return len(self.allocatedTasks) + self.communicationThread.getTotalAcceptedTasks()
 
 
-    def appendTask(self, task: Task):
-        self.allocatedTasks.addTaskToQueue(task)
+    def appendTask(self, task: Task, frequency: float):
+        """Append a task to the allocatedTasks queue 
+
+        Args:
+            task (Task): Task to be added to the queue
+        """
+        self.allocatedTasks.addTaskToQueue(task, frequency)
     
     def appendUnallocatedTask(self, task: Task):
         self.__unallocatedTasks.addTaskToQueue(task)
+    
+    def estimateTransmissionEnergyToGround(self, taskSource: int) -> float:
+        distance = self.orbitalPositionThread.getPathDistanceToGround(taskSource)
+        return 5*distance[2]
 
 """
 #####################################################################################################
@@ -155,3 +201,56 @@ print(f"TaskID: {taskID}, TimeLimit: {timeLimit}")
 taskID, source= thread.sendRespond(task)  # Call on the instance
 #####################################################################################################
 """
+if __name__ == "__main__":
+    import json
+    from random import randint
+    from MessageClasses import RequestMessage
+    test_json = """{
+    "satellites": [
+        {
+        "id": 1,
+        "ip_address": "192.168.1.101",
+        "connections": [1, 4],
+        "initial_angle": 0.0
+        },
+        {
+        "id": 2,
+        "ip_address": "192.168.1.102",
+        "connections": [2,3],
+        "initial_angle": 1.5708
+        },
+        {
+        "id": 3,
+        "ip_address": "192.168.1.103",
+        "connections": [2,3],
+        "initial_angle": 3.14159
+        },
+        {
+        "id": 4,
+        "ip_address": "192.168.1.104",
+        "connections": [3,1],
+        "initial_angle": 4.71239
+        },
+        {
+        "id": 5,
+        "ip_address": "192.168.1.105",
+        "connections": [3,1],
+        "initial_angle": 5.71239
+        }
+    ],
+    "altitude": 200000,
+    "ground_station_ip": "192.168.1.106"
+    }"""
+    taskHandler: TaskHandlerThread = None
+    loaded_json = json.loads(test_json)
+    orbitalPositionThread = OrbitalPositionThread(loaded_json, 5, 1)
+    communicationThread = CommunicationThread(1, loaded_json, taskHandler)
+    taskHandler = TaskHandlerThread(communicationThread, orbitalPositionThread)
+    
+    for i in range(1,11):
+        taskHandler.appendTask(Task(1, i, randint(5,20)), 306000000.0)
+        
+    communicationThread.acceptedRequestsQueue.addMessage(RequestMessage(time.time()+7, 11), 306000000)
+    communicationThread.acceptedRequestsQueue.addMessage(RequestMessage(time.time()+11, 12), 306000000)
+    
+    print(taskHandler.allocateTaskToSelf(time.time() + 9,1))
