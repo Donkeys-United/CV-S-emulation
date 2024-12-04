@@ -4,6 +4,7 @@ from threading import Thread
 from MessageClasses import RequestMessage, RespondMessage, ImageDataMessage, ResponseNackMessage, ProcessedDataMessage, Message
 from AcceptedRequestQueue import AcceptedRequestQueue
 from typing import Any, Iterable, List, Mapping, TYPE_CHECKING
+import time
 
 if TYPE_CHECKING:
     from TaskHandlerThread import TaskHandlerThread
@@ -89,10 +90,12 @@ class CommunicationThread(Thread):
 
 
     def run(self) -> None:
-        while len(self.messageList) != 0:
-            for message in self.messageList:
-                self.messageTypeHandle(message=message)
-                self.messageList.remove(message)
+        while True:
+            while len(self.messageList) != 0:
+                for message in self.messageList:
+                    self.messageTypeHandle(message=message)
+                    self.messageList.remove(message)
+            time.sleep(2)
     
     def messageTypeHandle(
             self,
