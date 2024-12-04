@@ -45,9 +45,11 @@ class CommunicationThread(Thread):
             ) -> None:
         from TransmissionThread import TransmissionThread
         from ListeningThread import ListeningThread
+        from TaskHandlerThread import TaskHandlerThread
+        from OrbitalPositionThread import OrbitalPositionThread
 
         super().__init__(group, target, name, args, kwargs, daemon=daemon)
-        
+        self.orbitalPositionThread = orbitalPositionThread
         self.taskHandlerThread = taskHandlerThread
         self.acceptedRequestsQueue = AcceptedRequestQueue()
         self.acceptedRequestsQueue.start()
@@ -127,7 +129,7 @@ class CommunicationThread(Thread):
                 if task.getTaskID() == messageID:
                     for response in self.responseList:
                         if response.getTaskID() == messageID:
-                            
+                            priorityList = self.orbitalPositionThread.getSatellitePriorityList()
                             break
                         else:
                             self.responseList.append(message)
