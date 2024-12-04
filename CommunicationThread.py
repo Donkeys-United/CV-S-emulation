@@ -9,7 +9,6 @@ import time
 if TYPE_CHECKING:
     from TaskHandlerThread import TaskHandlerThread
     from OrbitalPositionThread import OrbitalPositionThread
-    
 
 class CommunicationThread(Thread):
     """The CommunicationThread that handles incoming and outgoing messages
@@ -59,7 +58,6 @@ class CommunicationThread(Thread):
         #Setup and start transmissionThread using config
         try:
             for satellites in self.config['satellites']:
-                print(f"Satellite ID: {satellites['id']}")
                 if satellites['id'] == satelliteID:
                     connections = satellites['connections']
                     break
@@ -71,6 +69,7 @@ class CommunicationThread(Thread):
             raise ValueError('Config file is not correct')
         
         print(connections, connectionsIP)
+
         self.transmissionThread: TransmissionThread = TransmissionThread(
             communicationThread=self,
             neighbourSatelliteIDs=connections,
@@ -81,6 +80,7 @@ class CommunicationThread(Thread):
         
 
         #Initiate listeningThreads
+        from ListeningThread import ListeningThread
         self.listeningThreadLeft: ListeningThread = ListeningThread(port=self.LISTENING_PORTS_LEFT, communicationThread=self)
         self.listeningThreadRight: ListeningThread = ListeningThread(port=self.LISTENING_PORTS_RIGHT, communicationThread=self)
         self.listeningThreadLeft.start()
@@ -98,6 +98,7 @@ class CommunicationThread(Thread):
                     self.messageTypeHandle(message=message)
                     self.messageList.remove(message)
             time.sleep(2)
+
     
     def messageTypeHandle(
             self,

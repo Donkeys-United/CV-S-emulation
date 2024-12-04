@@ -134,6 +134,38 @@ class TaskHandlerThread(threading.Thread):
         #return sendRequestMessage.getTaskID(), sendRequestMessage.getUnixTimeLimit()
 
 
+
+    def sendRespond(self, message: RequestMessage):
+        """
+        Method to send a respond to other satellites telling them they can perform the requested task
+        """
+        taskID = message.getTaskID()
+        sendRespondMessage = RespondMessage(
+            taskID=taskID,
+            source=int.from_bytes(taskID[0:6], byteorder='big')
+            firstHopID = message.lastSenderID
+        )
+
+        self.communicationThread.addTransmission(sendRespondMessage)
+ 
+
+        # Print and return
+        print(f"Sending: {sendRespondMessage}")
+        return sendRespondMessage.getTaskID(), sendRespondMessage.getTaskID()
+
+
+
+    def sendDataPacket(self, task: Task, message: Message):
+        """
+        Send task packet to 
+        """
+        sendDataMessage = ImageDataMessage(payload=task, firstHopID=message.lastSenderID)
+
+        self.communicationThread.addTransmission(sendDataMessage)
+        return sendDataMessage
+
+
+
     def getAcceptedTaskTotal(self):
         """
         Method to get the ammount of accepted tasks a satellite has

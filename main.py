@@ -25,6 +25,7 @@ with open(config_path, 'r') as config_file:
     loaded_config_file = json.load(config_file)
     print(f"Config_file = {loaded_config_file}")
 
+
 objectDetectionThread = ObjectDetectionThread(cv_model_path, 
                                               communicationThread = communicationThread, 
                                               taskHandlerThread = taskHandlerThread)
@@ -36,6 +37,7 @@ communicationThread = CommunicationThread(satelliteID=satelliteID,
 orbitalPositionThread = OrbitalPositionThread(config=loaded_config_file,
                                                   tickRate=1.0,
                                                   satelliteID=satelliteID)
+
 
 missionThread = MissionThread(configPath=config_path,
                               satelliteID=satelliteID,
