@@ -1,14 +1,14 @@
 from collections.abc import Callable
 from Task import Task
 from threading import Thread
-from MessageClasses import RequestMessage, RespondMessage, ImageDataMessage, ResponseNackMessage, ProcessedDataMessage
+from MessageClasses import RequestMessage, RespondMessage, ImageDataMessage, ResponseNackMessage, ProcessedDataMessage, Message
 from AcceptedRequestQueue import AcceptedRequestQueue
 from typing import Any, Iterable, List, Mapping, TYPE_CHECKING
+import time
 
 if TYPE_CHECKING:
     from TaskHandlerThread import TaskHandlerThread
-    #from TransmissionThread import TransmissionThread
-    #from ListeningThread import ListeningThread
+    from OrbitalPositionThread import OrbitalPositionThread
 
 class CommunicationThread(Thread):
     """The CommunicationThread that handles incoming and outgoing messages
@@ -19,7 +19,7 @@ class CommunicationThread(Thread):
         taskHandlerThread (TaskHandlerThread): A reference to the local TaskHandlerThread
     
     """
-
+    
     #Constants
     LISTENING_PORTS_LEFT: int = 4500
     LISTENING_PORTS_RIGHT: int = 4600
@@ -36,14 +36,18 @@ class CommunicationThread(Thread):
             self,
             satelliteID: int,
             config: dict,
-            taskHandlerThread,
+            taskHandlerThread: TaskHandlerThread,
+            orbitalPositionThread: OrbitalPositionThread,
             group: None = None, target: Callable[..., object] | None = None, name: str | None = None,
             args: Iterable[Any] = ..., kwargs: Mapping[str, Any] | None = None,
             *,
             daemon: bool | None = None
             ) -> None:
-        super().__init__(group, target, name, args, kwargs, daemon=daemon)
+        from TransmissionThread import TransmissionThread
+        from ListeningThread import ListeningThread
 
+        super().__init__(group, target, name, args, kwargs, daemon=daemon)
+        
         self.taskHandlerThread = taskHandlerThread
         self.acceptedRequestsQueue = AcceptedRequestQueue()
         self.acceptedRequestsQueue.start()
@@ -63,9 +67,9 @@ class CommunicationThread(Thread):
                     connectionsIP.append(satellites['ip_address'])
         except:
             raise ValueError('Config file is not correct')
-        #self.acceptedRequestsQueue.start()
-        print(f"connections = {connections}")
-        from TransmissionThread import TransmissionThread
+        
+        print(connections, connectionsIP)
+
         self.transmissionThread: TransmissionThread = TransmissionThread(
             communicationThread=self,
             neighbourSatelliteIDs=connections,
@@ -74,6 +78,7 @@ class CommunicationThread(Thread):
             )
         self.transmissionThread.start()
         
+
         #Initiate listeningThreads
         from ListeningThread import ListeningThread
         self.listeningThreadLeft: ListeningThread = ListeningThread(port=self.LISTENING_PORTS_LEFT, communicationThread=self)
@@ -87,10 +92,13 @@ class CommunicationThread(Thread):
 
 
     def run(self) -> None:
-        while len(self.messageList) != 0:
-            for message in self.messageList:
-                self.messageTypeHandle(message=message)
-                self.messageList.remove(message)
+        while True:
+            while len(self.messageList) != 0:
+                for message in self.messageList:
+                    self.messageTypeHandle(message=message)
+                    self.messageList.remove(message)
+            time.sleep(2)
+
     
     def messageTypeHandle(
             self,
@@ -109,6 +117,7 @@ class CommunicationThread(Thread):
         if type(message) == RequestMessage:
             if self.taskHandlerThread.allocateTaskToSelf(): #add input - ONLY TIMELIMIT
                 self.acceptedRequestsQueue.addMessage(message=message)
+                self.sendRespond(message=message)
             else:
                 self.addTransmission(message=message)
 
@@ -142,8 +151,6 @@ class CommunicationThread(Thread):
         elif type(message) == ProcessedDataMessage:
             pass
     
-    def priorityCheck(sourceMac:int) -> int:
-        pass #I need constellation to do this
 
     def addTransmission(
             self,
@@ -174,3 +181,31 @@ class CommunicationThread(Thread):
     
     def giveTask(self, task: Task) -> None:
         self.taskWaitingList.append(task)
+    
+    def sendRespond(self,  message: RequestMessage):
+        """
+        Method to send a respond to other satellites telling them they can perform the requested task
+        """
+        sendRespondMessage = RespondMessage(
+            taskID=message.getTaskID(),
+            source=message.getTaskID() & 0x0000FFFFFFFFFFFF,
+            firstHopID = message.lastSenderID
+        )
+
+        self.communicationThread.addTransmission(sendRespondMessage)
+ 
+
+        # Print and return
+        print(f"Sending: {sendRespondMessage}")
+        return sendRespondMessage.getTaskID(), sendRespondMessage.getTaskID()
+
+
+
+    def sendDataPacket(self, task: Task, message: Message):
+        """
+        Send task packet to 
+        """
+        sendDataMessage = ImageDataMessage(payload=task, firstHopID=message.lastSenderID)
+
+        self.communicationThread.addTransmission(sendDataMessage)
+        return sendDataMessage

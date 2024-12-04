@@ -1,11 +1,14 @@
 from ultralytics import YOLO
+from torch import device
 from MessageClasses import ImageDataMessage, ProcessedDataMessage
 from CommunicationThread import CommunicationThread
 from TaskHandlerThread import TaskHandlerThread
 import os
-from pathlib import Path
-import Task
+from pathlib import Path, PurePath
+from Task import Task
 import threading
+import subprocess
+import torch
 
 
 class ObjectDetectionThread(threading.Thread):
@@ -15,11 +18,16 @@ class ObjectDetectionThread(threading.Thread):
     def __init__(self, PATH_TO_MODEL, communicationThread: CommunicationThread, taskHandlerThread: TaskHandlerThread):
         super().__init__()
         self.PATH_TO_MODEL = PATH_TO_MODEL
+        self.FREQUENCY_PATH = "/sys/devices/platform/17000000.gpu/devfreq/17000000.gpu/"
+        self.SUDO_PASSWORD = "1234"
+        self.AVAILABLE_FREQUENCIES = [306000000, 408000000, 510000000, 612000000,642750000]
         self.model = self.loadModel()
         self.communicationThread = communicationThread
         self.taskHandlerThread = taskHandlerThread
         self._stop_event = threading.Event()
         self.no_tasks = threading.Event()
+        dummy_input = torch.rand(1, 3, 640, 640).to('cuda')
+        self.model.predict(dummy_input)
     
     def loadModel(self):
         """Method which is automatically called when ObjectDetectionThread 
@@ -31,7 +39,7 @@ class ObjectDetectionThread(threading.Thread):
         model = YOLO(self.PATH_TO_MODEL)
         return model
     
-    def runInference(self, imageObject: Task):
+    def runInference(self, TaskFrequencyList: list[Task, float]):
         """Method used for running inference on a specific imageDataMessage object instance - which the satellite would have received or captured itself.
 
         Args:
@@ -40,29 +48,72 @@ class ObjectDetectionThread(threading.Thread):
         Returns:
             ProcessedDataMessage: a object instance, ready to be sent to the ground station, with the results of the inference.
         """
+        
+        imageObject = TaskFrequencyList[0]
+        
         image = imageObject.getImage()
+        """
         results = self.model.predict(image, 
                                     save = True, 
                                     show_labels = True, 
                                     show_boxes = True, 
-                                    show_conf = True)
+                                    show_conf = True,
+                                    device=0)
+        """
+
+        results = self.model.predict(image, device=0)
+        for result in results:
+            result.save_crop(save_dir=result.save_dir)
+
         bounding_boxes = [result.boxes for result in results]
         bounding_box_xyxy = [box.xyxy for box in bounding_boxes]
 
-        save_dir = results[0].save_dir
+        print(bounding_box_xyxy)
+        bounding_box_list = []
+        for i in range(len(bounding_box_xyxy[0])):
+            bounding_box_list.append([(bounding_box_xyxy[0][i][0], bounding_box_xyxy[0][i][1]),(bounding_box_xyxy[0][i][2], bounding_box_xyxy[0][i][3])])
+
+        save_dir = Path(results[0].save_dir)
 
         image_name_list = []
 
+        image_file_name = PurePath(imageObject.getFileName()).name
+
+        crop_number = 0
+
         # Rename saved files (example logic)
-        for image_path in Path(save_dir).glob("*.jpg"):  # Adjust extension if not .jpg
-            new_name = f"processed_{image_path.stem}.jpg"
-            image_name_list.append(f"{save_dir}/{new_name}")
-            os.rename(image_path, save_dir / new_name)
+        for image_path in Path(save_dir / "boat").glob("*.jpg"):  # Adjust extension if not .jpg
+            if not image_path.name.startswith("processed_"):
+                new_name = f"processed_{crop_number}_{image_file_name}"
+                image_name_list.append(str(save_dir / "boat" / new_name))
+                image_path.rename(save_dir / "boat" / new_name)
+                crop_number += 1
+        
+        print(image_name_list)
 
         finished_message_list = []
-        for result in len(results):
-            finished_message_list.append(ProcessedDataMessage(image_name_list[result], imageObject.getLocation(), imageObject.getUnixTimeStamp(), imageObject.getFileName(), ((bounding_box_xyxy[result][0], bounding_box_xyxy[result][1]),(bounding_box_xyxy[result][2], bounding_box_xyxy[result][4]))))
+        for result in range(len(results)):
+            finished_message_list.append(ProcessedDataMessage(image_name_list[result], 
+                                                              imageObject.getLocation(), 
+                                                              imageObject.getUnixTimestamp(), 
+                                                              imageObject.getFileName(), 
+                                                              bounding_box_list,
+                                                              firstHopID=1))
         return finished_message_list
+    
+    def changeFrequency(self, frequency: float) -> None:
+        """This function fixes the gpu at the closest frequency available to the input frequency
+        Args:
+            frequency (float): The desired frequency
+        """
+        frequencies = [f for f in self.AVAILABLE_FREQUENCIES if f >= frequency]
+        command = (
+            'echo 1234 | sudo -S sh -c "cd /sys/devices/platform/17000000.gpu/devfreq/17000000.gpu && '
+            'echo 306000000 | tee min_freq max_freq"'
+        )
+        subprocess.run(
+            command, shell=True
+        )
 
     def sendProcessedDataMessage(self, message_list: list[ProcessedDataMessage]):
         """Simple method for moving the PrcessedDataMessage object instance to the transmission queue in the CommunicationThread object instance.
@@ -81,12 +132,28 @@ class ObjectDetectionThread(threading.Thread):
     def run(self):
         # Det her skal ændres, således at der er en metode i stedet for at læse direkte fra __allocatedTasks
         while not self._stop_event.is_set():
-            if self.taskHandlerThread.__allocatedTasks:
-                processedDataList = self.runInference(self.taskHandlerThread.__allocatedTasks.nextTask())
-                self.sendProcessedDataMessage(processedDataList)
+            if not self.taskHandlerThread.allocatedTasks.isEmpty():
+                print("Running Object detection")
+                processedDataList = self.runInference(self.taskHandlerThread.allocatedTasks.nextTask())
+                #self.sendProcessedDataMessage(processedDataList)
             else:
+                #Set the gpu frequency to smallest possible frequency to save on power
+                #self.changeFrequency(self.AVAILABLE_FREQUENCIES[0])
+                print("No tasks")
                 self.no_tasks.wait(1)
 
 
     def stop(self):
         self._stop_event.set()
+        
+if __name__ == "__main__":
+    import cv2
+    current_dir = Path(__file__).parent.resolve()
+    cv_model_path = current_dir / "models" / "yolov8m_best.pt"
+    taskHandler = TaskHandlerThread(None) 
+    objectThread = ObjectDetectionThread(cv_model_path,None,taskHandler)
+    task = Task(1,1,10)
+    image_dir = current_dir / "images" / "GE_1_jpg.rf.4247084b7a777fee8a12057bce802026.jpg"
+    task.appendImage("GE_1_jpg.rf.4247084b7a777fee8a12057bce802026.jpg",cv2.imread(image_dir), 0 + 0j)
+    taskHandler.allocatedTasks.addTaskToQueue(task)
+    objectThread.start()

@@ -1,5 +1,6 @@
 from Task import Task
-from typing import List, Optional
+from typing import Optional, Union
+from threading import Lock
 
 class PriorityQueue:
     """PriorityQueue that handles tasks
@@ -8,9 +9,12 @@ class PriorityQueue:
         None:
     
     """
-    __queue:List[Task] = []
+    def __init__(self):
+        self.__queue: list[list[Union[Task, float]]] = []
+        self.lock: Lock = Lock()
+        
 
-    def addTaskToQueue(self, task:Task) -> None:
+    def addTaskToQueue(self, task:Task, frequency: float = 0.0) -> None:
         """Method that adds task to queue
 
         Args:
@@ -20,7 +24,7 @@ class PriorityQueue:
             None:
         
         """
-        self.__queue.append(task)
+        self.__queue.append([task, frequency])
     
     def isEmpty(self) -> bool:
         """Method that checks if queue is empty
@@ -37,8 +41,8 @@ class PriorityQueue:
         else:
             return False
 
-    def nextTask(self) -> Optional[Task]:
-        """Method for getting the next task in the queue. Method removes the task retrieved
+    def nextTaskNonRemoving(self) -> Optional[list[Union[Task, float]]]:
+        """Method for getting the next task in the queue but does not remove the task from the queue
 
         Args:
             None:
@@ -48,12 +52,69 @@ class PriorityQueue:
         
         """
         if not self.isEmpty():
-            min_limit:float = self.__queue[0].getUnixTimestampLimit()
-            for task in self.__queue:
-                if task.getUnixTimestampLimit() < min_limit:
-                    min_limit = task.getUnixTimestampLimit()
-                    next_task:Task = task
-                    self.__queue.remove(task)
+            min_limit:float = self.__queue[0][0].getUnixTimestampLimit()
+            next_task = self.__queue[0]
+            next_task_index = 0
+            for i in range(len(self.__queue)):
+                if self.__queue[i][0].getUnixTimestampLimit() < min_limit:
+                    min_limit = self.__queue[i][0].getUnixTimestampLimit()
+                    next_task = self.__queue[i]
+                    next_task_index = i
+            
             return next_task
         else:
             return None
+    
+    def nextTask(self) -> Optional[list[Union[Task, float]]]:
+        """Get the next task of queue. Also removes the task from the queue
+
+        Returns:
+            Optional[list[Task, int]]: The list containing the task as well as the frequency
+        """
+        self.lockQueue()
+        task = self.nextTaskNonRemoving()
+        
+        if task == None:
+            return None
+        
+        self.__queue.remove(task)
+        self.releaseQueue()
+        return task
+    
+    def updateFrequencies(self, frequencies: list[float]) -> None:
+        self.sortQueue()
+        for i in range(len(frequencies)):
+            self.__queue[i][1] = frequencies[i]
+    
+    def sortQueue(self) -> None:
+        self.__queue = sorted(self.__queue, key=lambda task: task[0].getUnixTimestampLimit())
+    
+    def getSortedQueueList(self) -> list[list[Union[Task, float]]]:
+        self.sortQueue()
+        return self.__queue
+    
+    def getQueue(self) -> list[list[Union[Task, float]]]:
+        return self.__queue
+    
+    def lockQueue(self) -> None:
+        self.lock.acquire()
+    
+    def releaseQueue(self) -> None:
+        self.lock.release()
+
+    def printQueue(self):
+        print(self.__queue)
+
+
+if __name__ == "__main__":
+    from random import randint
+    queue = PriorityQueue()
+
+    for i in range(3):
+        queue.addTaskToQueue(Task(1,i, randint(1,20)))
+    
+    queue.printQueue()
+
+    task = queue.nextTask()
+
+    queue.printQueue()

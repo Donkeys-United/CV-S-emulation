@@ -1,10 +1,12 @@
 from scipy.optimize import minimize, OptimizeResult
+from typing import Callable
 
 class EnergyOptimiser:
-    MU_INFERENCE: float = 5.0
-    F_FIXED: int = 1*10**6
-    F_MIN: int =  5*10**5
-    F_MAX: int = 2*10**6
+    MU_INFERENCE: float = 1.0
+    P_GPU_FIXED: float = 15
+    F_FIXED: int = 500000000
+    F_MIN: int = 306000000
+    F_MAX: int = 642750000
     
     def totalEnergy(self, frequencies: list[float]) -> float:
         """Calculates the total amount of energy it would take to calculate some tasks at some frequencies
@@ -18,7 +20,7 @@ class EnergyOptimiser:
         return sum(self.MU_INFERENCE * (self.P_GPU_FIXED/self.F_FIXED**2) * f**2 
                    for f in frequencies)
     
-    def taskConstraint(self, k: int, busyTime: float, timeLimit: float) -> function:
+    def taskConstraint(self, k: int, busyTime: float, timeLimit: float) -> Callable:
         """Method for generating a constraint function for the tasks
 
         Args:
@@ -27,7 +29,7 @@ class EnergyOptimiser:
             timeLimit (float): Time limit of task k
 
         Returns:
-            function: The constraint function
+            Callable: The constraint function
         """
         def constraint(frequencies):
             cumulativeTime = busyTime + sum(self.MU_INFERENCE * (self.F_FIXED / frequencies[i]) for i in range(k))
@@ -56,7 +58,7 @@ class EnergyOptimiser:
         """
         return [self.F_MIN for _ in range(K)]
     
-    def getConstraints(self, K: int, busyTime: float, timeLimits: list[float]) -> list[dict[str, function]]:
+    def getConstraints(self, K: int, busyTime: float, timeLimits: list[float]) -> list[dict[str, Callable]]:
         """Function that generates constraints
 
         Args:

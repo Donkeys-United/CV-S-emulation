@@ -1,4 +1,4 @@
-from threading import Thread
+from threading import Thread, Event
 import json
 import numpy as np
 from uuid import getnode
@@ -20,7 +20,7 @@ class OrbitalPositionThread(Thread):
     orbitalRadius: float
     tickRate: float
     
-    def __init__(self, config: dict, tickRate: float):
+    def __init__(self, config: dict, tickRate: float, satelliteID):
         """Init function of the orbital thread class
 
         Args:
@@ -30,7 +30,7 @@ class OrbitalPositionThread(Thread):
         super().__init__()
         config_json  = config
         
-        self.satelliteID = getnode()
+        self.satelliteID = satelliteID
         
         for i in config_json["satellites"]:
             self.currentAngle[i["id"]] = i["initial_angle"]
@@ -46,6 +46,9 @@ class OrbitalPositionThread(Thread):
         self.neighbourSatDist = self.calculateDistance(temp_list[0], self.orbitalRadius ,temp_list[1], self.orbitalRadius)
 
         self.tickRate = tickRate
+        self.calculateSatClosestToGround()
+
+        self.wait = Event()
         
     def run(self) -> None:
         """Main loop of the orbital position thread
@@ -63,7 +66,7 @@ class OrbitalPositionThread(Thread):
             loopTimeTaken = loopEndTime - loopStartTime
             
             if loopTimeTaken < self.tickRate:
-                sleep(self.tickRate - loopTimeTaken)
+                self.wait.wait(self.tickRate - loopTimeTaken)
     
     def calculateOrbitalPeriodSeconds(self, altitude: float) -> float:
         """Calculates the orbital period
@@ -89,7 +92,7 @@ class OrbitalPositionThread(Thread):
         Returns:
             float: The distance between the points
         """
-        return np.abs(self.calculatePosition(angle1, radius1) - self.calculatePosition(angle2, radius1))
+        return np.abs(self.calculatePosition(angle1, radius1) - self.calculatePosition(angle2, radius2))
     
     def canExecuteMission(self, radian: float, orbitNumber: int) -> bool:
         """Check whether a mission can be executed
@@ -160,24 +163,42 @@ class OrbitalPositionThread(Thread):
         
         return priorityList
     
-    def getPathDistanceToGround(self) -> float:
-        """Calculates the path distance to ground station
+    def getPathDistanceToDestination(self, source: int, destination: int) -> tuple[int, float]:
+        """Calculate the travel for a message distance between to satellites
+
+        Args:
+            source (int): The source satellite
+            destination (int): The destination satellite
 
         Returns:
-            float: The path distance in meters
+            tuple[int, float]: The first element is the number of of between satellite
+                               The second element total travel distance between satellites
         """
         nodes = list(self.currentAngle.keys())
         N = len(nodes)
         
-        targetIdx = nodes.index(self.satClosestToGround)
-        startIdx = nodes.index(self.satelliteID)
+        targetIdx = nodes.index(destination)
+        startIdx = nodes.index(source)
         
         counterclockwiseDistance = np.abs(targetIdx - startIdx) % N
         clockwiseDistance = N - np.abs(startIdx - targetIdx) % N
         
         minimumHops = min(clockwiseDistance, counterclockwiseDistance)
         
-        return minimumHops * self.neighbourSatDist + self.calculateDistance(self.currentAngle[self.satClosestToGround], 
+        return minimumHops, minimumHops * self.neighbourSatDist
+        
+    
+    def getPathDistanceToGround(self, source: int) -> tuple[int,float, float]:
+        """Calculates the path distance to ground station from a given source satellite
+
+        Returns:
+            tuple[int, float, float]: The first element is the number of of between satellite
+                                      The second element total travel distance between satellites
+                                      The third is the distance from the satellites closest to ground to ground station 
+        """
+        
+        minimumHops, satDist = self.getPathDistanceToDestination(source, self.satClosestToGround) 
+        return minimumHops, satDist, self.calculateDistance(self.currentAngle[self.satClosestToGround], 
                                                                             self.orbitalRadius, 
                                                                             self.GROUND_STATION_ANGLE, 
                                                                             self.RADIUS_EARTH)
@@ -255,18 +276,19 @@ if __name__ == "__main__":
     "altitude": 200000
     }"""
 
-    testObject = OrbitalPositionThread(json.loads(test_json), 5)
-    testObject.satelliteID = 3
+    testObject = OrbitalPositionThread(json.loads(test_json), 5, 1)
+    testObject.satelliteID = 1
     print(testObject.currentAngle)
     print(testObject.orbitalPeriod)
     print(testObject.satelliteID)
     print(testObject.neighbourSatDist)
     print(testObject.currentAngle)
-    print(testObject.connections)
     testObject.calculateSatClosestToGround()
     print(testObject.getSatClosestToGround())
     print(testObject.getSatellitePriorityList())
+    print(testObject.calculateDistance(testObject.currentAngle[testObject.satelliteID], testObject.orbitalRadius, 0, testObject.RADIUS_EARTH))
     testObject.start()
+    print(testObject.getPathDistanceToGround(testObject.satelliteID))
     while True:
         print(testObject.currentAngle)
         print(testObject.getSatClosestToGround())

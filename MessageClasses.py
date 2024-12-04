@@ -25,7 +25,7 @@ class RequestMessage(Message):
         self.__taskID = taskID
 
 
-    def getUnixTimeLimit(self) -> float:
+    def getUnixTimestampLimit(self) -> float:
         """Method for returning the __unixTimeLimit attribute value.
         
         Returns:
