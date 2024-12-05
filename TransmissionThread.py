@@ -48,7 +48,7 @@ class TransmissionThread(threading.Thread):
         self.leftSatelliteID = neighbourSatelliteIDs[0]
         self.rightSatelliteID = neighbourSatelliteIDs[1]
         self.leftSatelliteAddr = (neighbourSatelliteAddrs[0], 4500)
-        self.rightSatelliteAddr = (neighbourSatelliteAddrs[1],4500)
+        self.rightSatelliteAddr = (neighbourSatelliteAddrs[1],4600)
         self.groundstationAddr = groundstationAddr
 
 
@@ -100,9 +100,9 @@ class TransmissionThread(threading.Thread):
                                     connection.connect(self.groundstationAddr)
                                 except:
                                     if message.firstHopID == self.leftSatelliteID:
-                                        connection.connect(self.rightSatelliteAddr)
-                                    else:
                                         connection.connect(self.leftSatelliteAddr)
+                                    else:
+                                        connection.connect(self.rightSatelliteAddr)
 
                             # Case 4: The satellite sends out its own RequestMessage - which must be sent to both neighbouring satellites.
                             elif isinstance(message, RequestMessage):
