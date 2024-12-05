@@ -5,6 +5,7 @@ from pickle import dumps
 from uuid import getnode
 import struct
 from getmac import get_mac_address
+import time
 
 class TransmissionThread(threading.Thread):
     """Class for creating the transmission thread.
@@ -97,29 +98,37 @@ class TransmissionThread(threading.Thread):
                         elif isinstance(message, ProcessedDataMessage):
                             try:
                                 connection.connect(self.groundstationAddr)
+
                             except:
                                 if message.firstHopID == self.leftSatelliteID:
                                     print(f"\nSending message to left satellite with address {self.leftSatelliteAddr}")
                                     connection.connect(self.leftSatelliteAddr)
+
                                 else:
                                     print(f"\nSending message to right satellite with address {self.rightSatelliteAddr}")
                                     connection.connect(self.rightSatelliteAddr)
+
 
                         # Case 4: The satellite sends out its own RequestMessage - which must be sent to both neighbouring satellites.
                         elif isinstance(message, RequestMessage):
                             message.lastSenderID = self.__satelliteID
                             pickled_message = dumps(message)
                             self.__dataTransmittedBytes += len(pickled_message)
+                            message_length = len(pickled_message)
+                            header = struct.pack('>I', message_length)
 
                             connection.connect(self.rightSatelliteAddr)
-                            connection.send(pickled_message)
-                            connection.shutdown(socket.SHUT_RDWR)
-                            connection.close()
+                            connection.sendall(header + pickled_message)
 
-                            connection.connect(self.leftSatelliteAddr)
-                            connection.send(pickled_message)
-                            connection.shutdown(socket.SHUT_RDWR)
-                            connection.close()
+                            time.sleep(2)
+
+                            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as connection_2:
+                                connection_2.connect(self.leftSatelliteAddr)
+                                connection_2.sendall(header + pickled_message)
+                                print(f"Sent request message\n")
+                                connection_2.shutdown(socket.SHUT_RDWR)
+                                connection_2.close()
+
 
                             continue
 

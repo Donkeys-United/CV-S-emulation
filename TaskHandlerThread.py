@@ -28,7 +28,7 @@ class TaskHandlerThread(threading.Thread):
         while self.running:
             if not self.__unallocatedTasks.isEmpty():
                 nextUnallocatedTask = self.__unallocatedTasks.nextTask()
-                allocateToSelf = self.allocateTaskToSelf(nextUnallocatedTask[0].getUnixTimestampLimit(), nextUnallocatedTask[0].getSource())
+                allocateToSelf = (False, 0)#self.allocateTaskToSelf(nextUnallocatedTask[0].getUnixTimestampLimit(), nextUnallocatedTask[0].getSource())
                 if allocateToSelf[0] == True:
                     self.allocatedTasks.addTaskToQueue(nextUnallocatedTask[0])
                 else:
