@@ -72,75 +72,74 @@ class TransmissionThread(threading.Thread):
         while not self._stop_event.is_set():
             if self.communicationThread.transmissionQueue:
                 message = self.communicationThread.transmissionQueue.pop(0)
-                for i in range(1):
-                    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as connection:
-                        #connection.bind((self.IP_ADDR, self.port))
-                        if isinstance(message, Message):
+                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as connection:
+                    #connection.bind((self.IP_ADDR, self.port))
+                    if isinstance(message, Message):
 
-                            # Case 1: The satellite must relay a message to the next satellite in the chain.
-                            if (isinstance(message, ProcessedDataMessage) == False) and (message.lastSenderID != None):
+                        # Case 1: The satellite must relay a message to the next satellite in the chain.
+                        if (isinstance(message, ProcessedDataMessage) == False) and (message.lastSenderID != None):
+                            if message.lastSenderID == self.leftSatelliteID:
+                                connection.connect(self.rightSatelliteAddr)
+                            else:
+                                connection.connect(self.leftSatelliteAddr)
+
+                        # Case 2: The satellite must relay the result message to either the groundstation or the next satellite.
+                        elif isinstance(message, ProcessedDataMessage) and (message.lastSenderID != None):
+                            try:
+                                connection.connect(self.groundstationAddr)
+                            except:
                                 if message.lastSenderID == self.leftSatelliteID:
                                     connection.connect(self.rightSatelliteAddr)
                                 else:
                                     connection.connect(self.leftSatelliteAddr)
 
-                            # Case 2: The satellite must relay the result message to either the groundstation or the next satellite.
-                            elif isinstance(message, ProcessedDataMessage) and (message.lastSenderID != None):
-                                try:
-                                    connection.connect(self.groundstationAddr)
-                                except:
-                                    if message.lastSenderID == self.leftSatelliteID:
-                                        connection.connect(self.rightSatelliteAddr)
-                                    else:
-                                        connection.connect(self.leftSatelliteAddr)
-
-                            # Case 3: The satellite must send its own results to the groundstation, or another satellite.
-                            elif isinstance(message, ProcessedDataMessage):
-                                try:
-                                    connection.connect(self.groundstationAddr)
-                                except:
-                                    if message.firstHopID == self.leftSatelliteID:
-                                        print(f"\nSending message to left satellite with address {self.leftSatelliteAddr}")
-                                        connection.connect(self.leftSatelliteAddr)
-                                    else:
-                                        print(f"\nSending message to right satellite with address {self.rightSatelliteAddr}")
-                                        connection.connect(self.rightSatelliteAddr)
-
-                            # Case 4: The satellite sends out its own RequestMessage - which must be sent to both neighbouring satellites.
-                            elif isinstance(message, RequestMessage):
-                                message.lastSenderID = self.__satelliteID
-                                pickled_message = dumps(message)
-                                self.__dataTransmittedBytes += len(pickled_message)
-
-                                connection.connect(self.rightSatelliteAddr)
-                                connection.send(pickled_message)
-                                connection.shutdown(socket.SHUT_RDWR)
-                                connection.close()
-
-                                connection.connect(self.leftSatelliteAddr)
-                                connection.send(pickled_message)
-                                connection.shutdown(socket.SHUT_RDWR)
-                                connection.close()
-
-                                continue
-
-                            # Case 5: The satellite sends any other message created by itself to one of its neighbouring satellites.
-                            else:
+                        # Case 3: The satellite must send its own results to the groundstation, or another satellite.
+                        elif isinstance(message, ProcessedDataMessage):
+                            try:
+                                connection.connect(self.groundstationAddr)
+                            except:
                                 if message.firstHopID == self.leftSatelliteID:
-                                    connection.connect(self.rightSatelliteAddr)
-                                else:
+                                    print(f"\nSending message to left satellite with address {self.leftSatelliteAddr}")
                                     connection.connect(self.leftSatelliteAddr)
+                                else:
+                                    print(f"\nSending message to right satellite with address {self.rightSatelliteAddr}")
+                                    connection.connect(self.rightSatelliteAddr)
 
+                        # Case 4: The satellite sends out its own RequestMessage - which must be sent to both neighbouring satellites.
+                        elif isinstance(message, RequestMessage):
                             message.lastSenderID = self.__satelliteID
                             pickled_message = dumps(message)
                             self.__dataTransmittedBytes += len(pickled_message)
-                            message_length = len(pickled_message)
-                            header = struct.pack('>I', message_length)
-                            connection.sendall(header + pickled_message)
-                            #print(f"\n\n\nTransmission Queue:{self.communicationThread.transmissionQueue}\n\n\n")
-                            print(f"Sent image: {message.getFileName()}\n")
+
+                            connection.connect(self.rightSatelliteAddr)
+                            connection.send(pickled_message)
                             connection.shutdown(socket.SHUT_RDWR)
                             connection.close()
+
+                            connection.connect(self.leftSatelliteAddr)
+                            connection.send(pickled_message)
+                            connection.shutdown(socket.SHUT_RDWR)
+                            connection.close()
+
+                            continue
+
+                        # Case 5: The satellite sends any other message created by itself to one of its neighbouring satellites.
+                        else:
+                            if message.firstHopID == self.leftSatelliteID:
+                                connection.connect(self.rightSatelliteAddr)
+                            else:
+                                connection.connect(self.leftSatelliteAddr)
+
+                        message.lastSenderID = self.__satelliteID
+                        pickled_message = dumps(message)
+                        self.__dataTransmittedBytes += len(pickled_message)
+                        message_length = len(pickled_message)
+                        header = struct.pack('>I', message_length)
+                        connection.sendall(header + pickled_message)
+                        #print(f"\n\n\nTransmission Queue:{self.communicationThread.transmissionQueue}\n\n\n")
+                        print(f"Sent image: {message.getFileName()}\n")
+                        connection.shutdown(socket.SHUT_RDWR)
+                        connection.close()
 
 
 
