@@ -16,14 +16,22 @@ current_dir = Path(__file__).parent.resolve()
 cv_model_path = current_dir / "models" / "yolov8m_best.engine"
 image_path = current_dir / "images"
 config_path = current_dir / "config_test.JSON"
-
-communicationThread = None
-
-taskHandlerThread = TaskHandlerThread(communicationThread=communicationThread)
+if satelliteID == 201170498634677:
+    config_path = current_dir / "config_test_nano.JSON"
 
 with open(config_path, 'r') as config_file:
     loaded_config_file = json.load(config_file)
     print(f"Config_file = {loaded_config_file}")
+
+communicationThread = None
+
+orbitalPositionThread = OrbitalPositionThread(config=loaded_config_file,
+                                                  tickRate=1.0,
+                                                  satelliteID=satelliteID)
+
+taskHandlerThread = TaskHandlerThread(communicationThread=communicationThread, orbitalPositionThread=orbitalPositionThread)
+
+
 
 objectDetectionThread = ObjectDetectionThread(cv_model_path, 
                                               communicationThread = communicationThread, 
@@ -31,11 +39,11 @@ objectDetectionThread = ObjectDetectionThread(cv_model_path,
 
 communicationThread = CommunicationThread(satelliteID=satelliteID, 
                                               config=loaded_config_file,
-                                              taskHandlerThread=taskHandlerThread,
+                                              taskHandlerThread=taskHandlerThread, orbitalPositionThread=orbitalPositionThread
                                               )
-orbitalPositionThread = OrbitalPositionThread(config=loaded_config_file,
-                                                  tickRate=1.0,
-                                                  satelliteID=satelliteID)
+
+taskHandlerThread.communicationThread = communicationThread
+objectDetectionThread.communicationThread = communicationThread
 
 missionThread = MissionThread(configPath=config_path,
                               satelliteID=satelliteID,
@@ -45,6 +53,8 @@ missionThread = MissionThread(configPath=config_path,
 
 print("Startin orbitlal thread")
 orbitalPositionThread.start()
+print("Starting communication thread")
+communicationThread.start()
 print("Starting taskhandler")
 taskHandlerThread.start()
 print("Starting mission thread")

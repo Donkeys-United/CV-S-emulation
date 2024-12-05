@@ -3,6 +3,9 @@ from MessageClasses import Message, RequestMessage, RespondMessage, ResponseNack
 import socket
 from pickle import dumps
 from uuid import getnode
+import struct
+from getmac import get_mac_address
+import time
 
 class TransmissionThread(threading.Thread):
     """Class for creating the transmission thread.
@@ -10,10 +13,11 @@ class TransmissionThread(threading.Thread):
     from CommunicationThread import CommunicationThread
 
     HOSTNAME = socket.gethostname()
-    IP_ADDR = socket.gethostbyname(HOSTNAME)
+    #IP_ADDR = socket.gethostbyname(HOSTNAME)
+    IP_ADDR = "0.0.0.0"
     __dataTransmittedBytes = 0 # Used for power consumption optimization.
     port = 6969 # Port selected for outgoing comms.
-    __satelliteID = getnode() # MAC Address
+    __satelliteID = int(get_mac_address("usb0").replace(":",""),16) # MAC Address
 
 
 
@@ -44,8 +48,8 @@ class TransmissionThread(threading.Thread):
         self.__satelliteID
         self.leftSatelliteID = neighbourSatelliteIDs[0]
         self.rightSatelliteID = neighbourSatelliteIDs[1]
-        self.leftSatelliteAddr = neighbourSatelliteAddrs[0]
-        self.rightSatelliteAddr = neighbourSatelliteAddrs[1]
+        self.leftSatelliteAddr = (neighbourSatelliteAddrs[0], 4500)
+        self.rightSatelliteAddr = (neighbourSatelliteAddrs[1],4600)
         self.groundstationAddr = groundstationAddr
 
 
@@ -62,12 +66,15 @@ class TransmissionThread(threading.Thread):
 
 
     def sendTransmission(self):
-        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as connection:
-            connection.bind((self.IP_ADDR, self.port))
+        #with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as connection:
+        #with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as connection:
+            #connection.bind((self.IP_ADDR, self.port))
 
-            while not self._stop_event.is_set():
-                if self.communicationThread.transmissionQueue:
-                    message = self.communicationThread.transmissionQueue.pop(0)
+        while not self._stop_event.is_set():
+            if self.communicationThread.transmissionQueue:
+                message = self.communicationThread.transmissionQueue.pop(0)
+                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as connection:
+                    #connection.bind((self.IP_ADDR, self.port))
                     if isinstance(message, Message):
 
                         # Case 1: The satellite must relay a message to the next satellite in the chain.
@@ -91,25 +98,37 @@ class TransmissionThread(threading.Thread):
                         elif isinstance(message, ProcessedDataMessage):
                             try:
                                 connection.connect(self.groundstationAddr)
+
                             except:
                                 if message.firstHopID == self.leftSatelliteID:
-                                    connection.connect(self.rightSatelliteAddr)
-                                else:
+                                    print(f"\nSending message to left satellite with address {self.leftSatelliteAddr}")
                                     connection.connect(self.leftSatelliteAddr)
+
+                                else:
+                                    print(f"\nSending message to right satellite with address {self.rightSatelliteAddr}")
+                                    connection.connect(self.rightSatelliteAddr)
+
 
                         # Case 4: The satellite sends out its own RequestMessage - which must be sent to both neighbouring satellites.
                         elif isinstance(message, RequestMessage):
                             message.lastSenderID = self.__satelliteID
                             pickled_message = dumps(message)
                             self.__dataTransmittedBytes += len(pickled_message)
+                            message_length = len(pickled_message)
+                            header = struct.pack('>I', message_length)
 
                             connection.connect(self.rightSatelliteAddr)
-                            connection.send(pickled_message)
-                            connection.shutdown()
+                            connection.sendall(header + pickled_message)
 
-                            connection.connect(self.leftSatelliteAddr)
-                            connection.send(pickled_message)
-                            connection.shutdown()
+                            time.sleep(2)
+
+                            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as connection_2:
+                                connection_2.connect(self.leftSatelliteAddr)
+                                connection_2.sendall(header + pickled_message)
+                                print(f"Sent request message\n")
+                                connection_2.shutdown(socket.SHUT_RDWR)
+                                connection_2.close()
+
 
                             continue
 
@@ -123,8 +142,13 @@ class TransmissionThread(threading.Thread):
                         message.lastSenderID = self.__satelliteID
                         pickled_message = dumps(message)
                         self.__dataTransmittedBytes += len(pickled_message)
-                        connection.send(pickled_message)
-                        connection.shutdown()
+                        message_length = len(pickled_message)
+                        header = struct.pack('>I', message_length)
+                        connection.sendall(header + pickled_message)
+                        #print(f"\n\n\nTransmission Queue:{self.communicationThread.transmissionQueue}\n\n\n")
+                        print(f"Sent image: {message.getFileName()}\n")
+                        connection.shutdown(socket.SHUT_RDWR)
+                        connection.close()
 
 
 

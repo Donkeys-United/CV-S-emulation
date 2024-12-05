@@ -4,10 +4,11 @@ from threading import Thread
 from MessageClasses import RequestMessage, RespondMessage, ImageDataMessage, ResponseNackMessage, ProcessedDataMessage, Message
 from AcceptedRequestQueue import AcceptedRequestQueue
 from typing import Any, Iterable, List, Mapping, TYPE_CHECKING
+import time
 
 if TYPE_CHECKING:
     from TaskHandlerThread import TaskHandlerThread
-    
+    from OrbitalPositionThread import OrbitalPositionThread
 
 class CommunicationThread(Thread):
     """The CommunicationThread that handles incoming and outgoing messages
@@ -36,6 +37,7 @@ class CommunicationThread(Thread):
             satelliteID: int,
             config: dict,
             taskHandlerThread,
+            orbitalPositionThread,
             group: None = None, target: Callable[..., object] | None = None, name: str | None = None,
             args: Iterable[Any] = ..., kwargs: Mapping[str, Any] | None = None,
             *,
@@ -43,9 +45,11 @@ class CommunicationThread(Thread):
             ) -> None:
         from TransmissionThread import TransmissionThread
         from ListeningThread import ListeningThread
+        from TaskHandlerThread import TaskHandlerThread
+        from OrbitalPositionThread import OrbitalPositionThread
 
         super().__init__(group, target, name, args, kwargs, daemon=daemon)
-        
+        self.orbitalPositionThread = orbitalPositionThread
         self.taskHandlerThread = taskHandlerThread
         self.acceptedRequestsQueue = AcceptedRequestQueue()
         self.acceptedRequestsQueue.start()
@@ -56,7 +60,6 @@ class CommunicationThread(Thread):
         #Setup and start transmissionThread using config
         try:
             for satellites in self.config['satellites']:
-                print(f"Satellite ID: {satellites['id']}")
                 if satellites['id'] == satelliteID:
                     connections = satellites['connections']
                     break
@@ -68,16 +71,18 @@ class CommunicationThread(Thread):
             raise ValueError('Config file is not correct')
         
         print(connections, connectionsIP)
+
         self.transmissionThread: TransmissionThread = TransmissionThread(
             communicationThread=self,
             neighbourSatelliteIDs=connections,
             neighbourSatelliteAddrs=connectionsIP,
-            groundstationAddr=config['ground_station_ip']
+            groundstationAddr=(config['ground_station_ip'],config['ground_station_port'])
             )
         self.transmissionThread.start()
         
 
         #Initiate listeningThreads
+        from ListeningThread import ListeningThread
         self.listeningThreadLeft: ListeningThread = ListeningThread(port=self.LISTENING_PORTS_LEFT, communicationThread=self)
         self.listeningThreadRight: ListeningThread = ListeningThread(port=self.LISTENING_PORTS_RIGHT, communicationThread=self)
         self.listeningThreadLeft.start()
@@ -89,10 +94,13 @@ class CommunicationThread(Thread):
 
 
     def run(self) -> None:
-        while len(self.messageList) != 0:
-            for message in self.messageList:
-                self.messageTypeHandle(message=message)
-                self.messageList.remove(message)
+        while True:
+            while len(self.messageList) != 0:
+                for message in self.messageList:
+                    self.messageTypeHandle(message=message)
+                    self.messageList.remove(message)
+            time.sleep(2)
+
     
     def messageTypeHandle(
             self,
@@ -109,7 +117,11 @@ class CommunicationThread(Thread):
         """
         
         if type(message) == RequestMessage:
-            if self.taskHandlerThread.allocateTaskToSelf(): #add input - ONLY TIMELIMIT
+            time_limit  = message.getUnixTimestampLimit()
+            task_source = message.getTaskID() & 0x0000FFFFFFFFFFFF
+            print(f"task_source = {task_source}")
+            allocation = self.taskHandlerThread.allocateTaskToSelf(time_limit, task_source)
+            if allocation[0]: #add input - ONLY TIMELIMIT
                 self.acceptedRequestsQueue.addMessage(message=message)
                 self.sendRespond(message=message)
             else:
@@ -118,10 +130,19 @@ class CommunicationThread(Thread):
         elif type(message) == RespondMessage:
             messageID = message.getTaskID()
             for task in self.taskWaitingList:
-                if task.getTaskID() == messageID:
+                messageID2 = task.getTaskID()
+                if messageID2 == messageID:
                     for response in self.responseList:
                         if response.getTaskID() == messageID:
-                            
+                            priorityList = self.orbitalPositionThread.getSatellitePriorityList()
+                            source1 = int.from_bytes(messageID[0:6], byteorder='big')
+                            source2 = int.from_bytes(messageID2[0:6], byteorder='big')
+                            for priority in priorityList:
+                                if priority == source1 or priority == source2:
+                                    selected_message = message.getLastSenderID() if priority == source1 else response.getLastSenderID()
+                                    dataPacket = ImageDataMessage(payload=task, firstHopID=selected_message)
+                                    self.transmissionQueue.append(dataPacket)
+                                    break
                             break
                         else:
                             self.responseList.append(message)
@@ -143,10 +164,8 @@ class CommunicationThread(Thread):
                 self.addTransmission(message=message)
                 
         elif type(message) == ProcessedDataMessage:
-            pass
+            self.transmissionQueue.append(message)
     
-    def priorityCheck(sourceMac:int) -> int:
-        pass #I need constellation to do this
 
     def addTransmission(
             self,
@@ -194,14 +213,3 @@ class CommunicationThread(Thread):
         # Print and return
         print(f"Sending: {sendRespondMessage}")
         return sendRespondMessage.getTaskID(), sendRespondMessage.getTaskID()
-
-
-
-    def sendDataPacket(self, task: Task, message: Message):
-        """
-        Send task packet to 
-        """
-        sendDataMessage = ImageDataMessage(payload=task, firstHopID=message.lastSenderID)
-
-        self.communicationThread.addTransmission(sendDataMessage)
-        return sendDataMessage

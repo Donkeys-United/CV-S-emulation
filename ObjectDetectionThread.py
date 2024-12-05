@@ -65,17 +65,13 @@ class ObjectDetectionThread(threading.Thread):
         for result in results:
             result.save_crop(save_dir=result.save_dir)
 
-        bounding_boxes = [result.boxes for result in results]
-        bounding_box_xyxy = [box.xyxy for box in bounding_boxes]
-
-        print(bounding_box_xyxy)
-        bounding_box_list = []
-        for i in range(len(bounding_box_xyxy[0])):
-            bounding_box_list.append([(bounding_box_xyxy[0][i][0], bounding_box_xyxy[0][i][1]),(bounding_box_xyxy[0][i][2], bounding_box_xyxy[0][i][3])])
-
         save_dir = Path(results[0].save_dir)
+        
+        bounding_box_list = result.boxes.xyxy.tolist()
+        #print(f"\n\nBounding Box List: {bounding_box_list}")
 
         image_name_list = []
+        short_name_list = []
 
         image_file_name = PurePath(imageObject.getFileName()).name
 
@@ -87,18 +83,20 @@ class ObjectDetectionThread(threading.Thread):
                 new_name = f"processed_{crop_number}_{image_file_name}"
                 image_name_list.append(str(save_dir / "boat" / new_name))
                 image_path.rename(save_dir / "boat" / new_name)
+                short_name_list.append(PurePath(image_name_list[-1]).name)
                 crop_number += 1
         
-        print(image_name_list)
 
         finished_message_list = []
-        for result in range(len(results)):
+        for result in range(len(image_name_list)):
+            #print(f"\n Results Lenght: {result}")
+            #print(short_name_list[result])
             finished_message_list.append(ProcessedDataMessage(image_name_list[result], 
                                                               imageObject.getLocation(), 
                                                               imageObject.getUnixTimestamp(), 
-                                                              imageObject.getFileName(), 
+                                                              short_name_list[result], 
                                                               bounding_box_list,
-                                                              firstHopID=1))
+                                                              firstHopID=201170498634677))
         return finished_message_list
     
     def changeFrequency(self, frequency: float) -> None:
@@ -135,11 +133,10 @@ class ObjectDetectionThread(threading.Thread):
             if not self.taskHandlerThread.allocatedTasks.isEmpty():
                 print("Running Object detection")
                 processedDataList = self.runInference(self.taskHandlerThread.allocatedTasks.nextTask())
-                #self.sendProcessedDataMessage(processedDataList)
+                self.sendProcessedDataMessage(processedDataList)
             else:
                 #Set the gpu frequency to smallest possible frequency to save on power
                 #self.changeFrequency(self.AVAILABLE_FREQUENCIES[0])
-                print("No tasks")
                 self.no_tasks.wait(1)
 
 
