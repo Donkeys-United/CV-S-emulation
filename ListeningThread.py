@@ -9,7 +9,7 @@ class ListeningThread(threading.Thread):
     """
     from CommunicationThread import CommunicationThread
     HOSTNAME = socket.gethostname()
-    IP_ADDR = socket.gethostbyname(HOSTNAME)
+    IP_ADDR = "0.0.0.0"
 
     def __init__(self, port: int, communicationThread: CommunicationThread):
         
