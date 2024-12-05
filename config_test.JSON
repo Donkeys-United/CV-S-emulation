@@ -3,14 +3,14 @@
     {
 
       "id": 201170498634677,
-      "ip_address": "192.168.1.101",
-      "connections": [4, 2],
+      "ip_address": "192.168.1.108",
+      "connections": [4, 64058203556573],
       "initial_angle": 0
     },
     {
       "id": 64058203556573,
       "ip_address": "192.168.1.106",
-      "connections": [4, 2],
+      "connections": [201170498634677, 2],
 
       "initial_angle": 0
     },
@@ -66,7 +66,7 @@
 
     }
   ],
-  "ground_station_ip": "192.168.0.102",
-  "ground_station_port": 4500,
+  "ground_station_ip": "192.168.0.202",
+  "ground_station_port": 4400,
   "altitude": 200000
 }

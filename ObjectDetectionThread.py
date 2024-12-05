@@ -96,7 +96,7 @@ class ObjectDetectionThread(threading.Thread):
                                                               imageObject.getUnixTimestamp(), 
                                                               short_name_list[result], 
                                                               bounding_box_list,
-                                                              firstHopID=2))
+                                                              firstHopID=201170498634677))
         return finished_message_list
     
     def changeFrequency(self, frequency: float) -> None:
