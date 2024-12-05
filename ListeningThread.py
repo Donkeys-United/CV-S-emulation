@@ -35,6 +35,7 @@ class ListeningThread(threading.Thread):
 
         connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         connection.bind((self.IP_ADDR, self.port))
+        print((self.IP_ADDR, self.port))
         while not self._stop_event.is_set():
             connection.listen()
             sock, addr = connection.accept()

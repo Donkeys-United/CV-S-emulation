@@ -100,8 +100,10 @@ class TransmissionThread(threading.Thread):
                                     connection.connect(self.groundstationAddr)
                                 except:
                                     if message.firstHopID == self.leftSatelliteID:
+                                        print(f"\nSending message to left satellite with address {self.leftSatelliteAddr}")
                                         connection.connect(self.leftSatelliteAddr)
                                     else:
+                                        print(f"\nSending message to right satellite with address {self.rightSatelliteAddr}")
                                         connection.connect(self.rightSatelliteAddr)
 
                             # Case 4: The satellite sends out its own RequestMessage - which must be sent to both neighbouring satellites.
