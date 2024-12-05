@@ -21,7 +21,7 @@ class Task:
 
 
     def __init__(self, satelliteID:int, taskCount:int, timeLimit:int) -> None:
-        self.taskID = satelliteID.to_bytes(6, 'big') + taskCount.to_bytes(1, 'big')
+        self.taskID =  taskCount.to_bytes(1, 'big') + satelliteID.to_bytes(6, 'big') 
         self.unixTimestamp = time.time()
         self.unixTimestampLimit = self.unixTimestamp + timeLimit
 
