@@ -10,7 +10,8 @@ class TransmissionThread(threading.Thread):
     from CommunicationThread import CommunicationThread
 
     HOSTNAME = socket.gethostname()
-    IP_ADDR = socket.gethostbyname(HOSTNAME)
+    #IP_ADDR = socket.gethostbyname(HOSTNAME)
+    IP_ADDR = "0.0.0.0"
     __dataTransmittedBytes = 0 # Used for power consumption optimization.
     port = 6969 # Port selected for outgoing comms.
     __satelliteID = getnode() # MAC Address
@@ -45,7 +46,7 @@ class TransmissionThread(threading.Thread):
         self.leftSatelliteID = neighbourSatelliteIDs[0]
         self.rightSatelliteID = neighbourSatelliteIDs[1]
         self.leftSatelliteAddr = (neighbourSatelliteAddrs[0], 4500)
-        self.rightSatelliteAddr = (neighbourSatelliteAddrs[1],4600)
+        self.rightSatelliteAddr = (neighbourSatelliteAddrs[1],4500)
         self.groundstationAddr = groundstationAddr
 
 
@@ -124,7 +125,7 @@ class TransmissionThread(threading.Thread):
                         pickled_message = dumps(message)
                         self.__dataTransmittedBytes += len(pickled_message)
                         connection.send(pickled_message)
-                        connection.shutdown()
+                        connection.shutdown(socket.SHUT_RDWR)
 
 
 
