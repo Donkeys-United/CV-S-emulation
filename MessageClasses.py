@@ -124,7 +124,7 @@ class ProcessedDataMessage(Message):
         self.__location = location
         self.__unixTimeStamp = unixTimeStamp
         self.__fileName = fileName
-        self.__boundingBox = 0#boundingBox
+        self.__boundingBox = boundingBox
 
         self.firstHopID = firstHopID
 

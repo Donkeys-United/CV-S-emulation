@@ -73,7 +73,7 @@ class TransmissionThread(threading.Thread):
                 message = self.communicationThread.transmissionQueue.pop(0)
                 for i in range(1):
                     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as connection:
-                        connection.bind((self.IP_ADDR, self.port))
+                        #connection.bind((self.IP_ADDR, self.port))
                         if isinstance(message, Message):
 
                             # Case 1: The satellite must relay a message to the next satellite in the chain.
@@ -134,7 +134,8 @@ class TransmissionThread(threading.Thread):
                             message_length = len(pickled_message)
                             header = struct.pack('>I', message_length)
                             connection.sendall(header + pickled_message)
-                            print(f"\n\n\nTransmission Queue:{self.communicationThread.transmissionQueue}\n\n\n")
+                            #print(f"\n\n\nTransmission Queue:{self.communicationThread.transmissionQueue}\n\n\n")
+                            print(f"Sent image: {message.getFileName()}\n")
                             connection.shutdown(socket.SHUT_RDWR)
                             connection.close()
 
