@@ -93,6 +93,7 @@ class ObjectDetectionThread(threading.Thread):
 
         finished_message_list = []
         for result in range(len(results)):
+            print(f"Image Name: {image_name_list[result]}")
             finished_message_list.append(ProcessedDataMessage(image_name_list[result], 
                                                               imageObject.getLocation(), 
                                                               imageObject.getUnixTimestamp(), 
