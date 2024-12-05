@@ -146,7 +146,7 @@ class TransmissionThread(threading.Thread):
                         header = struct.pack('>I', message_length)
                         connection.sendall(header + pickled_message)
                         #print(f"\n\n\nTransmission Queue:{self.communicationThread.transmissionQueue}\n\n\n")
-                        print(f"Sent image: {message.getFileName()}\n")
+                        print(f"Sent image: {message.getTaskID()}\n")
                         connection.shutdown(socket.SHUT_RDWR)
                         connection.close()
 

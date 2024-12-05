@@ -53,6 +53,7 @@ class CommunicationThread(Thread):
         self.taskHandlerThread = taskHandlerThread
         self.acceptedRequestsQueue = AcceptedRequestQueue()
         self.acceptedRequestsQueue.start()
+        self.satelliteID = satelliteID
 
         #Get config dictionary
         self.config = config
@@ -118,11 +119,12 @@ class CommunicationThread(Thread):
         
         if type(message) == RequestMessage:
             time_limit  = message.getUnixTimestampLimit()
-            task_source = message.getTaskID() & 0x0000FFFFFFFFFFFF
+            task_source = int.from_bytes(message.getTaskID(), "big") & 0x0000FFFFFFFFFFFF
             print(f"task_source = {task_source}")
             allocation = self.taskHandlerThread.allocateTaskToSelf(time_limit, task_source)
             if allocation[0]: #add input - ONLY TIMELIMIT
-                self.acceptedRequestsQueue.addMessage(message=message)
+                freq = allocation[1]
+                self.acceptedRequestsQueue.addMessage(message=message, frequency=freq)
                 self.sendRespond(message=message)
             else:
                 self.addTransmission(message=message)
@@ -203,11 +205,11 @@ class CommunicationThread(Thread):
         """
         sendRespondMessage = RespondMessage(
             taskID=message.getTaskID(),
-            source=message.getTaskID() & 0x0000FFFFFFFFFFFF,
+            source=self.satelliteID,#message.getTaskID() & 0x0000FFFFFFFFFFFF,
             firstHopID = message.lastSenderID
         )
 
-        self.communicationThread.addTransmission(sendRespondMessage)
+        self.addTransmission(sendRespondMessage)
  
 
         # Print and return
