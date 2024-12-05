@@ -41,6 +41,7 @@ communicationThread = CommunicationThread(satelliteID=satelliteID,
                                               )
 
 taskHandlerThread.communicationThread = communicationThread
+objectDetectionThread.communicationThread = communicationThread
 
 missionThread = MissionThread(configPath=config_path,
                               satelliteID=satelliteID,
@@ -50,6 +51,8 @@ missionThread = MissionThread(configPath=config_path,
 
 print("Startin orbitlal thread")
 orbitalPositionThread.start()
+print("Starting communication thread")
+communicationThread.start()
 print("Starting taskhandler")
 taskHandlerThread.start()
 print("Starting mission thread")

@@ -127,6 +127,7 @@ class ObjectDetectionThread(threading.Thread):
         """
         for message in message_list:
             self.communicationThread.addTransmission(message)
+        print(self.communicationThread.transmissionQueue)
         return None
 
     def run(self):
@@ -135,7 +136,7 @@ class ObjectDetectionThread(threading.Thread):
             if not self.taskHandlerThread.allocatedTasks.isEmpty():
                 print("Running Object detection")
                 processedDataList = self.runInference(self.taskHandlerThread.allocatedTasks.nextTask())
-                #self.sendProcessedDataMessage(processedDataList)
+                self.sendProcessedDataMessage(processedDataList)
             else:
                 #Set the gpu frequency to smallest possible frequency to save on power
                 #self.changeFrequency(self.AVAILABLE_FREQUENCIES[0])
