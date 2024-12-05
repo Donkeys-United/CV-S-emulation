@@ -63,7 +63,8 @@ class TransmissionThread(threading.Thread):
 
 
     def sendTransmission(self):
-        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as connection:
+        #with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as connection:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as connection:
             connection.bind((self.IP_ADDR, self.port))
 
             while not self._stop_event.is_set():
