@@ -10,7 +10,7 @@ from PIL import Image
 import numpy as np
 
 
-SERVER_IP = "127.0.0.1"
+SERVER_IP = "192.168.0.106"
 SERVER_PORT = 4500
 
 
@@ -54,6 +54,7 @@ try:
             print(f"Warning: The message size exceeds the UDP limit of {udp_limit} bytes!")
         else:
             print("Message size is within the safe UDP limit.")
+        print(client_socket.sendto(serialized_message, (SERVER_IP, SERVER_PORT)))
         client_socket.sendto(serialized_message, (SERVER_IP, SERVER_PORT))
         client_socket.sendto(serialized_message2, (SERVER_IP, SERVER_PORT))
         print("Message sent successfully.")

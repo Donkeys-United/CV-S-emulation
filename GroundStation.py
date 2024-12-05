@@ -8,6 +8,8 @@ from typing import TYPE_CHECKING
 import socket
 from pickle import loads, dumps
 import uuid
+import struct
+import torch
 
 if TYPE_CHECKING:
     from TaskHandlerThread import TaskHandlerThread
@@ -26,12 +28,11 @@ class GroundStation():
 
     def saveProcessedImage(self, message: ProcessedDataMessage):
         image = message.getImage()
-        print(image)
+        #print(image)
         # Get the full file name (with the directory)
         filename = message.getFileName()
-
-        # Load the image using the full path (filename includes full path)
-        image = cv2.imread(filename)
+        lastSender = message.lastSenderID
+        print(f"lastSenderID is {lastSender}")
         if image is None:
             print(f"Error loading image: {message.getImage()}")
         else:
@@ -46,10 +47,9 @@ class GroundStation():
 
     def saveUnProcessedImage(self, message: ImageDataMessage):
         payload = message.getPayload()
+        image = payload.getImage()
         # Get the full file name (with the directory)
         filename = payload.getFileName()
-        # Load the image using the full path (filename includes full path)
-        image = cv2.imread(filename)
         if image is None:
             print(f"Error loading image: {payload.getImage()}")
         else:
@@ -111,14 +111,33 @@ class ListeningThread(threading.Thread):
         self.communicationThread = communicationThread
         self.groundStation = groundStation
         self._stop_event = threading.Event()
-        self.connection = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.connection.bind((socket.gethostname(), self.port))
+        self.connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.connection.bind(("192.168.0.102", self.port))
 
     def activeListening(self):
         while not self._stop_event.is_set():
             try:
-                data, _ = self.connection.recvfrom(100000)
-                message = loads(data)
+                self.connection.listen()
+                #data, _ = self.connection.recvfrom(100000)
+                socket, _ = self.connection.accept()
+                # Receive the length prefix
+                length_prefix = socket.recv(4)
+                if not length_prefix:
+                    print("Connection closed or no data received.")
+                    continue
+                # Unpack the length prefix to get the message size
+                data_length = struct.unpack('!I', length_prefix)[0]
+
+                # Receive the entire message based on the length
+                received_data = b""
+                while len(received_data) < data_length:
+                    chunk = socket.recv(1024)  # Read in chunks
+                    if not chunk:
+                        break
+                    received_data += chunk
+                #data = socket.recv(64000)
+
+                message = loads(received_data)
                 print(f"Received message: {message}")
                 if isinstance(message, RequestMessage):
                     self.groundStation.sendRespond(message)
@@ -148,7 +167,7 @@ class TransmissionThread(threading.Thread):
 
     def sendTransmission(self, message):
         try:
-            self.connection.sendto(dumps(message), (socket.gethostname(), self.port))
+            self.connection.sendto(dumps(message), ("192.168.0.102", self.port))
         except Exception as e:
             print(f"Error in transmission: {e}")
 
