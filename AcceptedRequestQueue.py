@@ -64,9 +64,7 @@ class AcceptedRequestQueue(Thread):
         return IDList
 
     
-
     def addMessage(self, message:RequestMessage, frequency: float) -> None:
-
         """Method for adding request to list
 
         Args:
