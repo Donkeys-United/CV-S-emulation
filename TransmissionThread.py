@@ -44,8 +44,8 @@ class TransmissionThread(threading.Thread):
         self.__satelliteID
         self.leftSatelliteID = neighbourSatelliteIDs[0]
         self.rightSatelliteID = neighbourSatelliteIDs[1]
-        self.leftSatelliteAddr = neighbourSatelliteAddrs[0]
-        self.rightSatelliteAddr = neighbourSatelliteAddrs[1]
+        self.leftSatelliteAddr = (neighbourSatelliteAddrs[0], 4500)
+        self.rightSatelliteAddr = (neighbourSatelliteAddrs[1],4600)
         self.groundstationAddr = groundstationAddr
 
 

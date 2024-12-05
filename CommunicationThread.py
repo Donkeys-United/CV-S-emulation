@@ -76,7 +76,7 @@ class CommunicationThread(Thread):
             communicationThread=self,
             neighbourSatelliteIDs=connections,
             neighbourSatelliteAddrs=connectionsIP,
-            groundstationAddr=config['ground_station_ip']
+            groundstationAddr=(config['ground_station_ip'],config['ground_station_port'])
             )
         self.transmissionThread.start()
         

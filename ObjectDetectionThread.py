@@ -98,7 +98,7 @@ class ObjectDetectionThread(threading.Thread):
                                                               imageObject.getUnixTimestamp(), 
                                                               imageObject.getFileName(), 
                                                               bounding_box_list,
-                                                              firstHopID=1))
+                                                              firstHopID=2))
         return finished_message_list
     
     def changeFrequency(self, frequency: float) -> None:
