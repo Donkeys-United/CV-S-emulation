@@ -39,7 +39,7 @@ orbitalPositionThread = OrbitalPositionThread(config=loaded_config_file,
 
 missionThread = MissionThread(configPath=config_path,
                               satelliteID=satelliteID,
-                              orbitalPosistionThread=orbitalPositionThread,
+                              orbitalPositionThread=orbitalPositionThread,
                               taskHandlerThread=taskHandlerThread,
                               imagePath=image_path)
 
