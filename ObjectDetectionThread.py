@@ -140,7 +140,6 @@ class ObjectDetectionThread(threading.Thread):
             else:
                 #Set the gpu frequency to smallest possible frequency to save on power
                 #self.changeFrequency(self.AVAILABLE_FREQUENCIES[0])
-                print("No tasks")
                 self.no_tasks.wait(1)
 
 

@@ -3,6 +3,7 @@ from MessageClasses import Message, RequestMessage, RespondMessage, ResponseNack
 import socket
 from pickle import dumps
 from uuid import getnode
+import struct
 
 class TransmissionThread(threading.Thread):
     """Class for creating the transmission thread.
@@ -125,7 +126,10 @@ class TransmissionThread(threading.Thread):
                         message.lastSenderID = self.__satelliteID
                         pickled_message = dumps(message)
                         self.__dataTransmittedBytes += len(pickled_message)
-                        connection.send(pickled_message)
+                        message_length = len(pickled_message)
+                        header = struct.pack('>I', message_length)
+                        connection.sendall(header + pickled_message)
+                        print(f"\nTransmission Queue:{self.communicationThread.transmissionQueue}\n")
                         connection.shutdown(socket.SHUT_RDWR)
 
 
