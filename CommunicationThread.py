@@ -118,7 +118,7 @@ class CommunicationThread(Thread):
         """
         
         if type(message) == RequestMessage:
-            print(f'received request from task with ID {message.getTaskID()}')
+            print(f'received request from task with ID {int.from_bytes(message.getTaskID(), byteorder='big')}')
             time_limit  = message.getUnixTimestampLimit()
             task_source = int.from_bytes(message.getTaskID(), "big") & 0x0000FFFFFFFFFFFF
             print(f"task_source = {task_source}")
@@ -162,7 +162,7 @@ class CommunicationThread(Thread):
                 print(f'received tasks {messagePayload.getTaskID()} which is handled on node')
                 self.taskHandlerThread.appendTask(messagePayload)
             else:
-                print(f'forwarded task with ID {messagePayload.getTaskID()}')
+                print(f'forwarded task with ID {int.from_bytes()getTaskID()}')
                 self.addTransmission(message=message)
 
         elif type(message) == ResponseNackMessage:
@@ -206,6 +206,7 @@ class CommunicationThread(Thread):
         return self.acceptedRequestsQueue.getLength()
     
     def giveTask(self, task: Task) -> None:
+        print(f'added task with ID {int.from_bytes(task.getTaskID(), byteorder='big')}')
         self.taskWaitingList.append(task)
     
     def sendRespond(self,  message: RequestMessage):

@@ -81,8 +81,10 @@ class TransmissionThread(threading.Thread):
                         if (isinstance(message, ProcessedDataMessage) == False) and (message.lastSenderID != None):
                             if message.lastSenderID == self.leftSatelliteID:
                                 connection.connect(self.rightSatelliteAddr)
+                                print(f"Connected to satellite {self.rightSatelliteID}")
                             else:
                                 connection.connect(self.leftSatelliteAddr)
+                                print(f"Connected to satellite {self.leftSatelliteID}")
 
                         # Case 2: The satellite must relay the result message to either the groundstation or the next satellite.
                         elif isinstance(message, ProcessedDataMessage) and (message.lastSenderID != None):
@@ -90,8 +92,10 @@ class TransmissionThread(threading.Thread):
                                 connection.connect(self.groundstationAddr)
                             except:
                                 if message.lastSenderID == self.leftSatelliteID:
+                                    print(f"Connected to satellite {self.rightSatelliteID}")
                                     connection.connect(self.rightSatelliteAddr)
                                 else:
+                                    print(f"Connected to satellite {self.leftSatelliteID}")
                                     connection.connect(self.leftSatelliteAddr)
 
                         # Case 3: The satellite must send its own results to the groundstation, or another satellite.
@@ -135,9 +139,11 @@ class TransmissionThread(threading.Thread):
                         # Case 5: The satellite sends any other message created by itself to one of its neighbouring satellites.
                         else:
                             if message.firstHopID == self.leftSatelliteID:
-                                connection.connect(self.rightSatelliteAddr)
-                            else:
+                                print(f"Connected to satellite {self.leftSatelliteID}")
                                 connection.connect(self.leftSatelliteAddr)
+                            else:
+                                print(f"Connected to satellite {self.rightSatelliteID}")
+                                connection.connect(self.rightSatelliteAddr)
 
                         message.lastSenderID = self.__satelliteID
                         pickled_message = dumps(message)
