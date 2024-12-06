@@ -125,7 +125,3 @@ class Task:
         
         """
         return int.from_bytes(self.getTaskID()[-6:], "big")
-    
-
-task = Task(64058203556573, 1 , 1)
-print(task.getSource())
