@@ -104,8 +104,8 @@ class OrbitalPositionThread(Thread):
         Returns:
             bool: Returns True if the mission should be performed
         """
-        angle = radian + 2 * np.pi * orbitNumber
-        return angle >= self.currentAngle[self.satelliteID]
+        angle = radian + 2 * np.pi * (orbitNumber - 1)
+        return angle <= self.currentAngle[self.satelliteID]
     
     def getCurrentPosition(self) -> complex:
         """calculates and gets the position of the satellites itself
@@ -292,4 +292,5 @@ if __name__ == "__main__":
     while True:
         print(testObject.currentAngle)
         print(testObject.getSatClosestToGround())
+        print(testObject.canExecuteMission(0.05,1))
         sleep(1)
