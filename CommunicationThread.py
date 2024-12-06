@@ -66,7 +66,9 @@ class CommunicationThread(Thread):
                     break
             connectionsIP = []
             for satellites in self.config['satellites']:
-                if satellites['id'] in connections:
+                if satellites['id'] == connections[0]:
+                    connectionsIP.append(satellites['ip_address'])
+                if satellites['id'] == connections[1]:
                     connectionsIP.append(satellites['ip_address'])
         except:
             raise ValueError('Config file is not correct')
