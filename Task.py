@@ -124,4 +124,8 @@ class Task:
             source (int): Returns source
         
         """
-        return int.from_bytes(self.getTaskID()[0:6], "big")
+        return int.from_bytes(self.getTaskID()[-6:], "big")
+    
+
+task = Task(64058203556573, 1 , 1)
+print(task.getSource())
