@@ -157,7 +157,7 @@ class CommunicationThread(Thread):
                                     break
                         else:
                             self.responseList.append(message)
-                elif task == self.taskWaitingList[-1]:
+                elif task == self.taskWaitingList[-1] or len(self.taskWaitingList) == 0:
                     self.addTransmission(message=message)
 
         elif type(message) == ImageDataMessage:
