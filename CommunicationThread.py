@@ -66,8 +66,12 @@ class CommunicationThread(Thread):
                     break
             connectionsIP = []
             for satellites in self.config['satellites']:
-                if satellites['id'] in connections:
+                if satellites['id'] == connections[0]:
                     connectionsIP.append(satellites['ip_address'])
+            for satellites in self.config['satellites']:
+                if satellites['id'] == connections[1]:
+                    connectionsIP.append(satellites['ip_address'])
+            print(connectionsIP)
         except:
             raise ValueError('Config file is not correct')
         
@@ -133,6 +137,8 @@ class CommunicationThread(Thread):
                 self.addTransmission(message=message)
 
         elif type(message) == RespondMessage:
+            if len(self.taskWaitingList) == 0:
+                self.addTransmission(message=message)
             messageID = message.getTaskID()
             for task in self.taskWaitingList:
                 messageID2 = task.getTaskID()
