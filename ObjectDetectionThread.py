@@ -142,7 +142,7 @@ class ObjectDetectionThread(threading.Thread):
 
     def stop(self):
         self._stop_event.set()
-        
+"""        
 if __name__ == "__main__":
     import cv2
     current_dir = Path(__file__).parent.resolve()
@@ -154,3 +154,4 @@ if __name__ == "__main__":
     task.appendImage("GE_1_jpg.rf.4247084b7a777fee8a12057bce802026.jpg",cv2.imread(image_dir), 0 + 0j)
     taskHandler.allocatedTasks.addTaskToQueue(task)
     objectThread.start()
+"""

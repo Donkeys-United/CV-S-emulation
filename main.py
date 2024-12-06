@@ -2,7 +2,7 @@ from CommunicationThread import CommunicationThread
 from TaskHandlerThread import TaskHandlerThread
 from MissionThread import MissionThread
 from Task import Task
-from ObjectDetectionThread import ObjectDetectionThread
+#from ObjectDetectionThread import ObjectDetectionThread
 from OrbitalPositionThread import OrbitalPositionThread
 from getmac import get_mac_address
 from pathlib import Path
@@ -10,10 +10,10 @@ import json
 import pstats
 
 
-satelliteID = int(get_mac_address("usb0").replace(":",""),16)
+satelliteID = int(get_mac_address().replace(":",""),16)
 print(satelliteID)
 current_dir = Path(__file__).parent.resolve()
-cv_model_path = current_dir / "models" / "yolov8m_best.engine"
+cv_model_path = current_dir / "models" / "yolov8m_best.pt"
 image_path = current_dir / "images"
 config_path = current_dir / "config_test.JSON"
 if satelliteID == 201170498634677:
@@ -32,18 +32,18 @@ orbitalPositionThread = OrbitalPositionThread(config=loaded_config_file,
 taskHandlerThread = TaskHandlerThread(communicationThread=communicationThread, orbitalPositionThread=orbitalPositionThread)
 
 
-
+"""
 objectDetectionThread = ObjectDetectionThread(cv_model_path, 
                                               communicationThread = communicationThread, 
                                               taskHandlerThread = taskHandlerThread)
-
+"""
 communicationThread = CommunicationThread(satelliteID=satelliteID, 
                                               config=loaded_config_file,
                                               taskHandlerThread=taskHandlerThread, orbitalPositionThread=orbitalPositionThread
                                               )
 
 taskHandlerThread.communicationThread = communicationThread
-objectDetectionThread.communicationThread = communicationThread
+#objectDetectionThread.communicationThread = communicationThread
 
 missionThread = MissionThread(configPath=config_path,
                               satelliteID=satelliteID,
@@ -60,4 +60,4 @@ taskHandlerThread.start()
 print("Starting mission thread")
 missionThread.start()
 print("Starting ObjectDetection thread")
-objectDetectionThread.start()
+#objectDetectionThread.start()
