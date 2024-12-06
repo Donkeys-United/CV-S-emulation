@@ -55,7 +55,7 @@ class ListeningThread(threading.Thread):
             #data = socket.recv(64000)
 
             message = loads(received_data)
-            print(f"Received {message}")
+            print(f"Received {message} from {message.lastSenderID}")
             self.addMessageList(message)
 
 

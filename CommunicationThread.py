@@ -118,6 +118,7 @@ class CommunicationThread(Thread):
         """
         
         if type(message) == RequestMessage:
+            print(f'received request from task with ID {message.getTaskID()}')
             time_limit  = message.getUnixTimestampLimit()
             task_source = int.from_bytes(message.getTaskID(), "big") & 0x0000FFFFFFFFFFFF
             print(f"task_source = {task_source}")
@@ -125,8 +126,10 @@ class CommunicationThread(Thread):
             if allocation[0]: #add input - ONLY TIMELIMIT
                 freq = allocation[1]
                 self.acceptedRequestsQueue.addMessage(message=message, frequency=freq)
+                print('accepting tasks and sending respond')
                 self.sendRespond(message=message)
             else:
+                print('denied task and forwarded request')
                 self.addTransmission(message=message)
 
         elif type(message) == RespondMessage:
@@ -134,8 +137,10 @@ class CommunicationThread(Thread):
             for task in self.taskWaitingList:
                 messageID2 = task.getTaskID()
                 if messageID2 == messageID:
+                    print('received respond for local task')
                     for response in self.responseList:
                         if response.getTaskID() == messageID:
+                            print('received 2 responses for local task')
                             priorityList = self.orbitalPositionThread.getSatellitePriorityList()
                             source1 = int.from_bytes(messageID[0:6], byteorder='big')
                             source2 = int.from_bytes(messageID2[0:6], byteorder='big')
@@ -143,6 +148,7 @@ class CommunicationThread(Thread):
                                 if priority == source1 or priority == source2:
                                     selected_message = message.getLastSenderID() if priority == source1 else response.getLastSenderID()
                                     dataPacket = ImageDataMessage(payload=task, firstHopID=selected_message)
+                                    print(f'sending task with ID {task.getTaskID()} to highest priority')
                                     self.transmissionQueue.append(dataPacket)
                                     break
                         else:
@@ -153,17 +159,22 @@ class CommunicationThread(Thread):
         elif type(message) == ImageDataMessage:
             messagePayload = message.getPayload()
             if messagePayload.getTaskID() in self.acceptedRequestsQueue.getIDInQueue():
+                print(f'received tasks {messagePayload.getTaskID()} which is handled on node')
                 self.taskHandlerThread.appendTask(messagePayload)
             else:
+                print(f'forwarded task with ID {messagePayload.getTaskID()}')
                 self.addTransmission(message=message)
 
         elif type(message) == ResponseNackMessage:
             if message.getTaskID() in self.acceptedRequestsQueue.getIDInQueue():
+                print(f'removed accepted request with ID {message.getTaskID()}')
                 self.acceptedRequestsQueue.removeMessage(message.getTaskID())
             else:
+                print('forward ResponseNackMessage')
                 self.addTransmission(message=message)
                 
         elif type(message) == ProcessedDataMessage:
+            print('forwards processed data')
             self.transmissionQueue.append(message)
     
 
