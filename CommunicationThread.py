@@ -162,7 +162,7 @@ class CommunicationThread(Thread):
                 print(f'received tasks {messagePayload.getTaskID()} which is handled on node')
                 self.taskHandlerThread.appendTask(messagePayload)
             else:
-                print(f'forwarded task with ID {int.from_bytes(getTaskID(),"big")}')
+                print(f'forwarded task with ID {int.from_bytes(message.getTaskID(),"big")}')
                 self.addTransmission(message=message)
 
         elif type(message) == ResponseNackMessage:
