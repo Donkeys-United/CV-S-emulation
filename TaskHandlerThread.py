@@ -49,7 +49,7 @@ class TaskHandlerThread(threading.Thread):
             Tuple[bool, float]: Returns true with a optimised frequency if the task should be allocated to self
                                 Returns false with a frequency of 0 if the task should not be allocated to self
         """
-        #Lock the queue so they cant be modified during this process
+        #Lock the queues so they cant be modified during this process
         self.allocatedTasks.lockQueue()
         self.communicationThread.acceptedRequestsQueue.lockQueue()
         
@@ -58,7 +58,7 @@ class TaskHandlerThread(threading.Thread):
         
         currentFrequencies = []
         
-        
+        #Merge the queues and extract current given frequencies
         timestamp = time.time()
         allocatedAcceptedTasksQueueID = []
         for i in allocatedTasksQueue:
@@ -69,21 +69,34 @@ class TaskHandlerThread(threading.Thread):
             allocatedAcceptedTasksQueueID.append([i[0].getTaskID(), i[0].getUnixTimestampLimit() - timestamp])
             currentFrequencies.append(i[1]) 
         
+        #Calculate the current estimate
         currentEnergyEstimate = self.energyOptimiser.totalEnergy(currentFrequencies)
         
+        #Sort the tasks based on time limit
         allocatedAcceptedTasksQueueID.append([0, timeLimitUnixTime-timestamp])
         allocatedAcceptedTasksQueueID = sorted(allocatedAcceptedTasksQueueID, key=lambda list: list[1])
         
+        #Extract the time limits
         timeLimits = [i[1] for i in allocatedAcceptedTasksQueueID]
         
+        #Optimise for energy consumption
         result = self.energyOptimiser.minimiseEnergyConsumption(timeLimits, 0)
+        
+        #Check if a time limit was exceeded
+        if not result.success:
+            return False, 0.0
+        
+        #Extract the optimised frequencies
         optimisedFrequencies = result.x
         
+        #Estimate the optimised energy consumption
         optimisedEnergyEstimate = self.energyOptimiser.totalEnergy(optimisedFrequencies)
         
+        #Check whether transmitting to ground station would be more efficient
         if optimisedEnergyEstimate - currentEnergyEstimate > self.estimateTransmissionEnergyToGround(taskSource):
             return False, 0.0
         
+        #Split the queues again
         allocatedTaskOptimisedFreq = []
         acceptedTaskOptimisedFreq = []
         allocatedTaskID = {task[0].getTaskID() for task in allocatedTasksQueue}
@@ -95,14 +108,16 @@ class TaskHandlerThread(threading.Thread):
                 allocatedTaskOptimisedFreq.append(frequency)
             else:
                 acceptedTaskOptimisedFreq.append(frequency)
-                
+        
+        #Update the frequencies
         self.allocatedTasks.updateFrequencies(allocatedTaskOptimisedFreq)
         self.communicationThread.acceptedRequestsQueue.updateFrequencies(acceptedTaskOptimisedFreq)
         
-        #Release the queue
+        #Release the queues
         self.allocatedTasks.releaseQueue()
         self.communicationThread.acceptedRequestsQueue.releaseQueue()
         
+        #Return True plus the optimised frequency for the new tasks
         return True, newTaskOptimisedFrequency
         
         
@@ -276,7 +291,7 @@ if __name__ == "__main__":
     taskHandler: TaskHandlerThread = None
     loaded_json = json.loads(test_json)
     orbitalPositionThread = OrbitalPositionThread(loaded_json, 5, 1)
-    communicationThread = CommunicationThread(1, loaded_json, taskHandler)
+    communicationThread = CommunicationThread(1, loaded_json, taskHandler, orbitalPositionThread)
     taskHandler = TaskHandlerThread(communicationThread, orbitalPositionThread)
     
     for i in range(1,11):
