@@ -145,10 +145,8 @@ class CommunicationThread(Thread):
                                     dataPacket = ImageDataMessage(payload=task, firstHopID=selected_message)
                                     self.transmissionQueue.append(dataPacket)
                                     break
-                            break
                         else:
                             self.responseList.append(message)
-                    break
                 elif task == self.taskWaitingList[-1]:
                     self.addTransmission(message=message)
 
