@@ -142,3 +142,8 @@ class AcceptedRequestQueue(Thread):
     def releaseQueue(self) -> None:
         self.lock.release()
     
+    def getFrequency(self, taskID: int) -> float:
+        for request in self.__acceptedRequests:
+            if request[0].getTaskID() == taskID:
+                return request[1]
+    
