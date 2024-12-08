@@ -3,70 +3,33 @@
     {
 
       "id": 201170498634677,
-      "ip_address": "192.168.0.108",
-      "connections": [4, 64058203556573],
-      "initial_angle": 0
-    },
-    {
-      "id": 64058203556573,
-      "ip_address": "192.168.0.106",
-      "connections": [201170498634677, 273270825686681],
-
-      "initial_angle": 0
-    },
-    {
-      "id": 2,
-      "ip_address": "192.168.0.106",
-      "connections": [64058203556573,3],
-      "initial_angle": 1.5707963268
-    },
-    {
-      "id": 273270825686681,
-      "ip_address": "192.168.0.100",
-      "connections": [64058203556573,2],
+      "ip_address": "192.168.50.171",
+      "connections": [273270825686681, 64058203556573],
       "initial_angle": 3.1415926536
     },
     {
-      "id": 4,
-      "ip_address": "192.168.0.102",
-      "connections": [3,214466116409440],
-      "initial_angle": 4.7123889804
+      "id": 64058203556573,
+      "ip_address": "192.168.50.51",
+      "connections": [201170498634677, 273270825686681],
+      "initial_angle": 0.7853981634
+    },
+    {
+      "id": 273270825686681,
+      "ip_address": "192.168.50.2",
+      "connections": [64058203556573,201170498634677],
+      "initial_angle": 0
     }
   ],
   "missions": [
     {
-      "satellite_id": 201170498634677,
-      "location_radian": 0.1,
-      "orbit_number": 1,
-      "pictures_number": 5, 
-      "time_limit": 10
-    },
-    {
       "satellite_id": 64058203556573,
       "location_radian": 0.1,
       "orbit_number": 1,
-      "pictures_number": 5, 
-      "time_limit": 10
-    },
-    {
-      "satellite_id": 3,
-      "location_radian": 3.92699081699,
-      "orbit_number": 2,
-      "pictures_number": 20,
-      "time_limit": 20 
-
-    },
-
-    {
-      "satellite_id": 62156055568968,
-      "location_radian": 1.0471975512,
-      "orbit_number": 1,
-      "pictures_number": 3,
-      "time_limit": 20 
-
+      "pictures_number": 1, 
+      "time_limit": 100
     }
   ],
-  "ground_station_ip": "192.168.0.202",
-  "ground_station_port": 4400,
+  "ground_station_ip": "192.168.50.96",
+  "ground_station_port": 4500,
   "altitude": 200000
 }

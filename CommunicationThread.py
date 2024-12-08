@@ -53,6 +53,7 @@ class CommunicationThread(Thread):
         self.taskHandlerThread = taskHandlerThread
         self.acceptedRequestsQueue = AcceptedRequestQueue()
         self.acceptedRequestsQueue.start()
+        self.satelliteID = satelliteID
 
         #Get config dictionary
         self.config = config
@@ -65,8 +66,12 @@ class CommunicationThread(Thread):
                     break
             connectionsIP = []
             for satellites in self.config['satellites']:
-                if satellites['id'] in connections:
+                if satellites['id'] == connections[0]:
                     connectionsIP.append(satellites['ip_address'])
+            for satellites in self.config['satellites']:
+                if satellites['id'] == connections[1]:
+                    connectionsIP.append(satellites['ip_address'])
+            print(connectionsIP)
         except:
             raise ValueError('Config file is not correct')
         
@@ -118,22 +123,27 @@ class CommunicationThread(Thread):
         
         if type(message) == RequestMessage:
             time_limit  = message.getUnixTimestampLimit()
-            task_source = message.getTaskID() & 0x0000FFFFFFFFFFFF
+            task_source = int.from_bytes(message.getTaskID(), "big") & 0x0000FFFFFFFFFFFF
             print(f"task_source = {task_source}")
-            allocation = self.taskHandlerThread.allocateTaskToSelf(time_limit, task_source)
+            allocation = (False, 0)#self.taskHandlerThread.allocateTaskToSelf(time_limit, task_source)
             if allocation[0]: #add input - ONLY TIMELIMIT
-                self.acceptedRequestsQueue.addMessage(message=message)
+                freq = allocation[1]
+                self.acceptedRequestsQueue.addMessage(message=message, frequency=freq)
                 self.sendRespond(message=message)
             else:
                 self.addTransmission(message=message)
 
         elif type(message) == RespondMessage:
+            if len(self.taskWaitingList) == 0:
+                self.addTransmission(message=message)
             messageID = message.getTaskID()
             for task in self.taskWaitingList:
                 messageID2 = task.getTaskID()
                 if messageID2 == messageID:
+                    print('received respond for local task')
                     for response in self.responseList:
                         if response.getTaskID() == messageID:
+                            print('received 2 responses for local task')
                             priorityList = self.orbitalPositionThread.getSatellitePriorityList()
                             source1 = int.from_bytes(messageID[0:6], byteorder='big')
                             source2 = int.from_bytes(messageID2[0:6], byteorder='big')
@@ -141,12 +151,11 @@ class CommunicationThread(Thread):
                                 if priority == source1 or priority == source2:
                                     selected_message = message.getLastSenderID() if priority == source1 else response.getLastSenderID()
                                     dataPacket = ImageDataMessage(payload=task, firstHopID=selected_message)
+                                    print(f'sending task with ID {task.getTaskID()} to highest priority')
                                     self.transmissionQueue.append(dataPacket)
                                     break
-                            break
                         else:
                             self.responseList.append(message)
-                    break
                 elif task == self.taskWaitingList[-1]:
                     self.addTransmission(message=message)
 
@@ -203,11 +212,11 @@ class CommunicationThread(Thread):
         """
         sendRespondMessage = RespondMessage(
             taskID=message.getTaskID(),
-            source=message.getTaskID() & 0x0000FFFFFFFFFFFF,
+            source=self.satelliteID,#message.getTaskID() & 0x0000FFFFFFFFFFFF,,
             firstHopID = message.lastSenderID
         )
 
-        self.communicationThread.addTransmission(sendRespondMessage)
+        self.addTransmission(sendRespondMessage)
  
 
         # Print and return
