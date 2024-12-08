@@ -84,11 +84,12 @@ class ResponseHandler(Thread):
         source1 = responseList[0].getSource()
         source2 = responseList[1].getSource()
 
-        for priority in priorityList:
-            if priority == source1:
+        for i in range(len(priorityList)):
+            if priorityList[-(i+1)] == source1:
                 firstHopID = responseList[0].getLastSenderID()
-            elif priority == source2:
+                return firstHopID
+            elif priorityList[-(i+1)] == source2:
                 firstHopID = responseList[1].getLastSenderID()
-        return firstHopID
+                return firstHopID
 
 
