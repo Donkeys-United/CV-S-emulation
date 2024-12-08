@@ -146,8 +146,11 @@ class CommunicationThread(Thread):
         elif type(message) == ImageDataMessage:
             messagePayload = message.getPayload()
             if messagePayload.getTaskID() in self.acceptedRequestsQueue.getIDInQueue():
+                taskID = messagePayload.getTaskID()
+                frequency = self.acceptedRequestsQueue.getFrequency(taskID=taskID)
                 print(f'received tasks {messagePayload.getTaskID()} which is handled on node')
-                self.taskHandlerThread.appendTask(messagePayload)
+                self.taskHandlerThread.appendTask(messagePayload, frequency=frequency)
+                self.acceptedRequestsQueue.removeMessage(taskID=taskID)
             else:
                 print(f'forwarded task with ID {int.from_bytes(message.getTaskID(),"big")}')
                 self.addTransmission(message=message)

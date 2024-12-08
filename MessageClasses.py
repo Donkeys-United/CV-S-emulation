@@ -78,8 +78,8 @@ class RespondMessage(Message):
 
         return self.__source
     
-    def getLastSenderID():
-        return 5
+    def getLastSenderID(self):
+        return self.lastSenderID
 
 
 

@@ -37,7 +37,7 @@
 
     {
       "satellite_id": 64058203556573,
-      "location_radian": 0.1,
+      "location_radian": 0.0,
       "orbit_number": 1,
       "pictures_number": 1, 
       "time_limit": 10
