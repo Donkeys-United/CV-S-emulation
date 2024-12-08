@@ -78,7 +78,7 @@ class TransmissionThread(threading.Thread):
                     if isinstance(message, Message):
 
                         # Case 1: The satellite must relay a message to the next satellite in the chain.
-                        if (isinstance(message, ProcessedDataMessage) = False) and (message.lastSenderID != None) or (isinstance(message, ImageDataMessage) = False) and (message.lastSenderID != None):
+                        if (isinstance(message, ProcessedDataMessage) == False) and (message.lastSenderID != None) or (isinstance(message, ImageDataMessage) == False) and (message.lastSenderID != None):
                             print(f"Message {message} - case 1")
                             if message.lastSenderID == self.leftSatelliteID:
                                 connection.connect(self.rightSatelliteAddr)
