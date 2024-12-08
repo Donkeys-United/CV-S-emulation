@@ -74,6 +74,7 @@ class ResponseHandler(Thread):
                 task_dict["responseMessages"].append(response)
                 if len(task_dict["responseMessages"]) == 2:
                     firstHopID = self.getPriority(task_dict["responseMessages"])
+                    print(f"Response Messages Sources = {task_dict['responseMessages']}")
                     task_ref = task_dict["task"]
                     dataPacket = ImageDataMessage(payload=task_ref, firstHopID=firstHopID)
                     self.communicationThread.transmissionQueue.append(dataPacket)
