@@ -72,11 +72,9 @@ class CommunicationThread(Thread):
             for satellites in self.config['satellites']:
                 if satellites['id'] == connections[1]:
                     connectionsIP.append(satellites['ip_address'])
-            print(connectionsIP)
         except:
             raise ValueError('Config file is not correct')
         
-        print(connections, connectionsIP)
         self.connectionsIP = connectionsIP
         self.connections = connections
         self.transmissionThread: TransmissionThread = TransmissionThread(
@@ -129,7 +127,7 @@ class CommunicationThread(Thread):
             print(f'received request from task with ID {int.from_bytes(message.getTaskID(), "big")}')
             time_limit  = message.getUnixTimestampLimit()
             task_source = int.from_bytes(message.getTaskID(), "big") & 0x0000FFFFFFFFFFFF
-            print(f"task_source = {task_source}")
+            print(f'received request from task with ID {int.from_bytes(message.getTaskID(), "big")} from {task_source}')
             allocation = self.taskHandlerThread.allocateTaskToSelf(time_limit, task_source)
             if allocation[0]: #add input - ONLY TIMELIMIT
                 freq = allocation[1]

@@ -92,20 +92,13 @@ class ObjectDetectionThread(threading.Thread):
             #print(f"\n Results Lenght: {result}")
             #print(short_name_list[result])
             priority_list = self.communicationThread.orbitalPositionThread.getSatellitePriorityList()
-            print(f"Priority List = {priority_list}")
-            print(f"connections = {self.communicationThread.connections}")
             break_out = False
             for i in range(len(priority_list)):
                 for j in self.communicationThread.connections:
-                    print(f"\ni={priority_list[-(i+1)]}\nj={j}")
-                    print(f"\n{priority_list[-(i+1)]}=={j} = {priority_list[-(i+1)]==j}")
                     if priority_list[-(i+1)] == j:
                         firstHopID = j
-                        print(f"\nfirstHopID = {j}")
                         break_out = True
                         break
-                    else:
-                        print("\nNo First Hop!")
                 if break_out:
                     break
 
