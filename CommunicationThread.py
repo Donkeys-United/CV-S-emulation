@@ -152,7 +152,7 @@ class CommunicationThread(Thread):
                 self.taskHandlerThread.appendTask(messagePayload, frequency=frequency)
                 self.acceptedRequestsQueue.removeMessage(taskID=taskID)
             else:
-                print(f'forwarded task with ID {int.from_bytes(message.getTaskID(),"big")}')
+                #print(f'forwarded task with ID {int.from_bytes(message.getTaskID(),"big")}')
                 self.addTransmission(message=message)
 
         elif type(message) == ResponseNackMessage:

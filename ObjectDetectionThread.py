@@ -91,7 +91,7 @@ class ObjectDetectionThread(threading.Thread):
         for result in range(len(image_name_list)):
             #print(f"\n Results Lenght: {result}")
             #print(short_name_list[result])
-            priority_list = self.communicationThread.orbitorbitalPositionThread.getSatellitePriorityList()
+            priority_list = self.communicationThread.orbitalPositionThread.getSatellitePriorityList()
             for i in priority_list:
                 for j in self.communicationThread.connections[0]:
                  if i == j:
