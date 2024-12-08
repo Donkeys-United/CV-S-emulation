@@ -7,7 +7,7 @@ from OrbitalPositionThread import OrbitalPositionThread
 from getmac import get_mac_address
 from pathlib import Path
 import json
-import pstats
+import pstats  #this is not used 
 
 
 satelliteID = int(get_mac_address("usb0").replace(":",""),16)

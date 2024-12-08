@@ -91,12 +91,20 @@ class ObjectDetectionThread(threading.Thread):
         for result in range(len(image_name_list)):
             #print(f"\n Results Lenght: {result}")
             #print(short_name_list[result])
+            priority_list = self.communicationThread.orbitorbitalPositionThread.getSatellitePriorityList()
+            for i in priority_list:
+                for j in self.communicationThread.connections[0]:
+                 if i == j:
+                     firstHopID = j
+                     break
+                 break
+
             finished_message_list.append(ProcessedDataMessage(image_name_list[result], 
                                                               imageObject.getLocation(), 
                                                               imageObject.getUnixTimestamp(), 
                                                               short_name_list[result], 
                                                               bounding_box_list,
-                                                              firstHopID=201170498634677))
+                                                              firstHopID=firstHopID))
         return finished_message_list
     
     def changeFrequency(self, frequency: float) -> None:

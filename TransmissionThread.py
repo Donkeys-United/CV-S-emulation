@@ -87,10 +87,10 @@ class TransmissionThread(threading.Thread):
                                 print(f"Connected to satellite {self.leftSatelliteID}")
 
                         # Case 2: The satellite must relay the result message to either the groundstation or the next satellite.
-                        elif isinstance(message, ProcessedDataMessage) and (message.lastSenderID != None):
-                            try:
+                        elif (isinstance(message, ProcessedDataMessage) and (message.lastSenderID != None)) or (isinstance(message, ImageDataMessage) and (message.lastSenderID != None)):
+                            if self.communicationThread.orbitalPositionThread.getSatClosestToGround() == self.__satelliteID:
                                 connection.connect(self.groundstationAddr)
-                            except:
+                            else:
                                 if message.lastSenderID == self.leftSatelliteID:
                                     print(f"Connected to satellite {self.rightSatelliteID}")
                                     connection.connect(self.rightSatelliteAddr)
@@ -99,11 +99,11 @@ class TransmissionThread(threading.Thread):
                                     connection.connect(self.leftSatelliteAddr)
 
                         # Case 3: The satellite must send its own results to the groundstation, or another satellite.
-                        elif isinstance(message, ProcessedDataMessage):
-                            try:
+                        elif isinstance(message, ProcessedDataMessage) or isinstance(message, ImageDataMessage):
+                            if self.communicationThread.orbitalPositionThread.getSatClosestToGround() == self.__satelliteID:
                                 connection.connect(self.groundstationAddr)
 
-                            except:
+                            else:
                                 if message.firstHopID == self.leftSatelliteID:
                                     print(f"\nSending message to left satellite with address {self.leftSatelliteAddr}")
                                     connection.connect(self.leftSatelliteAddr)
