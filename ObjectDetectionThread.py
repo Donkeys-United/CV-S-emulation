@@ -103,6 +103,7 @@ class ObjectDetectionThread(threading.Thread):
                         break
                     else:
                         print("\nNo First Hop!")
+                break
 
 
 
