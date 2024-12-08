@@ -7,7 +7,8 @@ from CommunicationThread import CommunicationThread
 from PriorityQueue import PriorityQueue
 from OrbitalPositionThread import OrbitalPositionThread
 from EnergyOptimiser import EnergyOptimiser
-import numpy as np
+from RadioEnergy import RadioEnergy
+
 
 class TaskHandlerThread(threading.Thread):
 
@@ -200,8 +201,17 @@ class TaskHandlerThread(threading.Thread):
         self.__unallocatedTasks.addTaskToQueue(task)
     
     def estimateTransmissionEnergyToGround(self, taskSource: int) -> float:
-        distance = self.orbitalPositionThread.getPathDistanceToGround(taskSource)
-        return 5*distance[2]
+        """Estimate the energy consumed for transmitting directly to ground
+
+        Args:
+            taskSource (int): The source of the task
+
+        Returns:
+            float: The estimated energy
+        """        
+        numberOfSatHops, satDist, groundDist = self.orbitalPositionThread.getPathDistanceToGround(taskSource)
+        energy = numberOfSatHops * RadioEnergy.getEnergyForTransmission(satDist/numberOfSatHops, 6*10**6) + RadioEnergy.getEnergyForTransmission(groundDist, 6*10**6)
+        return energy
 
 """
 #####################################################################################################
