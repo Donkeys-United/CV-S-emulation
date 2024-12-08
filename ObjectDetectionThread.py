@@ -92,6 +92,8 @@ class ObjectDetectionThread(threading.Thread):
             #print(f"\n Results Lenght: {result}")
             #print(short_name_list[result])
             priority_list = self.communicationThread.orbitalPositionThread.getSatellitePriorityList()
+            print(f"Priority List = {priority_list}")
+            print(f"connections = {self.communicationThread.connections}")
             for i in priority_list:
                 for j in self.communicationThread.connections:
                     if i == j:
