@@ -103,7 +103,7 @@ class ObjectDetectionThread(threading.Thread):
                         break
                     else:
                         print("\nNo First Hop!")
-                break
+
 
 
             finished_message_list.append(ProcessedDataMessage(image_name_list[result], 
