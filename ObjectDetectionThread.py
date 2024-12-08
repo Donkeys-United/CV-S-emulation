@@ -94,11 +94,14 @@ class ObjectDetectionThread(threading.Thread):
             priority_list = self.communicationThread.orbitalPositionThread.getSatellitePriorityList()
             for i in priority_list:
                 for j in self.communicationThread.connections:
-                 if i == j:
-                     firstHopID = j
-                     print(f"\nfirstHopID = {j}")
-                     break
-                 break
+                    if i == j:
+                        firstHopID = j
+                        print(f"\nfirstHopID = {j}")
+                        break
+                    else:
+                        print("\nNo First Hop!")
+                break
+
 
             finished_message_list.append(ProcessedDataMessage(image_name_list[result], 
                                                               imageObject.getLocation(), 
