@@ -77,7 +77,8 @@ class CommunicationThread(Thread):
             raise ValueError('Config file is not correct')
         
         print(connections, connectionsIP)
-
+        self.connectionsIP = connectionsIP
+        self.connections = connections
         self.transmissionThread: TransmissionThread = TransmissionThread(
             communicationThread=self,
             neighbourSatelliteIDs=connections,

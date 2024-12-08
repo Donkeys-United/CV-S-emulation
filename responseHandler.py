@@ -81,8 +81,8 @@ class ResponseHandler(Thread):
 
     def getPriority(self, responseList: List):
         priorityList = self.orbitalPositionThread.getSatellitePriorityList()
-        source1 = int.from_bytes(responseList[0].getSource(), "big")
-        source2 = int.from_bytes(responseList[1].getSource(), "big")
+        source1 = responseList[0].getSource()
+        source2 = responseList[1].getSource()
 
         for priority in priorityList:
             if priority == source1:
