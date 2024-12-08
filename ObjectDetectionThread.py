@@ -96,6 +96,7 @@ class ObjectDetectionThread(threading.Thread):
                 for j in self.communicationThread.connections:
                  if i == j:
                      firstHopID = j
+                     print(f"\nfirstHopID = {j}")
                      break
                  break
 
