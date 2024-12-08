@@ -98,6 +98,7 @@ class ObjectDetectionThread(threading.Thread):
             for i in range(len(priority_list)):
                 for j in self.communicationThread.connections:
                     print(f"\ni={priority_list[-(i+1)]}\nj={j}")
+                    print(f"\n{priority_list[-(i+1)]}=={j} = {priority_list[-(i+1)]==j}")
                     if priority_list[i] == j:
                         firstHopID = j
                         print(f"\nfirstHopID = {j}")
