@@ -3,19 +3,19 @@
     {
 
       "id": 201170498634677,
-      "ip_address": "192.168.50.171",
+      "ip_address": "192.168.0.108",
       "connections": [273270825686681, 64058203556573],
       "initial_angle": 3.1415926536
     },
     {
       "id": 64058203556573,
-      "ip_address": "192.168.50.51",
+      "ip_address": "192.168.0.106",
       "connections": [201170498634677, 273270825686681],
       "initial_angle": 0.7853981634
     },
     {
       "id": 273270825686681,
-      "ip_address": "192.168.50.2",
+      "ip_address": "192.168.0.100",
       "connections": [64058203556573,201170498634677],
       "initial_angle": 0
     }
@@ -25,11 +25,11 @@
       "satellite_id": 64058203556573,
       "location_radian": 0.1,
       "orbit_number": 1,
-      "pictures_number": 1, 
+      "pictures_number": 5, 
       "time_limit": 100
     }
   ],
-  "ground_station_ip": "192.168.50.96",
+  "ground_station_ip": "192.168.0.102",
   "ground_station_port": 4500,
   "altitude": 200000
 }
