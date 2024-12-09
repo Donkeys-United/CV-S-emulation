@@ -112,7 +112,7 @@ class ListeningThread(threading.Thread):
         self.groundStation = groundStation
         self._stop_event = threading.Event()
         self.connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.connection.bind(("192.168.0.102", self.port))
+        self.connection.bind(("192.168.50.96", self.port))
 
     def activeListening(self):
         while not self._stop_event.is_set():
@@ -167,7 +167,7 @@ class TransmissionThread(threading.Thread):
 
     def sendTransmission(self, message):
         try:
-            self.connection.sendto(dumps(message), ("192.168.0.102", self.port))
+            self.connection.sendto(dumps(message), ("192.168.50.96", self.port))
         except Exception as e:
             print(f"Error in transmission: {e}")
 
