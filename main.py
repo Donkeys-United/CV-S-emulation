@@ -4,13 +4,16 @@ from MissionThread import MissionThread
 from OrbitalPositionThread import OrbitalPositionThread
 from getmac import get_mac_address
 from pathlib import Path
+from platform import system
 import json
 
 
 satelliteID = int(get_mac_address().replace(":",""),16)
 print(satelliteID)
 
-if satelliteID != 273270825686681:
+os = system()
+
+if os != "Windows":
     from ObjectDetectionThread import ObjectDetectionThread
 
 current_dir = Path(__file__).parent.resolve()
@@ -31,7 +34,7 @@ orbitalPositionThread = OrbitalPositionThread(config=loaded_config_file,
 taskHandlerThread = TaskHandlerThread(communicationThread=communicationThread, orbitalPositionThread=orbitalPositionThread)
 
 
-if satelliteID != 273270825686681:
+if os != "Windows":
     objectDetectionThread = ObjectDetectionThread(cv_model_path, 
                                               communicationThread = communicationThread, 
                                               taskHandlerThread = taskHandlerThread)
@@ -42,7 +45,7 @@ communicationThread = CommunicationThread(satelliteID=satelliteID,
                                               )
 
 taskHandlerThread.communicationThread = communicationThread
-if satelliteID != 273270825686681:
+if os != "Windows":
     objectDetectionThread.communicationThread = communicationThread
 
 missionThread = MissionThread(configPath=config_path,
@@ -59,6 +62,6 @@ print("Starting taskhandler")
 taskHandlerThread.start()
 print("Starting mission thread")
 missionThread.start()
-if satelliteID != 273270825686681:
+if os != "Windows":
     print("Starting ObjectDetection thread")
     objectDetectionThread.start()
