@@ -17,7 +17,7 @@ class TransmissionThread(threading.Thread):
     IP_ADDR = "0.0.0.0"
     __dataTransmittedBytes = 0 # Used for power consumption optimization.
     port = 6969 # Port selected for outgoing comms.
-    __satelliteID = int(get_mac_address("usb0").replace(":",""),16) # MAC Address
+    __satelliteID = int(get_mac_address().replace(":",""),16) # MAC Address
 
 
 

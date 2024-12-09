@@ -114,9 +114,8 @@ class ObjectDetectionThread(threading.Thread):
             'echo 1234 | sudo -S sh -c "cd /sys/devices/platform/17000000.gpu/devfreq/17000000.gpu && '
             f'echo {min(frequencies)} | tee min_freq max_freq"'
         )
-        subprocess.run(
-            command, shell=True
-        )
+
+        subprocess.run(command, shell=True)
 
     def sendProcessedDataMessage(self, message_list: list[ProcessedDataMessage]):
         """Simple method for moving the PrcessedDataMessage object instance to the transmission queue in the CommunicationThread object instance.
