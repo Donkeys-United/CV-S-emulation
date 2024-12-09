@@ -1,23 +1,19 @@
 from CommunicationThread import CommunicationThread
 from TaskHandlerThread import TaskHandlerThread
 from MissionThread import MissionThread
-from Task import Task
 from ObjectDetectionThread import ObjectDetectionThread
 from OrbitalPositionThread import OrbitalPositionThread
 from getmac import get_mac_address
 from pathlib import Path
 import json
-import pstats  #this is not used 
 
 
-satelliteID = int(get_mac_address("usb0").replace(":",""),16)
+satelliteID = int(get_mac_address().replace(":",""),16)
 print(satelliteID)
 current_dir = Path(__file__).parent.resolve()
 cv_model_path = current_dir / "models" / "yolov8m_best.engine"
 image_path = current_dir / "images"
 config_path = current_dir / "config_test.JSON"
-if satelliteID == 201170498634677:
-    config_path = current_dir / "config_test_nano.JSON"
 
 with open(config_path, 'r') as config_file:
     loaded_config_file = json.load(config_file)

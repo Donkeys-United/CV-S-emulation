@@ -17,8 +17,6 @@ class ObjectDetectionThread(threading.Thread):
     def __init__(self, PATH_TO_MODEL, communicationThread: CommunicationThread, taskHandlerThread: TaskHandlerThread):
         super().__init__()
         self.PATH_TO_MODEL = PATH_TO_MODEL #for loading the model.
-        self.FREQUENCY_PATH = "/sys/devices/platform/17000000.gpu/devfreq/17000000.gpu/"
-        self.SUDO_PASSWORD = "1234"
         self.AVAILABLE_FREQUENCIES = [306000000, 408000000, 510000000, 612000000,642750000]
         self.model = self.loadModel() # loading model automatically.
         self.communicationThread = communicationThread
@@ -116,9 +114,8 @@ class ObjectDetectionThread(threading.Thread):
             'echo 1234 | sudo -S sh -c "cd /sys/devices/platform/17000000.gpu/devfreq/17000000.gpu && '
             f'echo {min(frequencies)} | tee min_freq max_freq"'
         )
-        subprocess.run(
-            command, shell=True
-        )
+
+        subprocess.run(command, shell=True)
 
     def sendProcessedDataMessage(self, message_list: list[ProcessedDataMessage]):
         """Simple method for moving the PrcessedDataMessage object instance to the transmission queue in the CommunicationThread object instance.
