@@ -148,3 +148,9 @@ class ObjectDetectionThread(threading.Thread):
 
     def stop(self):
         self._stop_event.set()
+
+if __name__ == "__main__":
+    current_dir = Path(__file__).parent.resolve()
+    cv_model_path = current_dir / "models" / "yolov8m_best.engine"
+    objectDetectionThread = ObjectDetectionThread(cv_model_path,None, None)
+    
