@@ -28,8 +28,8 @@ orbitalPositionThread = OrbitalPositionThread(config=loaded_config_file,
 taskHandlerThread = TaskHandlerThread(communicationThread=communicationThread, orbitalPositionThread=orbitalPositionThread)
 
 
-
-objectDetectionThread = ObjectDetectionThread(cv_model_path, 
+if satelliteID != 273270825686681:
+    objectDetectionThread = ObjectDetectionThread(cv_model_path, 
                                               communicationThread = communicationThread, 
                                               taskHandlerThread = taskHandlerThread)
 
@@ -39,7 +39,8 @@ communicationThread = CommunicationThread(satelliteID=satelliteID,
                                               )
 
 taskHandlerThread.communicationThread = communicationThread
-objectDetectionThread.communicationThread = communicationThread
+if satelliteID != 273270825686681:
+    objectDetectionThread.communicationThread = communicationThread
 
 missionThread = MissionThread(configPath=config_path,
                               satelliteID=satelliteID,
@@ -55,5 +56,6 @@ print("Starting taskhandler")
 taskHandlerThread.start()
 print("Starting mission thread")
 missionThread.start()
-print("Starting ObjectDetection thread")
-objectDetectionThread.start()
+if satelliteID != 273270825686681:
+    print("Starting ObjectDetection thread")
+    objectDetectionThread.start()
