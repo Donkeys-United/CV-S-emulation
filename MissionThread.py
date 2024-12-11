@@ -8,6 +8,7 @@ from Task import Task
 import cv2
 import logging 
 import threading
+import time
 
 # Configure logging 
 logging.basicConfig(
@@ -113,6 +114,8 @@ class MissionThread(threading.Thread):
                         satellite_id = self.myMissions[i].get("satellite_id")
                         pictures_number = self.myMissions[i].get("pictures_number")
                         time_limit = self.myMissions[i].get("time_limit")
+                        unixTimestamp = time.time()
+                        TimestampLimit = unixTimestamp + time_limit
 
                         if None in (satellite_id, location_radian, orbit_number, pictures_number, time_limit):
                             logging.error("Invalid mission data: %s", self.myMissions[i])
@@ -120,10 +123,11 @@ class MissionThread(threading.Thread):
 
                         imageList = np.random.choice(self.files, pictures_number, replace = True) #replace change to false, when there is enough images
                         logging.debug("Selected images: %s", imageList)
+
                         for image in imageList:
                             # Load the image
                             file = os.path.join(self.IMAGEPATH, image)
-                            task = self.__createTask(time_limit, file, location_radian)
+                            task = self.__createTask(TimestampLimit, file, location_radian)
 
                             self.taskHandlerThread.appendUnallocatedTask(task)
 
