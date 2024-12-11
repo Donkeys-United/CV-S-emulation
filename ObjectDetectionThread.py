@@ -1,4 +1,6 @@
 from ultralytics import YOLO
+from ultralytics.engine.results import Results
+import ultralytics
 from pathlib import Path, PurePath
 import threading
 import subprocess
@@ -36,14 +38,14 @@ class ObjectDetectionThread(threading.Thread):
         model = YOLO(self.PATH_TO_MODEL, "detect")
         return model
     
-    def runInference(self, TaskFrequencyList: list[Task, float]):
+    def runInference(self, TaskFrequencyList: tuple[Task, float]) -> tuple[Results, str]:
         """Method used for running inference on a specific imageDataMessage object instance - which the satellite would have received or captured itself.
 
         Args:
-            imageObject (ImageDataMessage): the object instance containing the image, which is to be the subject of the inference.
+            TaskFrequencyList tuple[Task, float]: The task to be executed and its frequency
 
         Returns:
-            ProcessedDataMessage: a object instance, ready to be sent to the ground station, with the results of the inference.
+            tuple[Results, str]: a object instance, ready to be sent to the ground station, with the results of the inference.
         """
         # Getting image file from task.
         imageObject = TaskFrequencyList[0]
@@ -59,14 +61,18 @@ class ObjectDetectionThread(threading.Thread):
         # Saving crops of found boats.
         for result in results:
             result.save_crop(save_dir=result.save_dir)
+        
+        save_dir = results[0].save_dir
+        return results[0], save_dir
 
-        save_dir = Path(results[0].save_dir)
+    def getMessageList(self, result: Results, saveDir: str, task: Task):
+        save_dir = Path(saveDir)
         bounding_box_list = result.boxes.xyxy.tolist() # Save bounding boxes as list.
 
         # Necessary for renaming cropped images.
         image_name_list = []
         short_name_list = []
-        image_file_name = PurePath(imageObject.getFileName()).name
+        image_file_name = PurePath(task.getFileName()).name
         crop_number = 0 
 
         # Renaming cropped images.
@@ -95,8 +101,8 @@ class ObjectDetectionThread(threading.Thread):
             
             # Creating one ProcessedDataMessage per boat found.
             finished_message = ProcessedDataMessage(image_name_list[result], 
-                                        imageObject.getLocation(), 
-                                        imageObject.getUnixTimestamp(), 
+                                        task.getLocation(), 
+                                        task.getUnixTimestamp(), 
                                         short_name_list[result], 
                                         bounding_box_list,
                                         firstHopID=firstHopID)
@@ -115,7 +121,7 @@ class ObjectDetectionThread(threading.Thread):
             f'echo {min(frequencies)} | tee min_freq max_freq"'
         )
 
-        subprocess.run(command, shell=True)
+        subprocess.run(command, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
     def sendProcessedDataMessage(self, message_list: list[ProcessedDataMessage]):
         """Simple method for moving the PrcessedDataMessage object instance to the transmission queue in the CommunicationThread object instance.
@@ -135,7 +141,9 @@ class ObjectDetectionThread(threading.Thread):
         while not self._stop_event.is_set():
             if not self.taskHandlerThread.allocatedTasks.isEmpty():
                 print("Running Object detection")
-                processedDataList = self.runInference(self.taskHandlerThread.allocatedTasks.nextTask())
+                nextTask = self.taskHandlerThread.allocatedTasks.nextTask()
+                result, saveDir = self.runInference(nextTask)
+                processedDataList = self.getMessageList(result, saveDir, nextTask[0])
                 self.sendProcessedDataMessage(processedDataList)
             else:
                 #Set the gpu frequency to smallest possible frequency to save on power
@@ -147,7 +155,33 @@ class ObjectDetectionThread(threading.Thread):
         self._stop_event.set()
 
 if __name__ == "__main__":
+    import cv2
+    import os
+    HOME = Path.cwd()
     current_dir = Path(__file__).parent.resolve()
     cv_model_path = current_dir / "models" / "yolov8m_best.engine"
     objectDetectionThread = ObjectDetectionThread(cv_model_path,None, None)
+    # Prepare statistics
+    preprocessing_times = []
+    inference_times = []
+    postprocessing_times = []
+    {HOME}
+    test_imgs_path = list(Path('images').glob('*.jpg'))
+    tasks = [Task(1,1,1) for _ in test_imgs_path]
+    for task, img in zip(tasks, test_imgs_path):
+        task.appendImage(img.name, cv2.imread(img), 1+0j) 
     
+    for task in tasks:
+        result, _ = objectDetectionThread.runInference((task, 612000000.0))
+        preprocessing_times.append(result.speed["preprocess"])
+        inference_times.append(result.speed["inference"])
+        postprocessing_times.append(result.speed["postprocess"])
+    
+    avg_preprocessing_time = sum(preprocessing_times) / len(preprocessing_times)
+    avg_inference_time = sum(inference_times) / len(inference_times)
+    avg_postprocessing_time = sum(postprocessing_times) / len(postprocessing_times)
+
+    print("\n=== Average Timing Results ===")
+    print(f"Average Preprocessing Time: {avg_preprocessing_time:.4f} miliseconds")
+    print(f"Average Inference Time: {avg_inference_time:.4f} miliseconds")
+    print(f"Average Post-processing Time: {avg_postprocessing_time:.4f} miliseconds")

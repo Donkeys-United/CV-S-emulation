@@ -55,12 +55,10 @@ class PriorityQueue:
             print(self.__queue[0][0])
             min_limit:float = self.__queue[0][0].getUnixTimestampLimit()
             next_task = self.__queue[0]
-            next_task_index = 0
             for i in range(len(self.__queue)):
                 if self.__queue[i][0].getUnixTimestampLimit() < min_limit:
                     min_limit = self.__queue[i][0].getUnixTimestampLimit()
                     next_task = self.__queue[i]
-                    next_task_index = i
             
             return next_task
         else:

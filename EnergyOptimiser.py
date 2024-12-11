@@ -2,11 +2,11 @@ from scipy.optimize import minimize, OptimizeResult
 from typing import Callable
 
 class EnergyOptimiser:
-    MU_INFERENCE: float = 1.0
-    P_GPU_FIXED: float = 15
-    F_FIXED: int = 500000000
+    MU_INFERENCE: float = 0.057
+    P_GPU_FIXED: float = 2
+    F_FIXED: int = 510000000
     F_MIN: int = 306000000
-    F_MAX: int = 642750000
+    F_MAX: int = 612000000
     
     def totalEnergy(self, frequencies: list[float]) -> float:
         """Calculates the total amount of energy it would take to calculate some tasks at some frequencies
