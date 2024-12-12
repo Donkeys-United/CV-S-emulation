@@ -117,8 +117,8 @@ class TransmissionThread(threading.Thread):
                             else:
                                 connection.connect(self.rightSatelliteAddr)
                                 connection.sendall(header + pickled_message)
-                                connection_2.shutdown(socket.SHUT_RDWR)
-                                connection_2.close()
+                                connection.shutdown(socket.SHUT_RDWR)
+                                connection.close()
 
                                 time.sleep(2)
 
