@@ -171,6 +171,7 @@ config_test_nano.JSON
 big_guy_log.txt
 nano_1_log.txt
 nano_2_log.txt
+config_test.JSON
 
 #Ignore local database
 *.db
