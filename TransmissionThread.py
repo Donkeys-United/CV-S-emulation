@@ -122,7 +122,7 @@ class TransmissionThread(threading.Thread):
                                 continue
                             
                             else:
-                                logging.info("Case 4 - Connected to satellites to send %s", message)
+                                logging.info("Case 3 - Connected to satellites to send %s", message)
                                 connection.connect(self.rightSatelliteAddr)
                                 connection.sendall(header + pickled_message)
                                 logging.info("Succesully sent message %s to satellite %s", message, self.rightSatelliteID)
