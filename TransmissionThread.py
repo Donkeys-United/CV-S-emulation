@@ -1,8 +1,7 @@
 import threading
-from MessageClasses import Message, RequestMessage, RespondMessage, ResponseNackMessage, ProcessedDataMessage, ImageDataMessage
+from MessageClasses import Message, RequestMessage, ProcessedDataMessage, ImageDataMessage
 import socket
 from pickle import dumps
-from uuid import getnode
 import struct
 from getmac import get_mac_address
 import time
@@ -12,8 +11,6 @@ class TransmissionThread(threading.Thread):
     """
     from CommunicationThread import CommunicationThread
 
-    HOSTNAME = socket.gethostname()
-    #IP_ADDR = socket.gethostbyname(HOSTNAME)
     IP_ADDR = "0.0.0.0"
     __dataTransmittedBytes = 0 # Used for power consumption optimization.
     port = 6969 # Port selected for outgoing comms.
@@ -42,13 +39,12 @@ class TransmissionThread(threading.Thread):
         self.port
         self.communicationThread = communicationThread
         self._stop_event = threading.Event() # Used for stopping the thread.
-        self.HOSTNAME
         self.IP_ADDR
-        self.__dataTransmittedBytes
+        self.__dataTransmittedBytes # Used for the power optimization
         self.__satelliteID
         self.leftSatelliteID = neighbourSatelliteIDs[0]
         self.rightSatelliteID = neighbourSatelliteIDs[1]
-        self.leftSatelliteAddr = (neighbourSatelliteAddrs[0], 4500)
+        self.leftSatelliteAddr = (neighbourSatelliteAddrs[0], 4500) 
         self.rightSatelliteAddr = (neighbourSatelliteAddrs[1],4600)
         self.groundstationAddr = groundstationAddr
 
@@ -66,20 +62,16 @@ class TransmissionThread(threading.Thread):
 
 
     def sendTransmission(self):
-        #with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as connection:
-        #with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as connection:
-            #connection.bind((self.IP_ADDR, self.port))
 
         while not self._stop_event.is_set():
             if self.communicationThread.transmissionQueue:
                 message = self.communicationThread.transmissionQueue.pop(0)
                 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as connection:
-                    #connection.bind((self.IP_ADDR, self.port))
                     if isinstance(message, Message):
                         
-                        # Case 2: The satellite must relay the result message to either the groundstation or the next satellite.
+                        # Case 1: The satellite must relay the a ProcessedDataMessage or a ImageDataMessage to either the groundstation or the next satellite.
                         if (isinstance(message, ProcessedDataMessage) and (message.lastSenderID != None)) or (isinstance(message, ImageDataMessage) and (message.lastSenderID != None)):
-                            print(f"Message {message} - case 2")
+                            print(f"Message {message} - case 1")
                             if self.communicationThread.orbitalPositionThread.getSatClosestToGround() == self.__satelliteID:
                                 connection.connect(self.groundstationAddr)
                                 print(f"Connected to ground")
@@ -91,8 +83,9 @@ class TransmissionThread(threading.Thread):
                                     print(f"Connected to satellite {self.leftSatelliteID}")
                                     connection.connect(self.leftSatelliteAddr)
 
-                        # Case 3: The satellite must send its own results to the groundstation, or another satellite.
-                        elif (isinstance(message, ProcessedDataMessage) and (message.lastSenderID == None)) or (isinstance(message, ImageDataMessage) and (message.lastSenderID != None)):
+                        # Case 2: The satellite must send its own results to the groundstation, or another satellite.
+                        elif (isinstance(message, ProcessedDataMessage) and (message.lastSenderID == None)) or (isinstance(message, ImageDataMessage) and (message.lastSenderID == None)):
+                            print(f"Message {message} - case 2")
                             if self.communicationThread.orbitalPositionThread.getSatClosestToGround() == self.__satelliteID:
                                 connection.connect(self.groundstationAddr)
 
@@ -105,32 +98,38 @@ class TransmissionThread(threading.Thread):
                                     print(f"\nSending message to right satellite with address {self.rightSatelliteAddr}")
                                     connection.connect(self.rightSatelliteAddr)
 
-                       # Case 4: The satellite sends out its own RequestMessage - which must be sent to both neighbouring satellites.
+                        # Case 3: The satellite sends out its own RequestMessage - which must be sent to both neighbouring satellites.
                         elif isinstance(message, RequestMessage):
+                            print(f"Message {message} - case 3")
                             message.lastSenderID = self.__satelliteID
                             pickled_message = dumps(message)
-                            self.__dataTransmittedBytes += len(pickled_message)
                             message_length = len(pickled_message)
                             header = struct.pack('>I', message_length)
+                            self.__dataTransmittedBytes += len(pickled_message) + len(header)
 
-                            connection.connect(self.rightSatelliteAddr)
-                            connection.sendall(header + pickled_message)
+                            if self.communicationThread.orbitalPositionThread.getSatClosestToGround() == self.__satelliteID:
+                                connection.connect(self.groundstationAddr)
+                                connection.sendall(header + pickled_message)
+                                continue
+                            
+                            else:
+                                connection.connect(self.rightSatelliteAddr)
+                                connection.sendall(header + pickled_message)
 
-                            time.sleep(2)
+                                #time.sleep(1)
 
-                            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as connection_2:
-                                connection_2.connect(self.leftSatelliteAddr)
-                                connection_2.sendall(header + pickled_message)
-                                print(f"Sent request message\n")
-                                connection_2.shutdown(socket.SHUT_RDWR)
-                                connection_2.close()
-
-
+                                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as connection_2:
+                                    self.__dataTransmittedBytes += len(pickled_message) + len(header)
+                                    connection_2.connect(self.leftSatelliteAddr)
+                                    connection_2.sendall(header + pickled_message)
+                                    print(f"Sent request message\n")
+                                    connection_2.shutdown(socket.SHUT_RDWR)
+                                    connection_2.close()
                             continue
 
-                        # Case 1: The satellite must relay a message to the next satellite in the chain.
+                        # Case 4: The satellite must relay a message to the next satellite in the chain.
                         elif (isinstance(message, ProcessedDataMessage) == False) and (message.lastSenderID != None) or (isinstance(message, ImageDataMessage) == False) and (message.lastSenderID != None):
-                            print(f"Message {message} - case 1")
+                            print(f"Message {message} - case 4")
                             if message.lastSenderID == self.leftSatelliteID:
                                 connection.connect(self.rightSatelliteAddr)
                                 print(f"Connected to satellite {self.rightSatelliteID}")
@@ -141,6 +140,7 @@ class TransmissionThread(threading.Thread):
 
                         # Case 5: The satellite sends any other message created by itself to one of its neighbouring satellites.
                         else:
+                            print(f"Message {message} - case 5")
                             if message.firstHopID == self.leftSatelliteID:
                                 print(f"Connected to satellite {self.leftSatelliteID}")
                                 connection.connect(self.leftSatelliteAddr)
@@ -150,11 +150,10 @@ class TransmissionThread(threading.Thread):
 
                         message.lastSenderID = self.__satelliteID
                         pickled_message = dumps(message)
-                        self.__dataTransmittedBytes += len(pickled_message)
                         message_length = len(pickled_message)
                         header = struct.pack('>I', message_length)
+                        self.__dataTransmittedBytes += len(pickled_message) + len(header)
                         connection.sendall(header + pickled_message)
-                        #print(f"\n\n\nTransmission Queue:{self.communicationThread.transmissionQueue}\n\n\n")
                         print(f"Sent message {message}\n")
                         connection.shutdown(socket.SHUT_RDWR)
                         connection.close()
