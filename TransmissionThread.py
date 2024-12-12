@@ -87,10 +87,10 @@ class TransmissionThread(threading.Thread):
                                 logging.info("Case 1 - Connected to Ground Station to send %s", message)
                             else:
                                 if message.lastSenderID == self.leftSatelliteID:
-                                    logging.info("Case 1 - Connected to satellite %s to send %s", (self.rightSatelliteID, message))
+                                    logging.info("Case 1 - Connected to satellite %s to send %s", self.rightSatelliteID, message)
                                     connection.connect(self.rightSatelliteAddr)
                                 else:
-                                    logging.info("Case 1 - Connected to satellite %s to send %s", (self.leftSatelliteID, message))
+                                    logging.info("Case 1 - Connected to satellite %s to send %s", self.leftSatelliteID, message)
                                     connection.connect(self.leftSatelliteAddr)
 
                         # Case 2: The satellite must send its own results to the groundstation, or another satellite.
@@ -100,11 +100,11 @@ class TransmissionThread(threading.Thread):
 
                             else:
                                 if message.firstHopID == self.leftSatelliteID:
-                                    logging.info("Case 2 - Connected to satellite %s to send %s", (self.leftSatelliteID, message))
+                                    logging.info("Case 2 - Connected to satellite %s to send %s", self.leftSatelliteID, message)
                                     connection.connect(self.leftSatelliteAddr)
 
                                 else:
-                                    logging.info("Case 2 - Connected to satellite %s to send %s", (self.rightSatelliteID, message))
+                                    logging.info("Case 2 - Connected to satellite %s to send %s", self.rightSatelliteID, message)
                                     connection.connect(self.rightSatelliteAddr)
 
                         # Case 3: The satellite sends out its own RequestMessage - which must be sent to both neighbouring satellites.
@@ -125,7 +125,7 @@ class TransmissionThread(threading.Thread):
                                 logging.info("Case 4 - Connected to satellites to send %s", message)
                                 connection.connect(self.rightSatelliteAddr)
                                 connection.sendall(header + pickled_message)
-                                logging.info("Succesully sent message %s to satellite %s", (message, self.rightSatelliteID))
+                                logging.info("Succesully sent message %s to satellite %s", message, self.rightSatelliteID)
                                 connection.shutdown(socket.SHUT_RDWR)
                                 connection.close()
 
@@ -133,7 +133,7 @@ class TransmissionThread(threading.Thread):
                                     self.__dataTransmittedBytes += len(pickled_message) + len(header)
                                     connection_2.connect(self.leftSatelliteAddr)
                                     connection_2.sendall(header + pickled_message)
-                                    logging.info("Succesully sent message %s to satellite %s", (message, self.leftSatelliteID))
+                                    logging.info("Succesully sent message %s to satellite %s", message, self.leftSatelliteID)
                                     connection_2.shutdown(socket.SHUT_RDWR)
                                     connection_2.close()
                             continue
@@ -142,19 +142,19 @@ class TransmissionThread(threading.Thread):
                         elif (isinstance(message, ProcessedDataMessage) == False) and (message.lastSenderID != None) or (isinstance(message, ImageDataMessage) == False) and (message.lastSenderID != None):
                             if message.lastSenderID == self.leftSatelliteID:
                                 connection.connect(self.rightSatelliteAddr)
-                                logging.info("Case 4 - Connected to satellite %s to send %s", (self.rightSatelliteID, message))
+                                logging.info("Case 4 - Connected to satellite %s to send %s", self.rightSatelliteID, message)
                             else:
                                 connection.connect(self.leftSatelliteAddr)
-                                logging.info("Case 4- Connected to satellite %s to send %s", (self.leftSatelliteID, message))
+                                logging.info("Case 4- Connected to satellite %s to send %s", self.leftSatelliteID, message)
 
 
                         # Case 5: The satellite sends any other message created by itself to one of its neighbouring satellites.
                         else:
                             if message.firstHopID == self.leftSatelliteID:
-                                logging.info("Case 5 - Connected to satellite %s to send %s", (self.leftSatelliteID, message))
+                                logging.info("Case 5 - Connected to satellite %s to send %s", self.leftSatelliteID, message)
                                 connection.connect(self.leftSatelliteAddr)
                             else:
-                                logging.info("Case 5 - Connected to satellite %s to send %s", (self.rightSatelliteID, message))
+                                logging.info("Case 5 - Connected to satellite %s to send %s", self.rightSatelliteID, message)
                                 connection.connect(self.rightSatelliteAddr)
 
                         message.lastSenderID = self.__satelliteID
