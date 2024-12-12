@@ -3,6 +3,7 @@ from MessageClasses import Message
 import socket
 from pickle import loads
 import struct
+from getmac import get_mac_address
 
 class ListeningThread(threading.Thread):
     """Class for Listening Thread. Used for listening on a specific port for incoming messages.
