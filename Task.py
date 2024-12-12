@@ -2,6 +2,7 @@
 from numpy import ndarray
 import time
 
+
 class Task:
     """Task that stores the information that has to be processed by the system
 
@@ -16,14 +17,14 @@ class Task:
     fileName:str
     location:complex
     unixTimestamp:float
-    unixTimestampLimit:float
+    TimestampLimit:float
     image:ndarray
 
 
     def __init__(self, satelliteID:int, taskCount:int, timeLimit:int) -> None:
         self.taskID =  taskCount.to_bytes(1, 'big') + satelliteID.to_bytes(6, 'big') 
+        self.TimestampLimit = timeLimit
         self.unixTimestamp = time.time()
-        self.unixTimestampLimit = self.unixTimestamp + timeLimit
 
     def appendImage(self, fileName:str, image: ndarray, location:complex) -> None:
         """Method for adding image data to Task
@@ -100,7 +101,7 @@ class Task:
             unixTimestampLimit (float): Returns unixTimestampLimit
         
         """
-        return self.unixTimestampLimit
+        return self.TimestampLimit
     
     def getImage(self) -> ndarray:
         """Returns image data
