@@ -120,7 +120,7 @@ class TransmissionThread(threading.Thread):
                                 connection.shutdown(socket.SHUT_RDWR)
                                 connection.close()
 
-                                time.sleep(2)
+                                #time.sleep(2)
 
                                 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as connection_2:
                                     self.__dataTransmittedBytes += len(pickled_message) + len(header)

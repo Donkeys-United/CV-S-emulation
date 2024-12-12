@@ -12,6 +12,8 @@ from MissionThread import MissionThread
 from OrbitalPositionThread import OrbitalPositionThread
 from PowerMonitorThread import PowerMonitorThread
 
+start_time = time.time()
+
 # Setting MAC adress as satelliteID 
 satelliteID = int(get_mac_address().replace(":",""),16)
 print(satelliteID)
@@ -83,6 +85,8 @@ powerMonitorThread = PowerMonitorThread(measuringIntervalms=40,
                                         transmissionThread=communicationThread.transmissionThread, 
                                         satelliteDistance=orbitalPositionThread.neighbourSatDist)
 
+while time.time() < (start_time + 10):
+    continue
 
 # Starting all threads.
 print("Startin orbitlal thread")
