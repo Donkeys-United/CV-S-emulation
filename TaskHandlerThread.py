@@ -90,6 +90,8 @@ class TaskHandlerThread(threading.Thread):
         
         #Check if a time limit was exceeded
         if not result.success and self.algorithmMode == 1:
+            self.allocatedTasks.releaseQueue()
+            self.communicationThread.acceptedRequestsQueue.releaseQueue()
             return False, 0.0
         
         #Extract the optimised frequencies
@@ -100,6 +102,8 @@ class TaskHandlerThread(threading.Thread):
         
         #Check whether transmitting to ground station would be more efficient
         if optimisedEnergyEstimate - currentEnergyEstimate > self.estimateTransmissionEnergyToGround(taskSource) and self.algorithmMode == 1:
+            self.allocatedTasks.releaseQueue()
+            self.communicationThread.acceptedRequestsQueue.releaseQueue()
             return False, 0.0
         
         #Split the queues again
