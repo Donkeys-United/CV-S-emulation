@@ -5,13 +5,22 @@ from pathlib import Path, PurePath
 import threading
 import subprocess
 import torch
+import logging
+from getmac import get_mac_address
 
 from MessageClasses import ProcessedDataMessage
 from CommunicationThread import CommunicationThread
 from TaskHandlerThread import TaskHandlerThread
 from Task import Task
-from getmac import get_mac_address
 
+# Configure logging 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[
+        logging.StreamHandler()     # Also log to the console
+    ]
+)
 
 class ObjectDetectionThread(threading.Thread):
     """ Class used for running inference on images, using a YOLOv8 model.
@@ -58,6 +67,7 @@ class ObjectDetectionThread(threading.Thread):
         frequency = TaskFrequencyList[1]
         self.changeFrequency(frequency=frequency)
 
+        logging.info("Running Object Detection on task %s with image file %s", (imageObject.getTaskID, imageObject.getFileName()))
         # Running inference on image, using the GPU
         results = self.model.predict(image, device=0)
 
@@ -66,6 +76,9 @@ class ObjectDetectionThread(threading.Thread):
             result.save_crop(save_dir=result.save_dir)
         
         save_dir = results[0].save_dir
+
+        logging.info("Finished Object Detection for task %s with image file %s", (imageObject.getTaskID, imageObject.getFileName()))
+
         return results[0], save_dir
 
     def getMessageList(self, result: Results, saveDir: str, task: Task):

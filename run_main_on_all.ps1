@@ -5,6 +5,7 @@ $hosts = @(
         User = "jetson-nano"
         IP = "192.168.0.110"
         Path = "/media/jetson-nano/Data/CV-S-emulation/main.py"
+        ConfigDir = "/media/jetson-nano/Data/CV-S-emulation"
         Log = "nano_2.log"
         VirtualEnv = "/media/jetson-nano/Data/comtek550/bin/activate"
     },
@@ -13,6 +14,7 @@ $hosts = @(
         User = "the-big-guy"
         IP = "192.168.0.106"
         Path = "~/P5/CV-S-emulation/main.py"
+        ConfigDir = "~/P5/CV-S-emulation"
         Log = "big_guy.log"
     },
     @{
@@ -20,9 +22,29 @@ $hosts = @(
         User = "comtek550nano"
         IP = "192.168.0.108"
         Path = "~/P5/CV-S-emulation/main.py"
+        ConfigDir = "~/P5/CV-S-emulation"
         Log = "nano_1.log"
     }
 )
+
+# Function to send config_test.JSON to each host
+function Send-ConfigFile {
+    $configFilePath = ".\config_test.JSON"
+    if (-Not (Test-Path $configFilePath)) {
+        Write-Error "Config file not found at $configFilePath"
+        return
+    }
+
+    foreach ($currentHost in $hosts) {
+        Write-Host "Sending config_test.JSON to $($currentHost.Name)..."
+        scp $configFilePath "$($currentHost.User)@$($currentHost.IP):$($currentHost.ConfigDir)"
+        if ($LASTEXITCODE -ne 0) {
+            Write-Error "Failed to send config_test.JSON to $($currentHost.Name)"
+        } else {
+            Write-Host "Config file sent to $($currentHost.Name)."
+        }
+    }
+}
 
 # Function to start main.py scripts
 function Start-MainPyScripts {
@@ -64,12 +86,15 @@ function Stop-finally {
 }
 
 try {
-# Start the scripts
-Start-MainPyScripts
 
-Write-Host "Main.py scripts are running. Press Ctrl+C or close PowerShell to stop them gracefully."
+    Send-ConfigFile
 
-# Keep the script alive until manually terminated
+    # Start the scripts
+    Start-MainPyScripts
+
+    Write-Host "Main.py scripts are running. Press Ctrl+C or close PowerShell to stop them gracefully."
+
+    # Keep the script alive until manually terminated
 
     while ($true) {
         Start-Sleep -Seconds 1
