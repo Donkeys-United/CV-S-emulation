@@ -3,12 +3,14 @@ from getmac import get_mac_address
 from pathlib import Path
 from platform import system
 import json
+import time
 
 # Internal library imports
 from CommunicationThread import CommunicationThread
 from TaskHandlerThread import TaskHandlerThread
 from MissionThread import MissionThread
 from OrbitalPositionThread import OrbitalPositionThread
+from PowerMonitorThread import PowerMonitorThread
 
 # Setting MAC adress as satelliteID 
 satelliteID = int(get_mac_address().replace(":",""),16)
@@ -67,6 +69,19 @@ missionThread = MissionThread(configPath=config_path,
                               taskHandlerThread=taskHandlerThread,
                               imagePath=image_path)
 
+for satellite in loaded_config_file["satellites"]:
+    if satellite["id"] == satelliteID:
+        isNano = satellite["is_nano"]
+
+powerMonitorThread = PowerMonitorThread(measuringIntervalms=40, 
+                                        emulationRunName=loaded_config_file["emulation_run_name"], 
+                                        unixtimeStart=time.time(), 
+                                        notes=None, 
+                                        isNano=isNano, 
+                                        transmissionThread=communicationThread.transmissionThread, 
+                                        satelliteDistance=orbitalPositionThread.neighbourSatDist)
+
+
 # Starting all threads.
 print("Startin orbitlal thread")
 orbitalPositionThread.start()
@@ -76,6 +91,8 @@ print("Starting taskhandler")
 taskHandlerThread.start()
 print("Starting mission thread")
 missionThread.start()
+print("Starting power monitor thread")
+powerMonitorThread.start()
 if os != "Windows":
     print("Starting ObjectDetection thread")
     objectDetectionThread.start()
