@@ -32,7 +32,7 @@ class EnergyOptimiser:
             Callable: The constraint function
         """
         def constraint(frequencies):
-            cumulativeTime = busyTime + sum(self.MU_INFERENCE * (self.F_FIXED / frequencies[i]) for i in range(k))
+            cumulativeTime = busyTime + sum(1 + self.MU_INFERENCE * (self.F_FIXED / frequencies[i]) for i in range(k))
             return timeLimit - cumulativeTime
         return constraint
     
