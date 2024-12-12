@@ -63,13 +63,14 @@ function Stop-finally {
     Write-Host "Cleanup complete. Logs fetched. Exiting script."
 }
 
+try {
 # Start the scripts
 Start-MainPyScripts
 
 Write-Host "Main.py scripts are running. Press Ctrl+C or close PowerShell to stop them gracefully."
 
 # Keep the script alive until manually terminated
-try {
+
     while ($true) {
         Start-Sleep -Seconds 1
     }
