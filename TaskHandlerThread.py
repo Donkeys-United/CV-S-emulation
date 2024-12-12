@@ -156,7 +156,7 @@ class TaskHandlerThread(threading.Thread):
         """
         # Create a RequestMessage object
         sendRequestMessage = RequestMessage(
-            unixTimeLimit=task.getUnixTimestampLimit(),
+            unixTimeLimit=task.getUnixTimestampLimit()+5,
             taskID=task.getTaskID()
         )
 
