@@ -118,7 +118,7 @@ class TransmissionThread(threading.Thread):
                                 connection.connect(self.rightSatelliteAddr)
                                 connection.sendall(header + pickled_message)
 
-                                #time.sleep(1)
+                                time.sleep(0.5)
 
                                 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as connection_2:
                                     self.__dataTransmittedBytes += len(pickled_message) + len(header)
