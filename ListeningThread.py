@@ -10,6 +10,8 @@ class ListeningThread(threading.Thread):
     from CommunicationThread import CommunicationThread
     HOSTNAME = socket.gethostname()
     IP_ADDR = "0.0.0.0"
+    if int(get_mac_address().replace(":",""),16) == 185001232117603:
+        IP_ADDR = "192.168.0.110"
 
     def __init__(self, port: int, communicationThread: CommunicationThread):
         
