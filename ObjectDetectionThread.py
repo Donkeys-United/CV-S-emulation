@@ -38,6 +38,7 @@ class ObjectDetectionThread(threading.Thread):
         dummy_input = torch.rand(1, 3, 640, 640).to('cuda') #for model loading
         self.model.predict(dummy_input) #used to load model faster.
         self.satelliteID = int(get_mac_address().replace(":",""),16)
+        self.total_cropped_images = 0
 
     
     def loadModel(self):
@@ -99,6 +100,7 @@ class ObjectDetectionThread(threading.Thread):
                 image_path.rename(save_dir / "boat" / new_name)
                 short_name_list.append(PurePath(image_name_list[-1]).name)
                 crop_number += 1
+                self.total_cropped_images += 1
 
         finished_message_list = [] # List for storing ProcessedDataMessage
 
@@ -167,6 +169,7 @@ class ObjectDetectionThread(threading.Thread):
                 result, saveDir = self.runInference(nextTask)
                 processedDataList = self.getMessageList(result, saveDir, nextTask[0])
                 self.sendProcessedDataMessage(processedDataList)
+                logging.info("Total boats found: %s", self.total_cropped_images)
             else:
                 #Set the gpu frequency to smallest possible frequency to save on power
                 self.changeFrequency(self.AVAILABLE_FREQUENCIES[0])
