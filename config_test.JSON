@@ -26,9 +26,23 @@
   "missions": [
     {
       "satellite_id": 185001232116297,
+      "location_radian": 2.09439510239,
+      "orbit_number": 1,
+      "pictures_number": 50, 
+      "time_limit": 100
+    },
+    {
+      "satellite_id": 31672463968659,
+      "location_radian": 4.18879020479,
+      "orbit_number": 1,
+      "pictures_number": 50, 
+      "time_limit": 100
+    },
+    {
+      "satellite_id": 185001232117603,
       "location_radian": 0.0,
       "orbit_number": 1,
-      "pictures_number": 5, 
+      "pictures_number": 50, 
       "time_limit": 100
     }
   ],
