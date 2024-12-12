@@ -43,7 +43,9 @@ orbitalPositionThread = OrbitalPositionThread(config=loaded_config_file,
                                                   satelliteID=satelliteID)
 
 # Setting up Task Handler Thread.
-taskHandlerThread = TaskHandlerThread(communicationThread=communicationThread, orbitalPositionThread=orbitalPositionThread)
+taskHandlerThread = TaskHandlerThread(communicationThread=communicationThread, 
+                                      orbitalPositionThread=orbitalPositionThread,
+                                      algorithmMode=loaded_config_file["algorithm_mode"])
 
 # Setting up Object Detection Thread - if OS is not Windows.
 if os != "Windows":

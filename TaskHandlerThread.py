@@ -12,7 +12,7 @@ from RadioEnergy import RadioEnergy
 
 class TaskHandlerThread(threading.Thread):
 
-    def __init__(self, communicationThread: CommunicationThread, orbitalPositionThread: OrbitalPositionThread):
+    def __init__(self, communicationThread: CommunicationThread, orbitalPositionThread: OrbitalPositionThread, algorithmMode: int):
         super().__init__()
         self.running = True
         self.allocatedTasks: PriorityQueue = PriorityQueue()
@@ -20,6 +20,7 @@ class TaskHandlerThread(threading.Thread):
         self.communicationThread: CommunicationThread = communicationThread
         self.orbitalPositionThread: OrbitalPositionThread = orbitalPositionThread
         self.energyOptimiser = EnergyOptimiser()
+        self.algorithmMode = algorithmMode
 
 
     def run(self):
@@ -50,6 +51,10 @@ class TaskHandlerThread(threading.Thread):
             Tuple[bool, float]: Returns true with a optimised frequency if the task should be allocated to self
                                 Returns false with a frequency of 0 if the task should not be allocated to self
         """
+        #Check algorithm mode and if everything should be routed to ground
+        if self.algorithmMode == 3:
+            return (False, 0.0)
+            
         #Lock the queues so they cant be modified during this process
         self.allocatedTasks.lockQueue()
         self.communicationThread.acceptedRequestsQueue.lockQueue()
@@ -84,7 +89,7 @@ class TaskHandlerThread(threading.Thread):
         result = self.energyOptimiser.minimiseEnergyConsumption(timeLimits, 0)
         
         #Check if a time limit was exceeded
-        if not result.success:
+        if not result.success and self.algorithmMode == 1:
             return False, 0.0
         
         #Extract the optimised frequencies
@@ -94,7 +99,7 @@ class TaskHandlerThread(threading.Thread):
         optimisedEnergyEstimate = self.energyOptimiser.totalEnergy(optimisedFrequencies)
         
         #Check whether transmitting to ground station would be more efficient
-        if optimisedEnergyEstimate - currentEnergyEstimate > self.estimateTransmissionEnergyToGround(taskSource):
+        if optimisedEnergyEstimate - currentEnergyEstimate > self.estimateTransmissionEnergyToGround(taskSource) and self.algorithmMode == 1:
             return False, 0.0
         
         #Split the queues again

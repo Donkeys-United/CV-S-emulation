@@ -36,5 +36,6 @@
   "ground_station_port": 4500,
   "altitude": 200000,
   "emulation_run_name": "Test",
-  "emulation_notes": ""
+  "emulation_notes": "",
+  "algorithm_mode": 1 
 }
