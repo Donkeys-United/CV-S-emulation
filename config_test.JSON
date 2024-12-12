@@ -5,25 +5,28 @@
       "id": 185001232116297,
       "ip_address": "192.168.0.108",
       "connections": [273270825686681, 31672463968659],
-      "initial_angle": 3.1415926536
+      "initial_angle": 3.1415926536,
+      "is_nano": 1
     },
     {
       "id": 31672463968659,
       "ip_address": "192.168.0.106",
       "connections": [185001232116297, 273270825686681],
-      "initial_angle": 0.7853981634
+      "initial_angle": 0.7853981634,
+      "is_nano": 0
     },
     {
       "id": 273270825686681,
-      "ip_address": "192.168.0.100",
+      "ip_address": "192.168.0.110",
       "connections": [31672463968659,185001232116297],
-      "initial_angle": 0
+      "initial_angle": 0,
+      "is_nano": 1
     }
   ],
   "missions": [
     {
-      "satellite_id": 31672463968659,
-      "location_radian": 0.1,
+      "satellite_id": 185001232116297,
+      "location_radian": 0.0,
       "orbit_number": 1,
       "pictures_number": 5, 
       "time_limit": 100
@@ -31,5 +34,7 @@
   ],
   "ground_station_ip": "192.168.0.102",
   "ground_station_port": 4500,
-  "altitude": 200000
+  "altitude": 200000,
+  "emulation_run_name": "Test",
+  "emulation_notes": ""
 }
