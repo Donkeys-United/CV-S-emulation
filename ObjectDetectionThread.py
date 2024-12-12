@@ -91,6 +91,7 @@ class ObjectDetectionThread(threading.Thread):
 
         # Finding the first hop for sending to ground station.
         for result in range(len(image_name_list)):
+            break_out = False
             if self.communicationThread.orbitalPositionThread.getSatClosestToGround() == self.satelliteID:
                 firstHopID = None
                 break_out = True
@@ -98,7 +99,6 @@ class ObjectDetectionThread(threading.Thread):
                     break
 
             priority_list = self.communicationThread.orbitalPositionThread.getSatellitePriorityList()
-            break_out = False
             firstHopID = None
             for i in range(len(priority_list)):
                 for j in self.communicationThread.connections:
