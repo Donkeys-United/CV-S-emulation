@@ -97,6 +97,7 @@ class TransmissionThread(threading.Thread):
                         elif (isinstance(message, ProcessedDataMessage) and (message.lastSenderID == None)) or (isinstance(message, ImageDataMessage) and (message.lastSenderID == None)):
                             if self.communicationThread.orbitalPositionThread.getSatClosestToGround() == self.__satelliteID:
                                 connection.connect(self.groundstationAddr)
+                                logging.info("Case 2 - Connected to Ground Station to send %s", message)
 
                             else:
                                 if message.firstHopID == self.leftSatelliteID:
