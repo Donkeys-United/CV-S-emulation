@@ -45,7 +45,8 @@ class TaskHandlerThread(threading.Thread):
                 else:
                     self.sendRequest(nextUnallocatedTask[0])
                     self.communicationThread.giveTask(nextUnallocatedTask[0])
-            time.sleep(1)
+            else:
+                time.sleep(1)
 
 
 

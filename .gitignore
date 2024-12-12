@@ -176,3 +176,4 @@ config_test.JSON
 #Ignore local database
 *.db
 config_test.JSON
+config_test.json
