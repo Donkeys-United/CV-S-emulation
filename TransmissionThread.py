@@ -45,6 +45,8 @@ class TransmissionThread(threading.Thread):
         self.leftSatelliteID = neighbourSatelliteIDs[0]
         self.rightSatelliteID = neighbourSatelliteIDs[1]
         self.leftSatelliteAddr = (neighbourSatelliteAddrs[0], 4500) 
+        print(f"\nleftSatelliteAddr = {self.leftSatelliteAddr}\n")
+        print(f"\nrightSatelliteAddr = {self.rightSatelliteAddr}\n")
         self.rightSatelliteAddr = (neighbourSatelliteAddrs[1],4600)
         self.groundstationAddr = groundstationAddr
 
