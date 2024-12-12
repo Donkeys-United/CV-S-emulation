@@ -10,6 +10,7 @@ from MessageClasses import ProcessedDataMessage
 from CommunicationThread import CommunicationThread
 from TaskHandlerThread import TaskHandlerThread
 from Task import Task
+from getmac import get_mac_address
 
 
 class ObjectDetectionThread(threading.Thread):
@@ -27,6 +28,8 @@ class ObjectDetectionThread(threading.Thread):
         self.no_tasks = threading.Event() #for waiting.
         dummy_input = torch.rand(1, 3, 640, 640).to('cuda') #for model loading
         self.model.predict(dummy_input) #used to load model faster.
+        self.satelliteID = int(get_mac_address().replace(":",""),16)
+
     
     def loadModel(self):
         """Method which is automatically called when ObjectDetectionThread 
@@ -88,8 +91,15 @@ class ObjectDetectionThread(threading.Thread):
 
         # Finding the first hop for sending to ground station.
         for result in range(len(image_name_list)):
-            priority_list = self.communicationThread.orbitalPositionThread.getSatellitePriorityList()
             break_out = False
+            if self.communicationThread.orbitalPositionThread.getSatClosestToGround() == self.satelliteID:
+                firstHopID = None
+                break_out = True
+            if break_out:
+                    break
+
+            priority_list = self.communicationThread.orbitalPositionThread.getSatellitePriorityList()
+            firstHopID = None
             for i in range(len(priority_list)):
                 for j in self.communicationThread.connections:
                     if priority_list[-(i+1)] == j:

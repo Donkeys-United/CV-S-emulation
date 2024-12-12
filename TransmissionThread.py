@@ -45,7 +45,9 @@ class TransmissionThread(threading.Thread):
         self.leftSatelliteID = neighbourSatelliteIDs[0]
         self.rightSatelliteID = neighbourSatelliteIDs[1]
         self.leftSatelliteAddr = (neighbourSatelliteAddrs[0], 4500) 
+        print(f"\nleftSatelliteAddr = {self.leftSatelliteAddr}\n")
         self.rightSatelliteAddr = (neighbourSatelliteAddrs[1],4600)
+        print(f"\nrightSatelliteAddr = {self.rightSatelliteAddr}\n")
         self.groundstationAddr = groundstationAddr
 
 
@@ -115,8 +117,10 @@ class TransmissionThread(threading.Thread):
                             else:
                                 connection.connect(self.rightSatelliteAddr)
                                 connection.sendall(header + pickled_message)
+                                connection.shutdown(socket.SHUT_RDWR)
+                                connection.close()
 
-                                #time.sleep(1)
+                                #time.sleep(2)
 
                                 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as connection_2:
                                     self.__dataTransmittedBytes += len(pickled_message) + len(header)

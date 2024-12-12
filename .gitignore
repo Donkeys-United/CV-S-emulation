@@ -168,6 +168,9 @@ runs
 /models/yolov8m_best.engine
 /models/yolov8m_best.onnx
 config_test_nano.JSON
+big_guy_log.txt
+nano_1_log.txt
+nano_2_log.txt
 
 #Ignore local database
 *.db

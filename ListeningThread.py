@@ -3,6 +3,7 @@ from MessageClasses import Message
 import socket
 from pickle import loads
 import struct
+from getmac import get_mac_address
 
 class ListeningThread(threading.Thread):
     """Class for Listening Thread. Used for listening on a specific port for incoming messages.
@@ -10,6 +11,8 @@ class ListeningThread(threading.Thread):
     from CommunicationThread import CommunicationThread
     HOSTNAME = socket.gethostname()
     IP_ADDR = "0.0.0.0"
+    if int(get_mac_address().replace(":",""),16) == 185001232117603:
+        IP_ADDR = "192.168.0.110"
 
     def __init__(self, port: int, communicationThread: CommunicationThread):
         
@@ -34,6 +37,7 @@ class ListeningThread(threading.Thread):
         """
 
         connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        print(f"ListeningThread binding to {self.IP_ADDR, self.port}")
         connection.bind((self.IP_ADDR, self.port))
         while not self._stop_event.is_set():
             connection.listen()
