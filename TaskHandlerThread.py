@@ -8,7 +8,16 @@ from PriorityQueue import PriorityQueue
 from OrbitalPositionThread import OrbitalPositionThread
 from EnergyOptimiser import EnergyOptimiser
 from RadioEnergy import RadioEnergy
+import logging
 
+# Configure logging 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[
+        logging.StreamHandler()     # Also log to the console
+    ]
+)
 
 class TaskHandlerThread(threading.Thread):
 
@@ -90,6 +99,7 @@ class TaskHandlerThread(threading.Thread):
         
         #Check if a time limit was exceeded
         if not result.success and self.algorithmMode == 1:
+            logging.info("Task from satellite with ID %s was rejected due to TIME LIMIT constraints. Remaining time for time limit is %s", taskSource, (timeLimitUnixTime - time.time()))
             self.allocatedTasks.releaseQueue()
             self.communicationThread.acceptedRequestsQueue.releaseQueue()
             return False, 0.0
@@ -102,6 +112,7 @@ class TaskHandlerThread(threading.Thread):
         
         #Check whether transmitting to ground station would be more efficient
         if optimisedEnergyEstimate - currentEnergyEstimate > self.estimateTransmissionEnergyToGround(taskSource) and self.algorithmMode == 1:
+            logging.info("Task from satellite with ID %s was rejected due to ENERGY constraints. Remaining time for time limit is %s", taskSource, (timeLimitUnixTime - time.time()))
             self.allocatedTasks.releaseQueue()
             self.communicationThread.acceptedRequestsQueue.releaseQueue()
             return False, 0.0
