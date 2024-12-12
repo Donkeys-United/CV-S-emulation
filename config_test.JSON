@@ -48,7 +48,7 @@
   ],
   "ground_station_ip": "192.168.0.101",
   "ground_station_port": 4500,
-  "altitude": 200000,
+  "altitude": 6378000,
   "emulation_run_name": "Test",
   "emulation_notes": "",
   "algorithm_mode": 1 
