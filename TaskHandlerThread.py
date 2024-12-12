@@ -215,7 +215,7 @@ class TaskHandlerThread(threading.Thread):
             float: The estimated energy
         """        
         numberOfSatHops, satDist, groundDist = self.orbitalPositionThread.getPathDistanceToGround(taskSource)
-        energy = numberOfSatHops * RadioEnergy.getEnergyForTransmission(orbitalPositionThread.neighbourSatDist, 6*10**6) + RadioEnergy.getEnergyForTransmission(groundDist, 6*10**6)
+        energy = numberOfSatHops * RadioEnergy.getEnergyForTransmission(self.orbitalPositionThread.neighbourSatDist, 6*10**6) + RadioEnergy.getEnergyForTransmission(groundDist, 6*10**6)
         return energy
 
 """
