@@ -140,12 +140,15 @@ class ObjectDetectionThread(threading.Thread):
             frequency (float): The desired frequency
         """
         frequencies = [f for f in self.AVAILABLE_FREQUENCIES if f >= frequency]
+        min_frequency = min(frequencies)
         command = (
             'echo 1234 | sudo -S sh -c "cd /sys/devices/platform/17000000.gpu/devfreq/17000000.gpu && '
-            f'echo {min(frequencies)} | tee min_freq max_freq"'
+            f'echo {min_frequency} | tee min_freq max_freq"'
         )
 
         subprocess.run(command, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        
+        logging.info("GPU frequency set to %s Hz", min_frequency)
 
     def sendProcessedDataMessage(self, message_list: list[ProcessedDataMessage]):
         """Simple method for moving the PrcessedDataMessage object instance to the transmission queue in the CommunicationThread object instance.
