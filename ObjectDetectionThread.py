@@ -95,19 +95,18 @@ class ObjectDetectionThread(threading.Thread):
             if self.communicationThread.orbitalPositionThread.getSatClosestToGround() == self.satelliteID:
                 firstHopID = None
                 break_out = True
-            if break_out:
-                    break
 
-            priority_list = self.communicationThread.orbitalPositionThread.getSatellitePriorityList()
-            firstHopID = None
-            for i in range(len(priority_list)):
-                for j in self.communicationThread.connections:
-                    if priority_list[-(i+1)] == j:
-                        firstHopID = j
-                        break_out = True
+            else:
+                priority_list = self.communicationThread.orbitalPositionThread.getSatellitePriorityList()
+                firstHopID = None
+                for i in range(len(priority_list)):
+                    for j in self.communicationThread.connections:
+                        if priority_list[-(i+1)] == j:
+                            firstHopID = j
+                            break_out = True
+                            break
+                    if break_out:
                         break
-                if break_out:
-                    break
             
             # Creating one ProcessedDataMessage per boat found.
             finished_message = ProcessedDataMessage(image_name_list[result], 
