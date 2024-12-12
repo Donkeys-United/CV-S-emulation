@@ -65,6 +65,7 @@ class ResponseHandler(Thread):
                     self.communicationThread.transmissionQueue.append(dataPacket)
                     dataPacket = ImageDataMessage(payload=task, firstHopID=firstHopID_1)
                     self.communicationThread.transmissionQueue.append(dataPacket)
+                self.responses.remove(i)
 
     
     def addResponse(self, response: RespondMessage) -> None:
