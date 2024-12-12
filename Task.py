@@ -1,5 +1,6 @@
 
 from numpy import ndarray
+import time
 
 
 class Task:
@@ -23,6 +24,7 @@ class Task:
     def __init__(self, satelliteID:int, taskCount:int, timeLimit:int) -> None:
         self.taskID =  taskCount.to_bytes(1, 'big') + satelliteID.to_bytes(6, 'big') 
         self.TimestampLimit = timeLimit
+        self.unixTimestamp = time.time()
 
     def appendImage(self, fileName:str, image: ndarray, location:complex) -> None:
         """Method for adding image data to Task
