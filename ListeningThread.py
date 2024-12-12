@@ -4,6 +4,16 @@ import socket
 from pickle import loads
 import struct
 from getmac import get_mac_address
+import logging
+
+# Configure logging 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[
+        logging.StreamHandler()     # Also log to the console
+    ]
+)
 
 class ListeningThread(threading.Thread):
     """Class for Listening Thread. Used for listening on a specific port for incoming messages.
@@ -59,7 +69,7 @@ class ListeningThread(threading.Thread):
             #data = socket.recv(64000)
 
             message = loads(received_data)
-            print(f"Received {message} from {message.lastSenderID}")
+            logging.info("Received %s from %s", message, message.lastSenderID)
             self.addMessageList(message)
 
 
