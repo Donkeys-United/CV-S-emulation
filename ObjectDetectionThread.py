@@ -101,11 +101,9 @@ class ObjectDetectionThread(threading.Thread):
             break_out = False
             firstHopID = None
             for i in range(len(priority_list)):
-                print("object detection i = {i}")
                 for j in self.communicationThread.connections:
                     if priority_list[-(i+1)] == j:
                         firstHopID = j
-                        print("object detection firsthopID = {firstHopID}")
                         break_out = True
                         break
                 if break_out:
