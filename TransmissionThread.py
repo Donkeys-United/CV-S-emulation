@@ -152,7 +152,7 @@ class TransmissionThread(threading.Thread):
                         pickled_message = dumps(message)
                         message_length = len(pickled_message)
                         header = struct.pack('>I', message_length)
-                        self.__dataTransmittedBytes += len(pickled_message+header)
+                        self.__dataTransmittedBytes += len(pickled_message) + len(header)
                         connection.sendall(header + pickled_message)
                         print(f"Sent message {message}\n")
                         connection.shutdown(socket.SHUT_RDWR)
