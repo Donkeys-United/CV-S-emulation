@@ -55,10 +55,12 @@ class RespondMessage(Message):
     def __init__(self, 
                  taskID: int, 
                  source: int, 
-                 firstHopID: int):
+                 firstHopID: int,
+                 recipient: int):
         self.__taskID = taskID
         self.__source = source
         self.firstHopID = firstHopID
+        self.recipient = recipient
 
 
     def getTaskID(self) -> int:
@@ -81,6 +83,9 @@ class RespondMessage(Message):
     
     def getLastSenderID(self):
         return self.lastSenderID
+    
+    def getRecipient(self):
+        return self.recipient
 
 
 

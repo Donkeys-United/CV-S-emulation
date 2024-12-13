@@ -152,7 +152,11 @@ class CommunicationThread(Thread):
                 self.addTransmission(message=message)
 
         elif type(message) == RespondMessage:
-            self.responseHandler.addResponse(message)
+            if message.getRecipient() == self.satelliteID:
+                self.responseHandler.addResponse(message)
+            else:
+                logging.info("Unrecognised RespondMessage. Added to TransmissionQueue - Info: \n\tTaskID: %s \n\tSource: %s\n\tRecipient: %s", message.getTaskID(), message.getSource(), message.getRecipient())
+                self.transmissionQueue.append(message)
 
         elif type(message) == ImageDataMessage:
             messagePayload = message.getPayload()
@@ -218,10 +222,13 @@ class CommunicationThread(Thread):
         """
         Method to send a respond to other satellites telling them they can perform the requested task
         """
+        recipient = message.getTaskID & 0x0000FFFFFFFFFFFF
+
         sendRespondMessage = RespondMessage(
             taskID=message.getTaskID(),
             source=self.satelliteID,#message.getTaskID() & 0x0000FFFFFFFFFFFF,
-            firstHopID = message.lastSenderID
+            firstHopID = message.lastSenderID,
+            recipient=recipient
         )
 
         self.addTransmission(sendRespondMessage)

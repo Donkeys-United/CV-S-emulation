@@ -177,10 +177,12 @@ class TaskHandlerThread(threading.Thread):
         Method to send a respond to other satellites telling them they can perform the requested task
         """
         taskID = message.getTaskID()
+        recipient = message.getTaskID & 0x0000FFFFFFFFFFFF
         sendRespondMessage = RespondMessage(
             taskID=taskID,
             source=int.from_bytes(taskID[0:6], byteorder='big'),
-            firstHopID = message.lastSenderID
+            firstHopID = message.lastSenderID,
+            recipient=recipient
         )
 
         self.communicationThread.addTransmission(sendRespondMessage)

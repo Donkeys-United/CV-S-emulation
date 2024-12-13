@@ -95,10 +95,6 @@ class ResponseHandler(Thread):
                     logging.info("Waiting Task Sent to satellite %s - Info: \n\tTaskID: %s", firstHopID, taskID_int)
                     dataPacket = ImageDataMessage(payload=task_ref, firstHopID=firstHopID)
                     self.communicationThread.transmissionQueue.append(dataPacket)
-        if found == False:
-            taskID_int = response.getTaskID()
-            logging.info("Unrecognised RespondMessage. Added to TransmissionQueue - Info: \n\tTaskID: %s \n\tSource: %s", taskID_int, response.getSource())
-            self.communicationThread.transmissionQueue.append(response)
 
 
     def getPriority(self, responseList: List):
