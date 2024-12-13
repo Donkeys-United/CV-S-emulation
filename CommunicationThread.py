@@ -157,6 +157,7 @@ class CommunicationThread(Thread):
             if messagePayload.getTaskID() in self.acceptedRequestsQueue.getIDInQueue():
                 payload = message.getPayload()
                 task_source = payload.getSource()
+                time_limit_left = payload.getUnixTimestampLimit() - time.time()
                 taskID = messagePayload.getTaskID()
                 frequency = self.acceptedRequestsQueue.getFrequency(taskID=taskID)
                 logging.info("ImageData for Accepted Request Received - Info: \n\tTaskID: %s \n\tTask Source: %s \n\tRemaining Time In Time Limit: %s", message.lastSenderID, message.getTaskID(), task_source, time_limit_left)
