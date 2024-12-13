@@ -21,7 +21,7 @@ class RequestMessage(Message):
        process the data.
     """
 
-    def __init__(self, unixTimeLimit: float, taskID: int):
+    def __init__(self, unixTimeLimit: float, taskID: bytes):
         self.__unixTimeLimit = unixTimeLimit
         self.__taskID = taskID
 
@@ -36,7 +36,7 @@ class RequestMessage(Message):
 
         return self.__unixTimeLimit
 
-    def getTaskID(self) -> int:
+    def getTaskID(self) -> bytes:
         """Method for returning the __taskID attribute value.
 
 
