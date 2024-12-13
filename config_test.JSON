@@ -29,7 +29,7 @@
       "location_radian": 2.09439510239,
       "orbit_number": 1,
       "pictures_number": 5, 
-      "time_limit": 10
+      "time_limit": 5
     },
     {
       "satellite_id": 31672463968659,
@@ -49,7 +49,7 @@
   "ground_station_ip": "192.168.0.101",
   "ground_station_port": 4500,
   "altitude": 6378000,
-  "emulation_run_name": "Test",
-  "emulation_notes": "",
-  "algorithm_mode": 1 
+  "emulation_run_name": "GS_5_3",
+  "emulation_notes": "Testing 3 runs of each algorithm mode. time_limit = 5, images = 5, algorithm_mode = 3.",
+  "algorithm_mode": 3
 }

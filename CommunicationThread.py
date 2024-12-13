@@ -222,7 +222,7 @@ class CommunicationThread(Thread):
         """
         Method to send a respond to other satellites telling them they can perform the requested task
         """
-        recipient = message.getTaskID & 0x0000FFFFFFFFFFFF
+        recipient = message.getTaskID() & 0x0000FFFFFFFFFFFF
 
         sendRespondMessage = RespondMessage(
             taskID=message.getTaskID(),
