@@ -70,13 +70,22 @@ class TransmissionThread(threading.Thread):
 
         return self.__dataTransmittedBytes
 
+    def pop_first_instance_of_class(self, lst, cls):
+        # Find the index of the first instance
+        index = next((i for i, item in enumerate(lst) if isinstance(item, cls)), None)
+        return index  # Return None if no instance is found
+
 
 
     def sendTransmission(self):
 
         while not self._stop_event.is_set():
             if self.communicationThread.transmissionQueue:
-                message = self.communicationThread.transmissionQueue.pop(0)
+                instance_index = self.pop_first_instance_of_class(self.communicationThread.transmissionQueue, ImageDataMessage)
+                if instance_index != None:
+                    message = self.communicationThread.transmissionQueue.pop(instance_index)
+                else:
+                    message = self.communicationThread.transmissionQueue.pop(0)
                 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as connection:
                     if isinstance(message, Message):
                         
