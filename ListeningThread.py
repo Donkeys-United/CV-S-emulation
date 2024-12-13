@@ -5,6 +5,7 @@ from pickle import loads
 import struct
 from getmac import get_mac_address
 import logging
+import time
 
 # Configure logging 
 logging.basicConfig(
@@ -70,7 +71,11 @@ class ListeningThread(threading.Thread):
 
             message = loads(received_data)
             if isinstance(message, RequestMessage):
-                logging.info("Received RequestMessage with TaskID %s from %s", message.getTaskID(), message.lastSenderID)
+                task_source = int.from_bytes(message.getTaskID(), "big") & 0x0000FFFFFFFFFFFF
+                time_limit  = message.getUnixTimestampLimit()
+                time_limit_left = time_limit - time.time()
+
+                logging.info("Received RequestMessage from satellite %s - Info: \n\tTaskID: %s \n\tTask Source: %s \n\tRemaining Time In Time Limit: %s", message.lastSenderID, int.from_bytes(message.getTaskID(), "big"), task_source, time_limit_left)
             elif isinstance(message, RespondMessage):
                 logging.info("Received RespondMessage for task with TaskID %s and with source %s from %s", message.getTaskID(), message.getSource(), message.lastSenderID)
             elif isinstance(message, ImageDataMessage):
