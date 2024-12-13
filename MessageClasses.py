@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from typing import Tuple
 from Task import Task
 from cv2 import imread
+from numpy import ndarray
 
 #Abstract class
 class Message():
@@ -112,7 +113,7 @@ class ProcessedDataMessage(Message):
     """
 
     def __init__(self, 
-                 image: str, 
+                 image: ndarray, 
                  location: complex, 
                  unixTimeStamp: float, 
                  fileName: str, 
@@ -120,7 +121,7 @@ class ProcessedDataMessage(Message):
                  boundingBox: Tuple[Tuple[int, int], Tuple[int, int]],
                  firstHopID: int
                  ) -> None:
-        self.__image = imread(image)
+        self.__image = image
         self.__location = location
         self.__unixTimeStamp = unixTimeStamp
         self.__fileName = fileName
