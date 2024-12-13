@@ -157,7 +157,7 @@ class CommunicationThread(Thread):
             if messagePayload.getTaskID() in self.acceptedRequestsQueue.getIDInQueue():
                 taskID = messagePayload.getTaskID()
                 frequency = self.acceptedRequestsQueue.getFrequency(taskID=taskID)
-                logging.info("ImageData for Accepted Request Received - Info: \n\tTaskID: %s \n\tTask Source: %s \n\tRemaining Time In Time Limit: %s", message.lastSenderID, int.from_bytes(message.getTaskID(), "big"), task_source, time_limit_left)
+                logging.info("ImageData for Accepted Request Received - Info: \n\tTaskID: %s \n\tTask Source: %s \n\tRemaining Time In Time Limit: %s", message.lastSenderID, message.getTaskID(), task_source, time_limit_left)
                 self.taskHandlerThread.appendTask(messagePayload, frequency=frequency)
                 self.acceptedRequestsQueue.removeMessage(taskID=taskID)
             else:
