@@ -104,6 +104,12 @@ class ImageDataMessage(Message):
         """
 
         return self.__payload
+    
+    def getFileName(self):
+        return self.__payload.getFileName()
+    
+    def getTaskID(self):
+        return int.from_bytes(self.__payload.getTaskID(), "big")
 
 
 

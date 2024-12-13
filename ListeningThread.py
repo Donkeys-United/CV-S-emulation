@@ -74,8 +74,7 @@ class ListeningThread(threading.Thread):
             elif isinstance(message, RespondMessage):
                 logging.info("Received RespondMessage for task with TaskID %s and with source %s from %s", message.getTaskID(), message.getSource(), message.lastSenderID)
             elif isinstance(message, ImageDataMessage):
-                payload = message.getPayload()
-                logging.info("Received ImageDataMessage for task with TaskID %s from %s. FileName: %s", payload.getTaskID(), message.lastSenderID, payload.getFileName())
+                logging.info("Received ImageDataMessage for task with TaskID %s from %s. FileName: %s", message.getTaskID(), message.lastSenderID, message.getFileName())
             elif isinstance(message, ProcessedDataMessage):
                 logging.info("Received ProcessedDataMessage with file name %s from %s", message.getFileName(), message.lastSenderID)
             else:

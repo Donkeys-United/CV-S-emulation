@@ -84,28 +84,28 @@ class TransmissionThread(threading.Thread):
                         if (isinstance(message, ProcessedDataMessage) and (message.lastSenderID != None)) or (isinstance(message, ImageDataMessage) and (message.lastSenderID != None)):
                             if self.communicationThread.orbitalPositionThread.getSatClosestToGround() == self.__satelliteID:
                                 connection.connect(self.groundstationAddr)
-                                logging.info("Case 1 - Connected to Ground Station to send %s", message)
+                                logging.info("Case 1 - Connected to Ground Station to send file %s", message.getFileName())
                             else:
                                 if message.lastSenderID == self.leftSatelliteID:
-                                    logging.info("Case 1 - Connected to satellite %s to send %s", self.rightSatelliteID, message)
+                                    logging.info("Case 1 - Connected to satellite %s to send file %s", self.rightSatelliteID, message.getFileName())
                                     connection.connect(self.rightSatelliteAddr)
                                 else:
-                                    logging.info("Case 1 - Connected to satellite %s to send %s", self.leftSatelliteID, message)
+                                    logging.info("Case 1 - Connected to satellite %s to send file %s", self.leftSatelliteID, message.getFileName())
                                     connection.connect(self.leftSatelliteAddr)
 
                         # Case 2: The satellite must send its own results to the groundstation, or another satellite.
                         elif (isinstance(message, ProcessedDataMessage) and (message.lastSenderID == None)) or (isinstance(message, ImageDataMessage) and (message.lastSenderID == None)):
                             if self.communicationThread.orbitalPositionThread.getSatClosestToGround() == self.__satelliteID:
                                 connection.connect(self.groundstationAddr)
-                                logging.info("Case 2 - Connected to Ground Station to send %s", message)
+                                logging.info("Case 2 - Connected to Ground Station to send file %s", message.getFileName())
 
                             else:
                                 if message.firstHopID == self.leftSatelliteID:
-                                    logging.info("Case 2 - Connected to satellite %s to send %s", self.leftSatelliteID, message)
+                                    logging.info("Case 2 - Connected to satellite %s to send file %s", self.leftSatelliteID, message.getFileName())
                                     connection.connect(self.leftSatelliteAddr)
 
                                 else:
-                                    logging.info("Case 2 - Connected to satellite %s to send %s", self.rightSatelliteID, message)
+                                    logging.info("Case 2 - Connected to satellite %s to send file %s", self.rightSatelliteID, message.getFileName())
                                     connection.connect(self.rightSatelliteAddr)
 
                         # Case 3: The satellite sends out its own RequestMessage - which must be sent to both neighbouring satellites.
