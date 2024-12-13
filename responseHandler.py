@@ -89,6 +89,8 @@ class ResponseHandler(Thread):
                 if len(task_dict["responseMessages"]) == 2:
                     firstHopID = self.getPriority(task_dict["responseMessages"])
                     task_ref = task_dict["task"]
+                    taskID_int = int.from_bytes(task.getTaskID(), "big")
+                    logging.info("Waiting Task Sent to satellite %s - Info: \n\tTaskID: %s", firstHopID, taskID_int)
                     dataPacket = ImageDataMessage(payload=task_ref, firstHopID=firstHopID)
                     self.communicationThread.transmissionQueue.append(dataPacket)
 
