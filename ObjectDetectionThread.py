@@ -51,7 +51,7 @@ class ObjectDetectionThread(threading.Thread):
         model = YOLO(self.PATH_TO_MODEL, "detect")
         return model
     
-    def runInference(self, TaskFrequencyList: tuple[Task, float]) -> tuple[Results, str]:
+    def runInference(self, TaskFrequencyList: tuple[Task, float]) -> Results:
         """Method used for running inference on a specific imageDataMessage object instance - which the satellite would have received or captured itself.
 
         Args:
@@ -72,66 +72,45 @@ class ObjectDetectionThread(threading.Thread):
         # Running inference on image, using the GPU
         results = self.model.predict(image, device=0)
 
-        # Saving crops of found boats.
-        for result in results:
-            result.save_crop(save_dir=result.save_dir)
-        
-        save_dir = results[0].save_dir
-
         logging.info("Finished Object Detection for task %s with image file %s", imageObject.getTaskID(), imageObject.getFileName())
 
-        return results[0], save_dir
+        return results[0]
 
-    def getMessageList(self, result: Results, saveDir: str, task: Task):
-        save_dir = Path(saveDir)
+    def getMessageList(self, result: Results, task: Task):
         bounding_box_list = result.boxes.xyxy.tolist() # Save bounding boxes as list.
-
         # Necessary for renaming cropped images.
-        image_name_list = []
-        short_name_list = []
-        image_file_name = PurePath(task.getFileName()).name
+        image_file_name = task.getFileName()
         crop_number = 0 
 
-        # Renaming cropped images.
-        for image_path in Path(save_dir / "boat").glob("*.jpg"):
-            if not image_path.name.startswith("processed_"):
-                new_name = f"processed_{crop_number}_{image_file_name}"
-                image_name_list.append(str(save_dir / "boat" / new_name))
-                image_path.rename(save_dir / "boat" / new_name)
-                short_name_list.append(PurePath(image_name_list[-1]).name)
-                crop_number += 1
-                self.total_cropped_images += 1
-
         finished_message_list = [] # List for storing ProcessedDataMessage
-
-        # Finding the first hop for sending to ground station.
-        for result in range(len(image_name_list)):
+        
+        if self.communicationThread.orbitalPositionThread.getSatClosestToGround() == self.satelliteID:
+                firstHopID = None
+        else:
+            priority_list = self.communicationThread.orbitalPositionThread.getSatellitePriorityList()
+            firstHopID = None
             break_out = False
-            if self.communicationThread.orbitalPositionThread.getSatClosestToGround() == self.satelliteID:
-                firstHopID = None
-                break_out = True
-
-            else:
-                priority_list = self.communicationThread.orbitalPositionThread.getSatellitePriorityList()
-                firstHopID = None
-                for i in range(len(priority_list)):
-                    for j in self.communicationThread.connections:
-                        if priority_list[-(i+1)] == j:
-                            firstHopID = j
-                            break_out = True
-                            break
-                    if break_out:
+            for i in range(len(priority_list)):
+                for j in self.communicationThread.connections:
+                    if priority_list[-(i+1)] == j:
+                        firstHopID = j
+                        break_out = True
                         break
-            
+                if break_out:
+                    break
+        
+        for box in bounding_box_list:
             # Creating one ProcessedDataMessage per boat found.
-            finished_message = ProcessedDataMessage(image_name_list[result], 
-                                        task.getLocation(), 
-                                        task.getUnixTimestamp(), 
-                                        short_name_list[result], 
-                                        bounding_box_list,
-                                        firstHopID=firstHopID)
+            x_min, y_min, x_max, y_max = map(int, box)
+            finished_message = ProcessedDataMessage(result.orig_img[y_min:y_max, x_min:x_max], 
+                                                    task.getLocation(), 
+                                                    task.getUnixTimestamp(), 
+                                                    image_file_name + f"_crop{crop_number}", 
+                                                    box,
+                                                    firstHopID=firstHopID)
 
             finished_message_list.append(finished_message)
+            crop_number += 1
         return finished_message_list
     
     def changeFrequency(self, frequency: float) -> None:
@@ -169,8 +148,8 @@ class ObjectDetectionThread(threading.Thread):
             if not self.taskHandlerThread.allocatedTasks.isEmpty():
                 print("Running Object detection")
                 nextTask = self.taskHandlerThread.allocatedTasks.nextTask()
-                result, saveDir = self.runInference(nextTask)
-                processedDataList = self.getMessageList(result, saveDir, nextTask[0])
+                result = self.runInference(nextTask)
+                processedDataList = self.getMessageList(result)
                 self.sendProcessedDataMessage(processedDataList)
                 logging.info("Total boats found: %s", self.total_cropped_images)
             else:
