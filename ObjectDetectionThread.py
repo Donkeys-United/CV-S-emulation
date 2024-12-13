@@ -149,7 +149,7 @@ class ObjectDetectionThread(threading.Thread):
                 print("Running Object detection")
                 nextTask = self.taskHandlerThread.allocatedTasks.nextTask()
                 result = self.runInference(nextTask)
-                processedDataList = self.getMessageList(result)
+                processedDataList = self.getMessageList(result, nextTask[0])
                 self.sendProcessedDataMessage(processedDataList)
                 logging.info("Total boats found: %s", self.total_cropped_images)
             else:
