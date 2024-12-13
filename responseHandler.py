@@ -31,7 +31,7 @@ class ResponseHandler(Thread):
             None:
         
         """
-        responseTimeLimit = (task.getUnixTimestampLimit() - time.time() + 5)
+        responseTimeLimit = (task.getUnixTimestampLimit() - time.time())
         response_dict = {"task": task,
                          "timeLimit": responseTimeLimit,
                          "responseMessages": []}
