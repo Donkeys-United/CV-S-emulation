@@ -20,6 +20,8 @@ if TYPE_CHECKING:
 class GroundStation():
     directoryProcessed = "/Users/tobiaslundgaard/Desktop/Semester 5/Projekt5/Processed/"
     directoryUnProcessed = "/Users/tobiaslundgaard/Desktop/Semester 5/Projekt5/UnProcessed"
+    processedCounter = 0
+    unProcessedCounter = 0
     
     def __init__(self, transmissionThread: 'TransmissionThread'):
         # Make sure transmissionThread is set during initialization
@@ -36,7 +38,9 @@ class GroundStation():
         if image is None:
             print(f"Error loading image: {message.getImage()}")
         else:
-            print(f"Image loaded successfully: {message.getImage()}")
+            print("Image loaded successfully")
+            self.processedCounter += 1
+            print(self.processedCounter)
         
         # Extract the file name from the full path (remove the directory)
         base_filename = os.path.basename(filename)    
@@ -46,6 +50,7 @@ class GroundStation():
         print(f"Processed image saved as {save_path}")
 
     def saveUnProcessedImage(self, message: ImageDataMessage):
+        
         payload = message.getPayload()
         image = payload.getImage()
         # Get the full file name (with the directory)
@@ -53,7 +58,9 @@ class GroundStation():
         if image is None:
             print(f"Error loading image: {payload.getImage()}")
         else:
-            print(f"Image loaded successfully: {payload.getImage()}")
+            print("Image loaded successfully")
+            self.unProcessedCounter += 1
+            print(self.unProcessedCounter)
         
         # Extract the file name from the full path (remove the directory)
         base_filename = os.path.basename(filename)
@@ -71,21 +78,18 @@ class GroundStation():
 
 
     def sendRespond(self, message: RequestMessage):
-        print("I AM HERE")
+        print(f"Requestmessage received from {message.getTaskID()}")
         respond_message = RespondMessage(
             taskID = message.getTaskID(),  # Corrected method usage
             source = uuid.getnode(),
             firstHopID = message.lastSenderID
         )
-        print("I AM HERE2")
         if self.transmissionThread:
-            print("I AM HERE3")
             self.transmissionThread.sendTransmission(respond_message)
             print(self.transmissionThread.sendTransmission(respond_message))
-            print("I AM HERE4")
         else:
             print("Error: transmissionThread is not initialized.")
-            print("I AM HERE5")
+
 
 
 class CommunicationThread(threading.Thread):
@@ -112,7 +116,7 @@ class ListeningThread(threading.Thread):
         self.groundStation = groundStation
         self._stop_event = threading.Event()
         self.connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.connection.bind(("192.168.0.102", self.port))
+        self.connection.bind(("192.168.0.101", self.port))
 
     def activeListening(self):
         while not self._stop_event.is_set():
@@ -138,7 +142,6 @@ class ListeningThread(threading.Thread):
                 #data = socket.recv(64000)
 
                 message = loads(received_data)
-                print(f"Received message: {message}")
                 if isinstance(message, RequestMessage):
                     self.groundStation.sendRespond(message)
                 elif isinstance(message, ImageDataMessage):
@@ -167,7 +170,7 @@ class TransmissionThread(threading.Thread):
 
     def sendTransmission(self, message):
         try:
-            self.connection.sendto(dumps(message), ("192.168.0.102", self.port))
+            self.connection.sendto(dumps(message), ("192.168.0.101", self.port))
         except Exception as e:
             print(f"Error in transmission: {e}")
 
