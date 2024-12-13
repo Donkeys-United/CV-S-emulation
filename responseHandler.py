@@ -82,10 +82,12 @@ class ResponseHandler(Thread):
     
     def addResponse(self, response: RespondMessage) -> None:
         taskID = response.getTaskID()
+        found = False
         for task_dict in self.responses:
             task = task_dict["task"]
             if task.getTaskID() == taskID:
                 task_dict["responseMessages"].append(response)
+                found = True
                 if len(task_dict["responseMessages"]) == 2:
                     firstHopID = self.getPriority(task_dict["responseMessages"])
                     task_ref = task_dict["task"]
@@ -93,6 +95,10 @@ class ResponseHandler(Thread):
                     logging.info("Waiting Task Sent to satellite %s - Info: \n\tTaskID: %s", firstHopID, taskID_int)
                     dataPacket = ImageDataMessage(payload=task_ref, firstHopID=firstHopID)
                     self.communicationThread.transmissionQueue.append(dataPacket)
+        if found == False:
+            taskID_int = int.from_bytes(task.getTaskID(), "big")
+            logging.info("Unrecognised RespondMessage. Added to TransmissionQueue - Info: \n\tTaskID: %s \n\tSource: %s", taskID_int, response.getSource())
+            self.communicationThread.transmissionQueue.append(response)
 
 
     def getPriority(self, responseList: List):
