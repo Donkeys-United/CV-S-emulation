@@ -96,7 +96,7 @@ class ResponseHandler(Thread):
                     dataPacket = ImageDataMessage(payload=task_ref, firstHopID=firstHopID)
                     self.communicationThread.transmissionQueue.append(dataPacket)
         if found == False:
-            taskID_int = int.from_bytes(task.getTaskID(), "big")
+            taskID_int = response.getTaskID()
             logging.info("Unrecognised RespondMessage. Added to TransmissionQueue - Info: \n\tTaskID: %s \n\tSource: %s", taskID_int, response.getSource())
             self.communicationThread.transmissionQueue.append(response)
 
