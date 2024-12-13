@@ -155,6 +155,7 @@ class CommunicationThread(Thread):
         elif type(message) == ImageDataMessage:
             messagePayload = message.getPayload()
             if messagePayload.getTaskID() in self.acceptedRequestsQueue.getIDInQueue():
+                task_source = int.from_bytes(message.getTaskID(), "big") & 0x0000FFFFFFFFFFFF
                 taskID = messagePayload.getTaskID()
                 frequency = self.acceptedRequestsQueue.getFrequency(taskID=taskID)
                 logging.info("ImageData for Accepted Request Received - Info: \n\tTaskID: %s \n\tTask Source: %s \n\tRemaining Time In Time Limit: %s", message.lastSenderID, message.getTaskID(), task_source, time_limit_left)
