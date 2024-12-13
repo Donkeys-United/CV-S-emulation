@@ -134,7 +134,7 @@ class CommunicationThread(Thread):
         """
         
         if type(message) == RequestMessage:
-            task_source = int.from_bytes(message.getTaskID(), "big") & 0x0000FFFFFFFFFFFF
+            task_source = message.getTaskID() & 0x0000FFFFFFFFFFFF
             time_limit  = message.getUnixTimestampLimit()
 
             allocation = self.taskHandlerThread.allocateTaskToSelf(time_limit, task_source)
@@ -142,11 +142,11 @@ class CommunicationThread(Thread):
                 freq = allocation[1]
                 self.acceptedRequestsQueue.addMessage(message=message, frequency=freq)
                 time_limit_left = message.getUnixTimestampLimit() - time.time()
-                logging.info("Accepted Request from satellite %s - Info: \n\tTaskID: %s \n\tTask Source: %s \n\tRemaining Time In Time Limit: %s", message.lastSenderID, int.from_bytes(message.getTaskID(), "big"), task_source, time_limit_left)
+                logging.info("Accepted Request from satellite %s - Info: \n\tTaskID: %s \n\tTask Source: %s \n\tRemaining Time In Time Limit: %s", message.lastSenderID, message.getTaskID(), task_source, time_limit_left)
                 self.sendRespond(message=message)
             else:
                 time_limit_left = message.getUnixTimestampLimit() - time.time()
-                logging.info("Denied Request from satellite %s - Info: \n\tTaskID: %s \n\tTask Source: %s \n\tRemaining Time In Time Limit: %s", message.lastSenderID, int.from_bytes(message.getTaskID(), "big"), task_source, time_limit_left)
+                logging.info("Denied Request from satellite %s - Info: \n\tTaskID: %s \n\tTask Source: %s \n\tRemaining Time In Time Limit: %s", message.lastSenderID, message.getTaskID(), task_source, time_limit_left)
                 self.addTransmission(message=message)
 
         elif type(message) == RespondMessage:
@@ -155,7 +155,8 @@ class CommunicationThread(Thread):
         elif type(message) == ImageDataMessage:
             messagePayload = message.getPayload()
             if messagePayload.getTaskID() in self.acceptedRequestsQueue.getIDInQueue():
-                task_source = int.from_bytes(message.getTaskID(), "big") & 0x0000FFFFFFFFFFFF
+                payload = message.getPayload()
+                task_source = payload.getSource()
                 taskID = messagePayload.getTaskID()
                 frequency = self.acceptedRequestsQueue.getFrequency(taskID=taskID)
                 logging.info("ImageData for Accepted Request Received - Info: \n\tTaskID: %s \n\tTask Source: %s \n\tRemaining Time In Time Limit: %s", message.lastSenderID, message.getTaskID(), task_source, time_limit_left)
