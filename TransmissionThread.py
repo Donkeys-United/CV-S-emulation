@@ -1,5 +1,5 @@
 import threading
-from MessageClasses import Message, RequestMessage, ProcessedDataMessage, ImageDataMessage
+from MessageClasses import Message, RequestMessage, ProcessedDataMessage, ImageDataMessage, RespondMessage
 import socket
 from pickle import dumps
 import struct
@@ -163,7 +163,29 @@ class TransmissionThread(threading.Thread):
 
                         # Case 4: The satellite must relay a message to the next satellite in the chain.
                         elif (isinstance(message, ProcessedDataMessage) == False) and (message.lastSenderID != None) or (isinstance(message, ImageDataMessage) == False) and (message.lastSenderID != None):
-                            if message.lastSenderID == self.leftSatelliteID:
+                            if isinstance(message, RespondMessage) and message.getSource() == "GROUND":
+                                pickled_message = dumps(message)
+                                message_length = len(pickled_message)
+                                header = struct.pack('>I', message_length)
+                                self.__dataTransmittedBytes += len(pickled_message) + len(header)
+
+                                logging.info("Case 4 - Respond from GROUND - Connected to both satellites to send %s.", message)
+                                connection.connect(self.rightSatelliteAddr)
+                                connection.sendall(header + pickled_message)
+                                logging.info("Succesully sent message %s to satellite %s", message, self.rightSatelliteID)
+                                connection.shutdown(socket.SHUT_RDWR)
+                                connection.close()
+
+                                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as connection_2:
+                                    self.__dataTransmittedBytes += len(pickled_message) + len(header)
+                                    connection_2.connect(self.leftSatelliteAddr)
+                                    connection_2.sendall(header + pickled_message)
+                                    logging.info("Succesully sent message %s to satellite %s", message, self.leftSatelliteID)
+                                    connection_2.shutdown(socket.SHUT_RDWR)
+                                    connection_2.close()
+                                continue
+
+                            elif message.lastSenderID == self.leftSatelliteID:
                                 connection.connect(self.rightSatelliteAddr)
                                 logging.info("Case 5 - Connected to satellite %s to send %s", self.rightSatelliteID, message)
                             else:
