@@ -4,6 +4,16 @@ from OrbitalPositionThread import OrbitalPositionThread
 from typing import List, Union, Dict
 from Task import Task
 import time
+import logging
+
+# Configure logging 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[
+        logging.StreamHandler()     # Also log to the console
+    ]
+)
 
 
 
@@ -65,6 +75,8 @@ class ResponseHandler(Thread):
                     self.communicationThread.transmissionQueue.append(dataPacket)
                     dataPacket = ImageDataMessage(payload=task, firstHopID=firstHopID_1)
                     self.communicationThread.transmissionQueue.append(dataPacket)
+                    taskID_int = int.from_bytes(task.getTaskID(), "big")
+                    logging.info("Task Request Time Out - Info: \n\tTaskID: %s", taskID_int)
                 self.responses.remove(i)
 
     
