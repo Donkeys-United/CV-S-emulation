@@ -80,7 +80,7 @@ for satellite in loaded_config_file["satellites"]:
 powerMonitorThread = PowerMonitorThread(measuringIntervalms=40, 
                                         emulationRunName=loaded_config_file["emulation_run_name"], 
                                         unixtimeStart=time.time(), 
-                                        notes=None, 
+                                        notes=loaded_config_file["emulation_notes"], 
                                         isNano=isNano, 
                                         transmissionThread=communicationThread.transmissionThread, 
                                         satelliteDistance=orbitalPositionThread.neighbourSatDist)
