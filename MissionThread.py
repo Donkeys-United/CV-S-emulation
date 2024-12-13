@@ -121,7 +121,7 @@ class MissionThread(threading.Thread):
                             logging.error("Invalid mission data: %s", self.myMissions[i])
                             continue
 
-                        imageList = np.random.choice(self.files, pictures_number, replace = True) #replace change to false, when there is enough images
+                        imageList = np.random.choice(self.files, pictures_number, replace = False) #replace change to false, when there is enough images
                         logging.debug("Selected images: %s", imageList)
 
                         for image in imageList:

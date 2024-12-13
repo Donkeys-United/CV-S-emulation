@@ -79,7 +79,7 @@ class ObjectDetectionThread(threading.Thread):
     def getMessageList(self, result: Results, task: Task):
         bounding_box_list = result.boxes.xyxy.tolist() # Save bounding boxes as list.
         # Necessary for renaming cropped images.
-        image_file_name = task.getFileName()
+        image_file_name = PurePath(task.getFileName()).name
         crop_number = 0 
 
         finished_message_list = [] # List for storing ProcessedDataMessage
@@ -105,12 +105,14 @@ class ObjectDetectionThread(threading.Thread):
             finished_message = ProcessedDataMessage(result.orig_img[y_min:y_max, x_min:x_max], 
                                                     task.getLocation(), 
                                                     task.getUnixTimestamp(), 
-                                                    image_file_name + f"_crop{crop_number}", 
+                                                    f"crop{crop_number}_" + image_file_name, 
                                                     box,
                                                     firstHopID=firstHopID)
 
             finished_message_list.append(finished_message)
             crop_number += 1
+        
+        self.total_cropped_images += crop_number
         return finished_message_list
     
     def changeFrequency(self, frequency: float) -> None:
