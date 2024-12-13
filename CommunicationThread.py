@@ -138,7 +138,7 @@ class CommunicationThread(Thread):
             time_limit  = message.getUnixTimestampLimit()
             time_limit_left = time_limit - time.time()
 
-            logging.info("Received RequestMessage from satellite %s - Info: \n\tTaskID: %s \n\tTask Source: %s \n\tRemaining Time In Time Limit: %s", message.lastSenderID, int.from_bytes(message.getTaskID, "big"), task_source, time_limit_left)
+            logging.info("Received RequestMessage from satellite %s - Info: \n\tTaskID: %s \n\tTask Source: %s \n\tRemaining Time In Time Limit: %s", message.lastSenderID, int.from_bytes(message.getTaskID(), "big"), task_source, time_limit_left)
 
             allocation = self.taskHandlerThread.allocateTaskToSelf(time_limit, task_source)
             if allocation[0]: #add input - ONLY TIMELIMIT
