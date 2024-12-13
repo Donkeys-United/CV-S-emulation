@@ -79,7 +79,7 @@ class ObjectDetectionThread(threading.Thread):
     def getMessageList(self, result: Results, task: Task):
         bounding_box_list = result.boxes.xyxy.tolist() # Save bounding boxes as list.
         # Necessary for renaming cropped images.
-        image_file_name = task.getFileName()
+        image_file_name = PurePath(task.getFileName()).name
         crop_number = 0 
 
         finished_message_list = [] # List for storing ProcessedDataMessage
