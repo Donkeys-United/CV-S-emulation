@@ -6,10 +6,20 @@ from AcceptedRequestQueue import AcceptedRequestQueue
 from typing import Any, Iterable, List, Mapping, TYPE_CHECKING
 import time
 from responseHandler import ResponseHandler
+import logging
 
 if TYPE_CHECKING:
     from TaskHandlerThread import TaskHandlerThread
     from OrbitalPositionThread import OrbitalPositionThread
+
+# Configure logging 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[
+        logging.StreamHandler()     # Also log to the console
+    ]
+)
 
 class CommunicationThread(Thread):
     """The CommunicationThread that handles incoming and outgoing messages
@@ -124,10 +134,12 @@ class CommunicationThread(Thread):
         """
         
         if type(message) == RequestMessage:
-            print(f'received request from task with ID {int.from_bytes(message.getTaskID(), "big")}')
-            time_limit  = message.getUnixTimestampLimit()
             task_source = int.from_bytes(message.getTaskID(), "big") & 0x0000FFFFFFFFFFFF
-            print(f'received request from task with ID {int.from_bytes(message.getTaskID(), "big")} from {task_source}')
+            time_limit  = message.getUnixTimestampLimit()
+            time_limit_left = time_limit - time.time()
+
+            logging.info("Received RequestMessage from satellite %s - Info: \n\tTaskID: %s \n\tTask Source: %s \n\tRemaining Time In Time Limit: %s", message.lastSenderID, int.from_bytes(message.getTaskID, "big"), task_source, time_limit_left)
+
             allocation = self.taskHandlerThread.allocateTaskToSelf(time_limit, task_source)
             if allocation[0]: #add input - ONLY TIMELIMIT
                 freq = allocation[1]
