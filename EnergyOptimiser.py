@@ -92,14 +92,14 @@ class EnergyOptimiser:
             initialFrequencies,
             constraints=constraints,
             bounds=bounds,
-            method='trust-constr'
+            method='SLSQP'
         )
         
         return result
 
 if __name__ == "__main__":
     optimiser = EnergyOptimiser()
-    timeLimits = [-1, 2.2]
+    timeLimits = [1, 2.2]
     result = optimiser.minimiseEnergyConsumption(timeLimits, 0)
     print(result.x)
     print(result.success)
