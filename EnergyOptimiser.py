@@ -92,7 +92,7 @@ class EnergyOptimiser:
             initialFrequencies,
             constraints=constraints,
             bounds=bounds,
-            method='SLSQP'
+            method='CG'
         )
         
         return result
