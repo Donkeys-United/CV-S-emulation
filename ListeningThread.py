@@ -33,6 +33,7 @@ class ListeningThread(threading.Thread):
         self._stop_event = threading.Event()
         self.HOSTNAME
         self.IP_ADDR
+
     
     def addMessageList(self, message: Message):
         """Adds an incoming messages to the message list in the communication thread.
@@ -50,6 +51,7 @@ class ListeningThread(threading.Thread):
         connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         print(f"ListeningThread binding to {self.IP_ADDR, self.port}")
         connection.bind((self.IP_ADDR, self.port))
+        logging.info("Listening Thread started. Listening on address: %s and port %s", self.IP_ADDR, self.port)
         while not self._stop_event.is_set():
             connection.listen()
             sock, addr = connection.accept()
