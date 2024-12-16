@@ -92,20 +92,20 @@ class EnergyOptimiser:
             initialFrequencies,
             constraints=constraints,
             bounds=bounds,
-            method='CG'
+            method='SLSQP'
         )
         
         return result
 
 if __name__ == "__main__":
     optimiser = EnergyOptimiser()
-    timeLimits = [1, 2.2]
+    timeLimits = [1.1, 2.1,3.5]
     result = optimiser.minimiseEnergyConsumption(timeLimits, 0)
     print(result.x)
     print(result.success)
     
     for k in range(len(result.x)):
-        print(sum(1 + 0.057 * (float(510000000) / result.x[i]) for i in range(k+1)))
+        print(sum(1 + 0.049 * (float(612000000) / result.x[i]) for i in range(k+1)))
 
     
     
