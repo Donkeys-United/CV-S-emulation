@@ -77,16 +77,19 @@ class GroundStation():
 
 
 
-    def sendRespond(self, message: RequestMessage):
+    def sendRespond(self, message: RequestMessage, addr):
         print(f"Requestmessage received from {message.getTaskID()}")
+        recipient = int.from_bytes(message.getTaskID(), "big") & 0x0000FFFFFFFFFFFF
         respond_message = RespondMessage(
             taskID = message.getTaskID(),  # Corrected method usage
-            source = uuid.getnode(),
-            firstHopID = message.lastSenderID
+            source = "GROUND",
+            firstHopID = message.lastSenderID,
+            recipient=recipient
         )
+        
         if self.transmissionThread:
-            self.transmissionThread.sendTransmission(respond_message)
-            print(self.transmissionThread.sendTransmission(respond_message))
+            self.transmissionThread.sendTransmission(respond_message, addr)
+            print(self.transmissionThread.sendTransmission(respond_message, addr))
         else:
             print("Error: transmissionThread is not initialized.")
 
@@ -122,8 +125,7 @@ class ListeningThread(threading.Thread):
         while not self._stop_event.is_set():
             try:
                 self.connection.listen()
-                #data, _ = self.connection.recvfrom(100000)
-                socket, _ = self.connection.accept()
+                socket, addr = self.connection.accept()
                 # Receive the length prefix
                 length_prefix = socket.recv(4)
                 if not length_prefix:
@@ -143,7 +145,7 @@ class ListeningThread(threading.Thread):
 
                 message = loads(received_data)
                 if isinstance(message, RequestMessage):
-                    self.groundStation.sendRespond(message)
+                    self.groundStation.sendRespond(message, addr)
                 elif isinstance(message, ImageDataMessage):
                     self.groundStation.saveUnProcessedImage(message)
                 elif isinstance(message, ProcessedDataMessage):
@@ -166,13 +168,23 @@ class TransmissionThread(threading.Thread):
         self.port = port
         self.communicationThread = communicationThread
         self._stop_event = threading.Event()
-        self.connection = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        
+        
 
-    def sendTransmission(self, message):
-        try:
-            self.connection.sendto(dumps(message), ("192.168.0.101", self.port))
-        except Exception as e:
-            print(f"Error in transmission: {e}")
+    def sendTransmission(self, message, addr):
+        print(addr)
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as connection:
+            try:
+                pickled_message = dumps(message)
+                message_length = len(pickled_message)
+                header = struct.pack('>I', message_length)
+                final_message = header + pickled_message
+                final_addr = (addr[0], 4600)
+                connection.connect(final_addr)
+                connection.sendall(final_message)
+                connection.close()
+            except Exception as e:
+                print(f"Error in transmission: {e}")
 
     def run(self):
         while not self._stop_event.is_set():
