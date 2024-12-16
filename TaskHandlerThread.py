@@ -42,8 +42,8 @@ class TaskHandlerThread(threading.Thread):
                 allocateToSelf = self.allocateTaskToSelf(nextUnallocatedTask[0].getUnixTimestampLimit(), nextUnallocatedTask[0].getSource())
                 if allocateToSelf[0] == True:
                     taskID = nextUnallocatedTask[0].getTaskID()
+                    logging.info("Task %s from mission was accepted. \n\t---INFO---\n\t\tAllocated Tasks: %s\n\t\tUnallocated Tasks: %s\n", taskID, self.communicationThread.getTotalAcceptedTasks(), len(self.__unallocatedTasks()))
                     self.allocatedTasks.addTaskToQueue(nextUnallocatedTask[0], allocateToSelf[1])
-                    logging.info("Task %s from mission was accepted. \n\t---INFO---\n\t\tAllocated Tasks: %s\n\t\tUnallocated Tasks: %s\n", taskID, self.getAcceptedTaskTotal(), len(self.__unallocatedTasks()))
                 else:
                     self.sendRequest(nextUnallocatedTask[0])
                     self.communicationThread.giveTask(nextUnallocatedTask[0])
