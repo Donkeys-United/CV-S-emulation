@@ -2,9 +2,9 @@ from scipy.optimize import minimize, OptimizeResult
 from typing import Callable
 
 class EnergyOptimiser:
-    MU_INFERENCE: float = 0.057
-    P_GPU_FIXED: float = 2
-    F_FIXED: int = 510000000
+    MU_INFERENCE: float = 0.049
+    P_GPU_FIXED: float = 4.55
+    F_FIXED: int = 612000000
     F_MIN: int = 306000000
     F_MAX: int = 612000000
     
@@ -17,10 +17,10 @@ class EnergyOptimiser:
         Returns:
             float: The energy consumption in joules
         """
-        return sum(self.MU_INFERENCE * (self.P_GPU_FIXED/self.F_FIXED**2) * f**2 
+        return sum(1 + self.MU_INFERENCE * (self.P_GPU_FIXED/self.F_FIXED**2) * f**2 
                    for f in frequencies)
     
-    def taskConstraint(self, k: int, busyTime: float, timeLimit: float) -> Callable:
+    def taskConstraint(self, k: int, busytime: float, timeLimit: float) -> Callable:
         """Method for generating a constraint function for the tasks
 
         Args:
@@ -32,7 +32,7 @@ class EnergyOptimiser:
             Callable: The constraint function
         """
         def constraint(frequencies):
-            cumulativeTime = busyTime + sum(1 + self.MU_INFERENCE * (self.F_FIXED / frequencies[i]) for i in range(k))
+            cumulativeTime = sum(1 + self.MU_INFERENCE * (float(self.F_FIXED) / float(frequencies[i])) for i in range(k+1))
             return timeLimit - cumulativeTime
         return constraint
     
@@ -56,7 +56,7 @@ class EnergyOptimiser:
         Returns:
             list[int]: The list containing the start frequencies
         """
-        return [self.F_MIN for _ in range(K)]
+        return [(self.F_MAX-self.F_MIN)/2 for _ in range(K)]
     
     def getConstraints(self, K: int, busyTime: float, timeLimits: list[float]) -> list[dict[str, Callable]]:
         """Function that generates constraints
@@ -92,7 +92,20 @@ class EnergyOptimiser:
             initialFrequencies,
             constraints=constraints,
             bounds=bounds,
-            method='SLSQP'
+            method='trust-constr'
         )
         
         return result
+
+if __name__ == "__main__":
+    optimiser = EnergyOptimiser()
+    timeLimits = [-1, 2.2]
+    result = optimiser.minimiseEnergyConsumption(timeLimits, 0)
+    print(result.x)
+    print(result.success)
+    
+    for k in range(len(result.x)):
+        print(sum(1 + 0.057 * (float(510000000) / result.x[i]) for i in range(k+1)))
+
+    
+    
