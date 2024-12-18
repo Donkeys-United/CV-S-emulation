@@ -22,8 +22,8 @@ class ListeningThread(threading.Thread):
     from CommunicationThread import CommunicationThread
     HOSTNAME = socket.gethostname()
     IP_ADDR = "0.0.0.0"
-    if int(get_mac_address().replace(":",""),16) == 185001232117603:
-        IP_ADDR = "192.168.0.110"
+    #if int(get_mac_address().replace(":",""),16) == 185001232117603:
+    #    IP_ADDR = "192.168.0.110"
 
     def __init__(self, port: int, communicationThread: CommunicationThread):
         
@@ -34,7 +34,7 @@ class ListeningThread(threading.Thread):
         self.HOSTNAME
         self.IP_ADDR
 
-    
+
     def addMessageList(self, message: Message):
         """Adds an incoming messages to the message list in the communication thread.
 
@@ -43,7 +43,7 @@ class ListeningThread(threading.Thread):
         """
 
         self.communicationThread.messageList.append(message)
-    
+
     def activeListening(self):
         """Method for making the thread listen to the specific port.
         """
