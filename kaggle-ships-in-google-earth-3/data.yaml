@@ -1,0 +1,12 @@
+names:
+- boat
+nc: 1
+roboflow:
+  license: CC BY 4.0
+  project: kaggle-ships-in-google-earth-dfqwt
+  url: https://universe.roboflow.com/robin-public/kaggle-ships-in-google-earth-dfqwt/dataset/3
+  version: 3
+  workspace: robin-public
+test: ./test/images
+train: ./train/images
+val: ./valid/images
