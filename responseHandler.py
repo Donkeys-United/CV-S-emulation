@@ -4,6 +4,16 @@ from OrbitalPositionThread import OrbitalPositionThread
 from typing import List, Union, Dict
 from Task import Task
 import time
+import logging
+
+# Configure logging 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[
+        logging.StreamHandler()     # Also log to the console
+    ]
+)
 
 
 
@@ -31,7 +41,7 @@ class ResponseHandler(Thread):
             None:
         
         """
-        responseTimeLimit = (task.getUnixTimestampLimit() - time.time() + 5)
+        responseTimeLimit = (task.getUnixTimestampLimit() - time.time())
         response_dict = {"task": task,
                          "timeLimit": responseTimeLimit,
                          "responseMessages": []}
@@ -65,18 +75,24 @@ class ResponseHandler(Thread):
                     self.communicationThread.transmissionQueue.append(dataPacket)
                     dataPacket = ImageDataMessage(payload=task, firstHopID=firstHopID_1)
                     self.communicationThread.transmissionQueue.append(dataPacket)
+                    taskID_int = int.from_bytes(task.getTaskID(), "big")
+                    logging.info("Task Request Time Out - Info: \n\tTaskID: %s", taskID_int)
                 self.responses.remove(i)
 
     
     def addResponse(self, response: RespondMessage) -> None:
         taskID = response.getTaskID()
+        found = False
         for task_dict in self.responses:
             task = task_dict["task"]
             if task.getTaskID() == taskID:
                 task_dict["responseMessages"].append(response)
+                found = True
                 if len(task_dict["responseMessages"]) == 2:
                     firstHopID = self.getPriority(task_dict["responseMessages"])
                     task_ref = task_dict["task"]
+                    taskID_int = int.from_bytes(task.getTaskID(), "big")
+                    logging.info("Waiting Task Sent to satellite %s - Info: \n\tTaskID: %s", firstHopID, taskID_int)
                     dataPacket = ImageDataMessage(payload=task_ref, firstHopID=firstHopID)
                     self.communicationThread.transmissionQueue.append(dataPacket)
 
@@ -87,10 +103,10 @@ class ResponseHandler(Thread):
         source2 = responseList[1].getSource()
 
         for i in range(len(priorityList)):
-            if priorityList[-(i+1)] == source1:
+            if priorityList[-(i)] == source1:
                 firstHopID = responseList[0].getLastSenderID()
                 return firstHopID
-            elif priorityList[-(i+1)] == source2:
+            elif priorityList[-(i)] == source2:
                 firstHopID = responseList[1].getLastSenderID()
                 return firstHopID
 

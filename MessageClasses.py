@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from typing import Tuple
 from Task import Task
 from cv2 import imread
+from numpy import ndarray
 
 #Abstract class
 class Message():
@@ -20,7 +21,7 @@ class RequestMessage(Message):
        process the data.
     """
 
-    def __init__(self, unixTimeLimit: float, taskID: int):
+    def __init__(self, unixTimeLimit: float, taskID: bytes):
         self.__unixTimeLimit = unixTimeLimit
         self.__taskID = taskID
 
@@ -35,7 +36,7 @@ class RequestMessage(Message):
 
         return self.__unixTimeLimit
 
-    def getTaskID(self) -> int:
+    def getTaskID(self) -> bytes:
         """Method for returning the __taskID attribute value.
 
 
@@ -54,10 +55,12 @@ class RespondMessage(Message):
     def __init__(self, 
                  taskID: int, 
                  source: int, 
-                 firstHopID: int):
+                 firstHopID: int,
+                 recipient: int):
         self.__taskID = taskID
         self.__source = source
         self.firstHopID = firstHopID
+        self.recipient = recipient
 
 
     def getTaskID(self) -> int:
@@ -80,6 +83,9 @@ class RespondMessage(Message):
     
     def getLastSenderID(self):
         return self.lastSenderID
+    
+    def getRecipient(self):
+        return self.recipient
 
 
 
@@ -103,6 +109,12 @@ class ImageDataMessage(Message):
         """
 
         return self.__payload
+    
+    def getFileName(self):
+        return self.__payload.getFileName()
+    
+    def getTaskID(self):
+        return int.from_bytes(self.__payload.getTaskID(), "big")
 
 
 
@@ -112,7 +124,7 @@ class ProcessedDataMessage(Message):
     """
 
     def __init__(self, 
-                 image: str, 
+                 image: ndarray, 
                  location: complex, 
                  unixTimeStamp: float, 
                  fileName: str, 
@@ -120,7 +132,7 @@ class ProcessedDataMessage(Message):
                  boundingBox: Tuple[Tuple[int, int], Tuple[int, int]],
                  firstHopID: int
                  ) -> None:
-        self.__image = imread(image)
+        self.__image = image
         self.__location = location
         self.__unixTimeStamp = unixTimeStamp
         self.__fileName = fileName

@@ -38,10 +38,14 @@ class TaskHandlerThread(threading.Thread):
         """
         while self.running:
             if not self.__unallocatedTasks.isEmpty():
-                nextUnallocatedTask = self.__unallocatedTasks.nextTask()
+                nextUnallocatedTask: Task = self.__unallocatedTasks.nextTask()
                 allocateToSelf = self.allocateTaskToSelf(nextUnallocatedTask[0].getUnixTimestampLimit(), nextUnallocatedTask[0].getSource())
                 if allocateToSelf[0] == True:
-                    self.allocatedTasks.addTaskToQueue(nextUnallocatedTask[0])
+                    taskID = nextUnallocatedTask[0].getTaskID()
+                    allocatedQueueLength = len(self.allocatedTasks.getQueue())+ self.communicationThread.getTotalAcceptedTasks()
+                    unallocatedQueueLength = len(self.__unallocatedTasks.getQueue())
+                    logging.info("Task %s from mission was accepted. \n\t---INFO---\n\t\tAllocated Tasks: %s\n\t\tUnallocated Tasks: %s\n", taskID, allocatedQueueLength, unallocatedQueueLength)
+                    self.allocatedTasks.addTaskToQueue(nextUnallocatedTask[0], allocateToSelf[1])
                 else:
                     self.sendRequest(nextUnallocatedTask[0])
                     self.communicationThread.giveTask(nextUnallocatedTask[0])
@@ -157,7 +161,7 @@ class TaskHandlerThread(threading.Thread):
         """
         # Create a RequestMessage object
         sendRequestMessage = RequestMessage(
-            unixTimeLimit=task.getUnixTimestampLimit()+5,
+            unixTimeLimit=task.getUnixTimestampLimit(),
             taskID=task.getTaskID()
         )
 
@@ -169,46 +173,6 @@ class TaskHandlerThread(threading.Thread):
 
         # Return the task ID and time limit
         #return sendRequestMessage.getTaskID(), sendRequestMessage.getUnixTimeLimit()
-
-
-
-    def sendRespond(self, message: RequestMessage):
-        """
-        Method to send a respond to other satellites telling them they can perform the requested task
-        """
-        taskID = message.getTaskID()
-        sendRespondMessage = RespondMessage(
-            taskID=taskID,
-            source=int.from_bytes(taskID[0:6], byteorder='big'),
-            firstHopID = message.lastSenderID
-        )
-
-        self.communicationThread.addTransmission(sendRespondMessage)
- 
-
-        # Print and return
-        print(f"Sending: {sendRespondMessage}")
-        return sendRespondMessage.getTaskID(), sendRespondMessage.getTaskID()
-
-
-
-    def sendDataPacket(self, task: Task, message: Message):
-        """
-        Send task packet to 
-        """
-        sendDataMessage = ImageDataMessage(payload=task, firstHopID=message.lastSenderID)
-
-        self.communicationThread.addTransmission(sendDataMessage)
-        return sendDataMessage
-
-
-
-    def getAcceptedTaskTotal(self):
-        """
-        Method to get the ammount of accepted tasks a satellite has
-        """
-        return len(self.allocatedTasks) + self.communicationThread.getTotalAcceptedTasks()
-
 
     def appendTask(self, task: Task, frequency: float):
         """Append a task to the allocatedTasks queue 

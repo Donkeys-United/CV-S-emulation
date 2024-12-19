@@ -177,3 +177,5 @@ config_test.JSON
 *.db
 config_test.JSON
 config_test.json
+*.JSON
+*.json

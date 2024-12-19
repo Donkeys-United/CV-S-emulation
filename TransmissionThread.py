@@ -1,5 +1,5 @@
 import threading
-from MessageClasses import Message, RequestMessage, ProcessedDataMessage, ImageDataMessage
+from MessageClasses import Message, RequestMessage, ProcessedDataMessage, ImageDataMessage, RespondMessage
 import socket
 from pickle import dumps
 import struct
@@ -70,13 +70,21 @@ class TransmissionThread(threading.Thread):
 
         return self.__dataTransmittedBytes
 
+    def pop_first_instance_of_class(self, lst, cls):
+        # Find the index of the first instance
+        index = next((i for i, item in enumerate(lst) if isinstance(item, cls)), None)
+        return index  # Return None if no instance is found
+
 
 
     def sendTransmission(self):
-
         while not self._stop_event.is_set():
             if self.communicationThread.transmissionQueue:
-                message = self.communicationThread.transmissionQueue.pop(0)
+                instance_index = self.pop_first_instance_of_class(self.communicationThread.transmissionQueue, ImageDataMessage)
+                if instance_index != None:
+                    message = self.communicationThread.transmissionQueue.pop(instance_index)
+                else:
+                    message = self.communicationThread.transmissionQueue.pop(0)
                 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as connection:
                     if isinstance(message, Message):
                         
@@ -84,28 +92,28 @@ class TransmissionThread(threading.Thread):
                         if (isinstance(message, ProcessedDataMessage) and (message.lastSenderID != None)) or (isinstance(message, ImageDataMessage) and (message.lastSenderID != None)):
                             if self.communicationThread.orbitalPositionThread.getSatClosestToGround() == self.__satelliteID:
                                 connection.connect(self.groundstationAddr)
-                                logging.info("Case 1 - Connected to Ground Station to send %s", message)
+                                logging.info("Case 1 - Connected to Ground Station to send file %s", message.getFileName())
                             else:
                                 if message.lastSenderID == self.leftSatelliteID:
-                                    logging.info("Case 1 - Connected to satellite %s to send %s", self.rightSatelliteID, message)
+                                    logging.info("Case 1 - Connected to satellite %s to send file %s", self.rightSatelliteID, message.getFileName())
                                     connection.connect(self.rightSatelliteAddr)
                                 else:
-                                    logging.info("Case 1 - Connected to satellite %s to send %s", self.leftSatelliteID, message)
+                                    logging.info("Case 1 - Connected to satellite %s to send file %s", self.leftSatelliteID, message.getFileName())
                                     connection.connect(self.leftSatelliteAddr)
 
                         # Case 2: The satellite must send its own results to the groundstation, or another satellite.
                         elif (isinstance(message, ProcessedDataMessage) and (message.lastSenderID == None)) or (isinstance(message, ImageDataMessage) and (message.lastSenderID == None)):
                             if self.communicationThread.orbitalPositionThread.getSatClosestToGround() == self.__satelliteID:
                                 connection.connect(self.groundstationAddr)
-                                logging.info("Case 2 - Connected to Ground Station to send %s", message)
+                                logging.info("Case 2 - Connected to Ground Station to send file %s", message.getFileName())
 
                             else:
                                 if message.firstHopID == self.leftSatelliteID:
-                                    logging.info("Case 2 - Connected to satellite %s to send %s", self.leftSatelliteID, message)
+                                    logging.info("Case 2 - Connected to satellite %s to send file %s", self.leftSatelliteID, message.getFileName())
                                     connection.connect(self.leftSatelliteAddr)
 
                                 else:
-                                    logging.info("Case 2 - Connected to satellite %s to send %s", self.rightSatelliteID, message)
+                                    logging.info("Case 2 - Connected to satellite %s to send file %s", self.rightSatelliteID, message.getFileName())
                                     connection.connect(self.rightSatelliteAddr)
 
                         # Case 3: The satellite sends out its own RequestMessage - which must be sent to both neighbouring satellites.
@@ -152,9 +160,31 @@ class TransmissionThread(threading.Thread):
                                     logging.info("Case 4 - Connected to satellite %s to send RequestMessage with TaskID %s", self.leftSatelliteID, message.getTaskID())
                                     connection.connect(self.leftSatelliteAddr)
 
-                        # Case 4: The satellite must relay a message to the next satellite in the chain.
+                        # Case 5: The satellite must relay a message to the next satellite in the chain.
                         elif (isinstance(message, ProcessedDataMessage) == False) and (message.lastSenderID != None) or (isinstance(message, ImageDataMessage) == False) and (message.lastSenderID != None):
-                            if message.lastSenderID == self.leftSatelliteID:
+                            if isinstance(message, RespondMessage) and message.getSource() == "GROUND":
+                                pickled_message = dumps(message)
+                                message_length = len(pickled_message)
+                                header = struct.pack('>I', message_length)
+                                self.__dataTransmittedBytes += len(pickled_message) + len(header)
+
+                                logging.info("Case 5 - Respond from GROUND - Connected to both satellites to send %s.", message)
+                                connection.connect(self.rightSatelliteAddr)
+                                connection.sendall(header + pickled_message)
+                                logging.info("Succesully sent message %s to satellite %s", message, self.rightSatelliteID)
+                                connection.shutdown(socket.SHUT_RDWR)
+                                connection.close()
+
+                                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as connection_2:
+                                    self.__dataTransmittedBytes += len(pickled_message) + len(header)
+                                    connection_2.connect(self.leftSatelliteAddr)
+                                    connection_2.sendall(header + pickled_message)
+                                    logging.info("Succesully sent message %s to satellite %s", message, self.leftSatelliteID)
+                                    connection_2.shutdown(socket.SHUT_RDWR)
+                                    connection_2.close()
+                                continue
+
+                            elif message.lastSenderID == self.leftSatelliteID:
                                 connection.connect(self.rightSatelliteAddr)
                                 logging.info("Case 5 - Connected to satellite %s to send %s", self.rightSatelliteID, message)
                             else:
@@ -162,7 +192,7 @@ class TransmissionThread(threading.Thread):
                                 logging.info("Case 5- Connected to satellite %s to send %s", self.leftSatelliteID, message)
 
 
-                        # Case 5: The satellite sends any other message created by itself to one of its neighbouring satellites.
+                        # Case 6: The satellite sends any other message created by itself to one of its neighbouring satellites.
                         else:
                             if message.firstHopID == self.leftSatelliteID:
                                 logging.info("Case 6 - Connected to satellite %s to send %s", self.leftSatelliteID, message)

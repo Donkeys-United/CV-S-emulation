@@ -5,6 +5,7 @@ from pickle import loads
 import struct
 from getmac import get_mac_address
 import logging
+import time
 
 # Configure logging 
 logging.basicConfig(
@@ -21,8 +22,8 @@ class ListeningThread(threading.Thread):
     from CommunicationThread import CommunicationThread
     HOSTNAME = socket.gethostname()
     IP_ADDR = "0.0.0.0"
-    if int(get_mac_address().replace(":",""),16) == 185001232117603:
-        IP_ADDR = "192.168.0.110"
+    #if int(get_mac_address().replace(":",""),16) == 185001232117603:
+    #    IP_ADDR = "192.168.0.110"
 
     def __init__(self, port: int, communicationThread: CommunicationThread):
         
@@ -32,7 +33,8 @@ class ListeningThread(threading.Thread):
         self._stop_event = threading.Event()
         self.HOSTNAME
         self.IP_ADDR
-    
+
+
     def addMessageList(self, message: Message):
         """Adds an incoming messages to the message list in the communication thread.
 
@@ -41,7 +43,7 @@ class ListeningThread(threading.Thread):
         """
 
         self.communicationThread.messageList.append(message)
-    
+
     def activeListening(self):
         """Method for making the thread listen to the specific port.
         """
@@ -49,6 +51,7 @@ class ListeningThread(threading.Thread):
         connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         print(f"ListeningThread binding to {self.IP_ADDR, self.port}")
         connection.bind((self.IP_ADDR, self.port))
+        logging.info("Listening Thread started. Listening on address: %s and port %s", self.IP_ADDR, self.port)
         while not self._stop_event.is_set():
             connection.listen()
             sock, addr = connection.accept()
@@ -70,14 +73,15 @@ class ListeningThread(threading.Thread):
 
             message = loads(received_data)
             if isinstance(message, RequestMessage):
-                logging.info("Received RequestMessage with TaskID %s from %s", message.getTaskID(), message.lastSenderID)
-            elif isinstance(message, RespondMessage):
-                logging.info("Received RespondMessage for task with TaskID %s and with source %s from %s", message.getTaskID(), message.getSource(), message.lastSenderID)
+                task_source = int.from_bytes(message.getTaskID(), "big") & 0x0000FFFFFFFFFFFF
+                time_limit  = message.getUnixTimestampLimit()
+                time_limit_left = time_limit - time.time()
+
+                logging.info("Received RequestMessage from satellite %s - Info: \n\tTaskID: %s \n\tTask Source: %s \n\tRemaining Time In Time Limit: %s", message.lastSenderID, int.from_bytes(message.getTaskID(), "big"), task_source, time_limit_left)
             elif isinstance(message, RespondMessage):
                 logging.info("Received RespondMessage for task with TaskID %s and with source %s from %s", message.getTaskID(), message.getSource(), message.lastSenderID)
             elif isinstance(message, ImageDataMessage):
-                payload = message.getPayload()
-                logging.info("Received ImageDataMessage for task with TaskID %s from %s", payload.getTaskID(), message.lastSenderID)
+                logging.info("Received ImageDataMessage for task with TaskID %s from %s. FileName: %s", message.getTaskID(), message.lastSenderID, message.getFileName())
             elif isinstance(message, ProcessedDataMessage):
                 logging.info("Received ProcessedDataMessage with file name %s from %s", message.getFileName(), message.lastSenderID)
             else:

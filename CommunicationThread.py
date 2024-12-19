@@ -6,10 +6,20 @@ from AcceptedRequestQueue import AcceptedRequestQueue
 from typing import Any, Iterable, List, Mapping, TYPE_CHECKING
 import time
 from responseHandler import ResponseHandler
+import logging
 
 if TYPE_CHECKING:
     from TaskHandlerThread import TaskHandlerThread
     from OrbitalPositionThread import OrbitalPositionThread
+
+# Configure logging 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[
+        logging.StreamHandler()     # Also log to the console
+    ]
+)
 
 class CommunicationThread(Thread):
     """The CommunicationThread that handles incoming and outgoing messages
@@ -124,29 +134,40 @@ class CommunicationThread(Thread):
         """
         
         if type(message) == RequestMessage:
-            print(f'received request from task with ID {int.from_bytes(message.getTaskID(), "big")}')
-            time_limit  = message.getUnixTimestampLimit()
             task_source = int.from_bytes(message.getTaskID(), "big") & 0x0000FFFFFFFFFFFF
-            print(f'received request from task with ID {int.from_bytes(message.getTaskID(), "big")} from {task_source}')
+            time_limit  = message.getUnixTimestampLimit()
+
             allocation = self.taskHandlerThread.allocateTaskToSelf(time_limit, task_source)
             if allocation[0]: #add input - ONLY TIMELIMIT
                 freq = allocation[1]
                 self.acceptedRequestsQueue.addMessage(message=message, frequency=freq)
-                print('accepting tasks and sending respond')
+                time_limit_left = message.getUnixTimestampLimit() - time.time()
+                taskID_int = int.from_bytes(message.getTaskID(), "big")
+                logging.info("Accepted Request from satellite %s - Info: \n\tTaskID: %s \n\tTask Source: %s \n\tRemaining Time In Time Limit: %s", message.lastSenderID,taskID_int, task_source, time_limit_left)
                 self.sendRespond(message=message)
             else:
-                print('denied task and forwarded request')
+                time_limit_left = message.getUnixTimestampLimit() - time.time()
+                taskID_int = int.from_bytes(message.getTaskID(), "big")
+                logging.info("Denied Request from satellite %s - Info: \n\tTaskID: %s \n\tTask Source: %s \n\tRemaining Time In Time Limit: %s", message.lastSenderID, taskID_int, task_source, time_limit_left)
                 self.addTransmission(message=message)
 
         elif type(message) == RespondMessage:
-            self.responseHandler.addResponse(message)
+            if message.getRecipient() == self.satelliteID:
+                self.responseHandler.addResponse(message)
+            else:
+                logging.info("Unrecognised RespondMessage. Added to TransmissionQueue - Info: \n\tTaskID: %s \n\tSource: %s\n\tRecipient: %s", message.getTaskID(), message.getSource(), message.getRecipient())
+                self.transmissionQueue.append(message)
 
         elif type(message) == ImageDataMessage:
             messagePayload = message.getPayload()
             if messagePayload.getTaskID() in self.acceptedRequestsQueue.getIDInQueue():
+                payload = message.getPayload()
+                task_source = payload.getSource()
+                time_limit_left = payload.getUnixTimestampLimit() - time.time()
                 taskID = messagePayload.getTaskID()
+                taskID_int = message.getTaskID()
                 frequency = self.acceptedRequestsQueue.getFrequency(taskID=taskID)
-                print(f'received tasks {messagePayload.getTaskID()} which is handled on node')
+                logging.info("ImageData for Accepted Request Received - Info: \n\tTaskID: %s \n\tTask Source: %s \n\tRemaining Time In Time Limit: %s", taskID_int, task_source, time_limit_left)
                 self.taskHandlerThread.appendTask(messagePayload, frequency=frequency)
                 self.acceptedRequestsQueue.removeMessage(taskID=taskID)
             else:
@@ -201,10 +222,13 @@ class CommunicationThread(Thread):
         """
         Method to send a respond to other satellites telling them they can perform the requested task
         """
+        recipient = int.from_bytes(message.getTaskID(), "big") & 0x0000FFFFFFFFFFFF
+
         sendRespondMessage = RespondMessage(
             taskID=message.getTaskID(),
             source=self.satelliteID,#message.getTaskID() & 0x0000FFFFFFFFFFFF,
-            firstHopID = message.lastSenderID
+            firstHopID = message.lastSenderID,
+            recipient=recipient
         )
 
         self.addTransmission(sendRespondMessage)
