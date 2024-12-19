@@ -78,7 +78,6 @@ class TransmissionThread(threading.Thread):
 
 
     def sendTransmission(self):
-
         while not self._stop_event.is_set():
             if self.communicationThread.transmissionQueue:
                 instance_index = self.pop_first_instance_of_class(self.communicationThread.transmissionQueue, ImageDataMessage)
@@ -161,7 +160,7 @@ class TransmissionThread(threading.Thread):
                                     logging.info("Case 4 - Connected to satellite %s to send RequestMessage with TaskID %s", self.leftSatelliteID, message.getTaskID())
                                     connection.connect(self.leftSatelliteAddr)
 
-                        # Case 4: The satellite must relay a message to the next satellite in the chain.
+                        # Case 5: The satellite must relay a message to the next satellite in the chain.
                         elif (isinstance(message, ProcessedDataMessage) == False) and (message.lastSenderID != None) or (isinstance(message, ImageDataMessage) == False) and (message.lastSenderID != None):
                             if isinstance(message, RespondMessage) and message.getSource() == "GROUND":
                                 pickled_message = dumps(message)
@@ -169,7 +168,7 @@ class TransmissionThread(threading.Thread):
                                 header = struct.pack('>I', message_length)
                                 self.__dataTransmittedBytes += len(pickled_message) + len(header)
 
-                                logging.info("Case 4 - Respond from GROUND - Connected to both satellites to send %s.", message)
+                                logging.info("Case 5 - Respond from GROUND - Connected to both satellites to send %s.", message)
                                 connection.connect(self.rightSatelliteAddr)
                                 connection.sendall(header + pickled_message)
                                 logging.info("Succesully sent message %s to satellite %s", message, self.rightSatelliteID)
@@ -193,7 +192,7 @@ class TransmissionThread(threading.Thread):
                                 logging.info("Case 5- Connected to satellite %s to send %s", self.leftSatelliteID, message)
 
 
-                        # Case 5: The satellite sends any other message created by itself to one of its neighbouring satellites.
+                        # Case 6: The satellite sends any other message created by itself to one of its neighbouring satellites.
                         else:
                             if message.firstHopID == self.leftSatelliteID:
                                 logging.info("Case 6 - Connected to satellite %s to send %s", self.leftSatelliteID, message)
